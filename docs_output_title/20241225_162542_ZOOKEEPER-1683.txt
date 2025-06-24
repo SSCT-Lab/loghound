@@ -1,0 +1,66 @@
+{
+  "p": [
+    "ZooKeeper-1683"
+  ],
+  "ZooKeeper client NPE when updating server list on disconnected client": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "zk clientfails to set up socket with the targetzk server"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "2013-04-04 22:16:15,872 ERROR [pool-4-thread-1] com.netflix.curator.ConnectionState.getZooKeeper (ConnectionState.java:84) - Background exception caught",
+        "java.lang.NullPointerException",
+        "at org.apache.zookeeper.client.StaticHostProvider.updateServerList(StaticHostProvider.java:161) ~[zookeeper-3.5.0.jar:3.5.0--1]",
+        "at org.apache.zookeeper.ZooKeeper.updateServerList(ZooKeeper.java:183) ~[zookeeper-3.5.0.jar:3.5.0--1]",
+        "at com.netflix.curator.HandleHolder$1$1.setConnectionString(HandleHolder.java:121) ~[curator-client-1.3.5-SNAPSHOT.jar:?]"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) From the callstack of the NPE, we know that NPE happens when updateServerList() is called on ZK client side. Furthermore, based on the line number, we see that the problem is at:",
+      "",
+      "Since before line 161, it has already made sure thatresolvedListis not NULL, soaddrwill not be null, andcurrentHostmight be null.",
+      "(2.2) Then we try to figure out why currentHost is null. (do something like slicing)",
+      "ZooKeeper.updateServerList() calls StaticHostProvider.updateServerList(), and passes the parameter currentHost.",
+      "",
+      "So remoteSocketAddress might be null.",
+      "(2.3) Then we can get the data flow forremoteSocketAddressonly based on the source code.",
+      "When creating a zk client, a ZooKeeper instance is created by new ZooKeeper().",
+      "",
+      "cnxn.start() will manage the socket i/o for the client.",
+      "",
+      "",
+      "Then we can see that remoteSocketAddress is related to sockKey, and there might be some problem when the client tries to connect the specific ZK server.",
+      "Since ZooKeeper.updateServerList() is called by another thread, so it happens that when updateServerList() is running, the client fails to set up the socket connection with the target zk server, which leads to currentHost null.",
+      "",
+      "startConnect() is called in a while loop of SendThread.run(), if zk client disconnects with the previous zk server, it will try to connect another zk server. So one possibility is that when the client application calls updateServerList(), the client disconnected with the previous zk server, and tries to connect another zk server, but fails to setup the socket connection, then currentHost will be null."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When the client application calls updateServerList(), the zk client fails to set up the socket with the target zk server, which leads to currentHost null, so the reference of currentHost in updateServerList() throws NPE."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Replace “currentHost” with “myServer”.",
+      "Add checking for “myServer”. When myServer == null:",
+      "if the client has connected with some server before, set the last server to which it connected to “myServer”, else, set the first server on the zk server list to “myServer”.",
+      "",
+      "•src/java/main/org/apache/zookeeper/client/StaticHostProvider.java",
+      "",
+      "",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "ZK client.",
+      ""
+    ]
+  }
+}

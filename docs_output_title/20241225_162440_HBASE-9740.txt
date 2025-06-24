@@ -1,0 +1,93 @@
+{
+  "p": [
+    "HBase-9740"
+  ],
+  "A corrupt HFile could cause endless attempts to assign the region without a chance of success": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster(master) many HRegionServers (slaves) same type of exception"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "A corrupt HFile had made its way into one of the regions which resulted in the region brought offline immediately. As soon as the region was offline, HMaster noticed this and tried to assign the region to another RegionServer which of course failed (again due to the corrupt HFile) and then Master tried to assign this to another and so on. So this region kept bouncing from one server to another and this went unnoticed for few hours and all region servers’ logs were filled with thousands of this message:",
+        "org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler:Failed open of region=userdata,50743646010,1378139055806.318c533716869574f10615703269497f., starting to roll back the global memstore size.",
+        "java.io.IOException: java.io.IOException:",
+        "org.apache.hadoop.hbase.io.hfile.CorruptHFileException: Problem reading HFile",
+        "Trailer from file",
+        "/hbase/userdata/318c533716869574f10615703269497f/data/a3e2ae39f71441ac92a6563479fb976e",
+        "at org.apache.hadoop.hbase.regionserver.HRegion.initializeRegionInternals(HRegion.java:550)",
+        "at org.apache.hadoop.hbase.regionserver.HRegion.initialize(HRegion.java:463)",
+        "at org.apache.hadoop.hbase.regionserver.HRegion.openHRegion(HRegion.java:3835)",
+        "at org.apache.hadoop.hbase.regionserver.HRegion.openHRegion(HRegion.java:3783)",
+        "at org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler.openRegion(OpenRegionHandler.java:332)",
+        "at org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler.process(OpenRegionHandler.java:108)",
+        "at org.apache.hadoop.hbase.executor.EventHandler.run(EventHandler.java:169)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "Caused by: java.io.IOException:",
+        "org.apache.hadoop.hbase.io.hfile.CorruptHFileException: Problem reading HFile",
+        "Trailer from file",
+        "/hbase/userdata/318c533716869574f10615703269497f/data/a3e2ae39f71441ac92a6563479fb976e",
+        "at org.apache.hadoop.hbase.regionserver.Store.loadStoreFiles(Store.java:404)",
+        "at org.apache.hadoop.hbase.regionserver.Store.<init>(Store.java:257)",
+        "at org.apache.hadoop.hbase.regionserver.HRegion.instantiateHStore(HRegion.java:3017)",
+        "at org.apache.hadoop.hbase.regionserver.HRegion$1.call(HRegion.java:525)",
+        "at org.apache.hadoop.hbase.regionserver.HRegion$1.call(HRegion.java:523)",
+        "at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:303)",
+        "at java.util.concurrent.FutureTask.run(FutureTask.java:138)",
+        "at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:441)",
+        "at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:303)",
+        "at java.util.concurrent.FutureTask.run(FutureTask.java:138)"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Since all region servers’ logs were filled with the message above, the developer can discover that the HFile name which fails to read is the same in the logs from different RegionServers:java.io.IOException: java.io.IOException:",
+      "org.apache.hadoop.hbase.io.hfile.CorruptHFileException: Problem reading HFile",
+      "Trailer from file",
+      "/hbase/userdata/318c533716869574f10615703269497f/data/a3e2ae39f71441ac92a6563479fb976e",
+      "The exception “CorruptHFileException” in the log not only shows the symptom but also indicates the reason for failing to open the region.",
+      "So it is very likely that the a HFile belonging to a certain region results in the exceptions in all the region servers."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "A corrupt HFile or HFile missed resulted in the region brought offline immediately. HMaster noticed this and tried to assign the region to another RegionServer which of course failed (again due to the corrupt HFile). As soon as the region was offline, HMaster will keep assigning the region without a chance of success.",
+      "There is a “maximumAssignmentAttempts” limit for each “assign”, but there is no limit for the “assign” with all the RegionServers. Therefore, HMaster will keep assigning."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The solution is to create a counter to count a region assign failed times, when it fails beyond the threshold (maxAssign = servers.size() * maxAssignFailedCount) , we call regionOffline() function to set this region to be OFFLINE, and remove from RIT in memory, which indicates the Master to stop assigning the region. Besides, LOG one error info for it.",
+      "The patch reduces the effect brought by the error.",
+      "• src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "TimeoutMonitor is a thread which is a periodic monitor to check for time outs on region transition operations.",
+      "Checking the faild times for region assign in function chore(). When TimeoutMonitor thread runs, chore() will be called.",
+      "",
+      "• src/main/java/org/apache/hadoop/hbase/master/handler/OpenedRegionHandler.java",
+      "Remove region assign number when the region is online(State.OPEN).",
+      "This process() function will be called by processRegionsInTransition() in AssignmentManager.",
+      "",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "One node: HMaster",
+      "The functions which are fixed are not on the callstack contained in the log.",
+      "The logs are from RegionServers, while the fixes are all in the HMaster.",
+      "",
+      ""
+    ]
+  }
+}

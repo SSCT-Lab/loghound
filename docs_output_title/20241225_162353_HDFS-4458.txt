@@ -1,0 +1,168 @@
+{
+  "p": [
+    "HDFS-4458",
+    "start balancer failed with \"Failed to create file [/system/balancer.id]\" if configure IP on fs.defaultFS"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "DFSClient (client-side) NameNode (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The logs are from NameNode. For description convenience, we refer the two HDFS Clients as follows:",
+        "DFSClient_NONMAPREDUCE_-732728704_1: DFSClient_A (who creates the file “/system/balancer.id” first)",
+        "DFSClient_NONMAPREDUCE_413051464_1: DFSClient_B",
+        "2013-01-28 01:21:49,550 WARN org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.startFile: Failed to create file[/system/balancer.id] for [DFSClient_NONMAPREDUCE_413051464_1] on client [10.111.57.222], because this file is already being created by [DFSClient_NONMAPREDUCE_-732728704_1] on [10.111.57.222]",
+        "DFSClient_A fails to create file “/system/balancer.id”, since this this file is already created by DFSClient_B. This also indicates that a balancer is already started. We notice that both these two DFSClients are on “10.111.57.222”.",
+        "",
+        "2013-01-28 01:21:49,550ERRORorg.apache.hadoop.security.UserGroupInformation:PriviledgedActionExceptionas:root (auth:SIMPLE) cause:org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException: Failed to create file [/system/balancer.id] for[DFSClient_NONMAPREDUCE_413051464_1] on client [10.111.57.222], because this file is already being created by[DFSClient_NONMAPREDUCE_-732728704_1] on [10.111.57.222]",
+        "The detailed information for “AlreadyBeingCreatedException” in this ERROR log is the same with the last log.",
+        "",
+        "2013-01-28 01:21:49,551 INFO org.apache.hadoop.ipc.Server: IPC Server handler 2 on 8020, callorg.apache.hadoop.hdfs.protocol.ClientProtocol.create from 10.111.57.222:41630: error:org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException: Failed to create file [/system/balancer.id] for[DFSClient_NONMAPREDUCE_413051464_1] on client [10.111.57.222], because this file is already being created by[DFSClient_NONMAPREDUCE_-732728704_1] on [10.111.57.222]",
+        "org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException: Failed to create file [/system/balancer.id] for[DFSClient_NONMAPREDUCE_413051464_1] on client [10.111.57.222], because this file is already being created by[DFSClient_NONMAPREDUCE_-732728704_1] on [10.111.57.222]",
+        "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.recoverLeaseInternal(FSNamesystem.java:2175)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.startFileInternal(FSNamesystem.java:1965)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.startFileInt(FSNamesystem.java:1878)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.startFile(FSNamesystem.java:1857)",
+        "at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.create(NameNodeRpcServer.java:407)",
+        "at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolServerSideTranslatorPB.create(ClientNamenodeProtocolServerSideTranslatorPB.java:208)this class is used on the server side",
+        "at org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos$ClientNamenodeProtocol$2.callBlockingMethod(ClientNamenodeProtocolProtos.java:45831)",
+        "at org.apache.hadoop.ipc.ProtobufRpcEngine$Server$ProtoBufRpcInvoker.call(ProtobufRpcEngine.java:454)",
+        "at org.apache.hadoop.ipc.RPC$Server.call(RPC.java:910)",
+        "at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1694)",
+        "at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1690)",
+        "at java.security.AccessController.doPrivileged(Native Method)",
+        "at javax.security.auth.Subject.doAs(Subject.java:396)",
+        "at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1367)",
+        "at org.apache.hadoop.ipc.Server$Handler.run(Server.java:1688)",
+        "One of the handlers in NameNode handles the RPC call of “create()” from the DFSClient through the RPC protocol ClientProtocol, but fails due to the “AlreadyBeingCreatedException”.",
+        "The call-stack contained in this log can help us get the place where the exception occurs.",
+        "",
+        "2013-01-28 01:21:49,567 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* NameSystem.allocateBlock: /system/balancer.id. BP-986428099-10.111.57.222-1359353997106 blk_-2102764247427435122_1002",
+        "{blockUCState=UNDER_CONSTRUCTION, primaryNodeIndex=-1, replicas=[ReplicaUnderConstruction[10.111.57.223:50010|RBW], ReplicaUnderConstruction[10.111.57.225:50010|RBW], ReplicaUnderConstruction[10.111.57.224:50010|RBW]]}",
+        "NameNode allocates three blocks for file “/system/balancer.id”, since the default replica factor is three for each block. They are located in “10.111.57.223/225/224”,respectively.",
+        "",
+        "2013-01-28 01:21:49,865 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* addStoredBlock: blockMap updated: 10.111.57.224:50010 is added to blk_-2102764247427435122_1002",
+        "{blockUCState=UNDER_CONSTRUCTION, primaryNodeIndex=-1, replicas=[ReplicaUnderConstruction[10.111.57.223:50010|RBW], ReplicaUnderConstruction[10.111.57.225:50010|RBW], ReplicaUnderConstruction[10.111.57.224:50010|RBW]]}",
+        "size 0",
+        "2013-01-28 01:21:49,868 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* addStoredBlock: blockMap updated: 10.111.57.225:50010 is added to blk_-2102764247427435122_1002",
+        "{blockUCState=UNDER_CONSTRUCTION, primaryNodeIndex=-1, replicas=[ReplicaUnderConstruction[10.111.57.223:50010|RBW], ReplicaUnderConstruction[10.111.57.225:50010|RBW], ReplicaUnderConstruction[10.111.57.224:50010|RBW]]}",
+        "size 0",
+        "2013-01-28 01:21:49,871 INFO org.apache.hadoop.hdfs.StateChange: BLOCK* addStoredBlock: blockMap updated: 10.111.57.223:50010 is added to blk_-2102764247427435122_1002",
+        "{blockUCState=UNDER_CONSTRUCTION, primaryNodeIndex=-1, replicas=[ReplicaUnderConstruction[10.111.57.223:50010|RBW], ReplicaUnderConstruction[10.111.57.225:50010|RBW], ReplicaUnderConstruction[10.111.57.224:50010|RBW]]}",
+        "size 0",
+        "The new allocated blocks are added to the blockMap in NameNode. Currently, no data has been written, so the size is 0.",
+        "",
+        "2013-01-28 01:21:49,874 INFO org.apache.hadoop.hdfs.StateChange: DIR* NameSystem.completeFile: file /system/balancer.id is closed by DFSClient_NONMAPREDUCE_-732728704_1",
+        "DFSClient_A closes the file, which indicates that the balancer exits."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Balancer is a tool that balances disk space usage on an HDFS cluster. The tool is deployed as an application program that can be run by the cluster administrator. Each time there can be only one banlancer.",
+      "(2.2) After executing the command for balancer, we can see the logs shown above. To make sure that there is no more than one balancer running in an HDFS, when the balancer is started, the file “/system/balancer.id” is created in HDFS, which writes the IP address of the machine on which the balancer is running, and it does not close until the balancer exits. This prevents the second balancer from running because it can not creates the file while the first one is running (guaranteed by the file lease in HDFS).",
+      "The information we can get from the logs are annotated.",
+      "(2.3) On NameNode side, we get the errors related to file creation conflict. The following analysis show how the error generates.",
+      "Next, we need to figure out why there are two DFSClients try to start the balancer, while we only execute the balancer starting command once.",
+      "Based on the source code, we can get the control flow for creating the file “/system/balancer.id”. With the call-stack, we know function recoverLeaseInternal() generates “AlreadyBeingCreatedException” with the message “Failed to create file [/system/balancer.id] for[DFSClient_NONMAPREDUCE_413051464_1] on client [10.111.57.222], because this file is already being created by[DFSClient_NONMAPREDUCE_-732728704_1] on [10.111.57.222]” .",
+      "",
+      "In startFileInternail(), it finds that the file to be created by DFSClient_B already exists, so the existing file is opened for writing, and it may need to recover lease, then function recoverLeaseInternal() is called.",
+      "lease recovery : Before a client can write an HDFS file, it must obtain a lease, which is essentially a lock. This ensures the single-writer semantics. The lease must be renewed within a predefined period of time if the client wishes to keep writing. If a lease is not explicitly renewed or the client holding it dies, then it will expire. When this happens, HDFS will close the file and release the lease on behalf of the client so that other clients can write to the file. This process is called lease recovery.",
+      "When DFSClient_A creates “/system/balancer.id”, it is the original holder of this file lease, in function recoverLeaseInternal(), it finds that the current holder(DFSClient_B) is not consistent with the original holder(DFSClient_A), and occurs the exception.",
+      "(2.4) Then, we try to figure out why there are two DFSClients try to start the balancer, while we only execute the balancer starting command once.",
+      "According to the control flow in (2.3), we notice that there is a for loop to create NameNodeConnector for each namenode. From the error logs, there are two DFSClients, so two connectors are created for two “NameNodes”. But actually, they are the same NameNode.",
+      "The uri for namenode is from: namenodes=DFSUtils.getNsServiceRPCUris(conf);",
+      "Three uri parameters are related:",
+      "·fs.default.name- This is the URI (protocol specifier, hostname, and port) that describes the NameNode for the cluster. The DataNode instances will register with this NameNode, and make their data available through it. Individual client programs will connect to this address to retrieve the locations of actual file blocks. value protocol://servername:port",
+      "·dfs.namenode.rpc-address: RPC address that handles all clients requests. In the case of HA/Federation where multiple namenodes exist, the name service id is added to the name e.g. dfs.namenode.rpc-address.ns1 dfs.namenode.rpc-address.EXAMPLENAMESERVICE The value of this property will take the form of nn-host1:rpc-port.",
+      "·dfs.namenode.servicerpc-address: RPC address for HDFS Services communication. BackupNode, Datanodes and all other services should be connecting to this address if it is configured. In the case of HA/Federation where multiple namenodes exist, the name service id is added to the name e.g. dfs.namenode.servicerpc-address.ns1 dfs.namenode.rpc-address.EXAMPLENAMESERVICE The value of this property will take the form of nn-host1:rpc-port. If the value of this property is unset the value of dfs.namenode.rpc-address will be used as the default.",
+      "public staticCollection<URI>getNsServiceRpcUris(Configuration conf) {returngetNameServiceUris(conf,DFSConfigKeys.DFS_NAMENODE_SERVICE_RPC_ADDRESS_KEY,DFSConfigKeys.DFS_NAMENODE_RPC_ADDRESS_KEY);}",
+      "function getNameServiceUris() is called.",
+      "",
+      "public staticCollection<URI>getNameServiceUris(Configuration conf, String... keys) {Set<URI> ret =newHashSet<URI>();",
+      "",
+      "// We're passed multiple possible configuration keys for any given NN or HA// nameservice, and search the config in order of these keys. In order to// make sure that a later config lookup (e.g. fs.defaultFS) doesn't add a// URI for a config key for which we've already found a preferred entry, we// keep track of non-preferred keys here.Set<URI> nonPreferredUris =newHashSet<URI>();",
+      "for(String nsId :getNameServiceIds(conf)) {if(HAUtil.isHAEnabled(conf, nsId)) {// Add the logical URI of the nameservice.try{ ret.add(newURI(HdfsConstants.HDFS_URI_SCHEME+\"://\"+ nsId));}catch(URISyntaxException ue) {throw newIllegalArgumentException(ue); }}else{// Add the URI corresponding to the address of the NN.booleanuriFound =false;for(String key : keys) { String addr = conf.get(concatSuffixes(key, nsId));if(addr !=null) {URI uri =createUri(HdfsConstants.HDFS_URI_SCHEME,NetUtils.createSocketAddr(addr));if(!uriFound) { uriFound =true;ret.add(uri);if dfs.namenode.servicerpc-address is in IP form, it will be changed to hostname form}else{ nonPreferredUris.add(uri); }}}}}",
+      "// Add the generic configuration keys.booleanuriFound =false;for(String key : keys) {String addr = conf.get(key);if(addr !=null) { URI uri =createUri(\"hdfs\", NetUtils.createSocketAddr(addr));if(!uriFound) { uriFound =true;ret.add(uri);}else{ nonPreferredUris.add(uri); }}}",
+      "// Add the default URI if it is an HDFS URI.",
+      "URI defaultUri = FileSystem.getDefaultUri(conf);",
+      "+// checks if defaultUri is ip:port format",
+      "+// and convert it to hostname:port format",
+      "+if (defaultUri != null && (defaultUri.getPort() != -1)) {",
+      "+defaultUri = createUri(defaultUri.getScheme(),",
+      "+NetUtils.createSocketAddr(defaultUri.getHost(),",
+      "+defaultUri.getPort()));",
+      "+}",
+      "if(defaultUri !=null&& HdfsConstants.HDFS_URI_SCHEME.equals(defaultUri.getScheme()) &&!nonPreferredUris.contains(defaultUri)) {",
+      "ret.add(defaultUri);before the fix, since fs.defaultFS is in IP form, so it is treated as a different uri, so it is also added to ret.",
+      "}returnret;}",
+      "",
+      "In getNameServiceUris(), dfs.namenode.servicerpc-address is added to ret, and dfs.namenode.rpc-address is added to nonPreferredUris. fs.default.name is also added to ret, so there are two URIs in ret.",
+      "",
+      "The client which running the balancer command will also occur the IOException(\"Another balancer is running\");"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When creating NamenodeConnector for balancer to access NameNode. The final address for connecting NN is selected from several candidates. And all these candidates should be in the default unified format. Here, it is hostname form rather than IP form.",
+      "In this bug, the user setfs.defaultFSanddfs.namenode.servicerpc-addressall using IP form.",
+      "DFSUtil.getNsServiceRpcUris(conf) will automatically change the ip indfs.namenode.servicerpc-addressto hostname, but not changefs.defaultFS, which leads tofs.defaultFSis also added falsely (since it will be treated as a different address). So DFSUtil.getNsServiceRpcUris(conf) will get two NN addresses, but actually they are pointing to the same NN, and starting two balancers causes the conflict.",
+      "(The standard way to setfs.defaultFSis to use hostname, but in previous versions setting ip address can also work.)"
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The patch is to eliminate the exception.",
+      "Check and convert the parameters related to NameNode URI in the unified format. So the duplicated address will not be added, and no redundant balancer will be started. The exception will not occur.",
+      "• /hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/DFSUtil.java",
+      "// Add the default URI if it is an HDFS URI.URI defaultUri = FileSystem.getDefaultUri(conf);",
+      "+// checks if defaultUri is ip:port format",
+      "+// and convert it to hostname:port format",
+      "+if (defaultUri != null && (defaultUri.getPort() != -1)) {",
+      "+defaultUri = createUri(defaultUri.getScheme(),",
+      "+NetUtils.createSocketAddr(defaultUri.getHost(),",
+      "+defaultUri.getPort()));",
+      "+}",
+      "if(defaultUri !=null&&",
+      "HdfsConstants.HDFS_URI_SCHEME.equals(defaultUri.getScheme()) &&",
+      "!nonPreferredUris.contains(defaultUri)) {",
+      "ret.add(defaultUri);",
+      "}"
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch is in a common utility, and it will be called by the DFSClient who running the Balancer tool."
+    ]
+  },
+  "(6) Code SnippetsprivateLocatedBlockstartFileInternal(...)throwsSafeModeException, FileAlreadyExistsException,": {
+    "p": [
+      "AccessControlException, UnresolvedLinkException, FileNotFoundException,ParentNotDirectoryException, IOException {asserthasWriteLock();if(NameNode.stateChangeLog.isDebugEnabled()) {...}",
+      "if(isInSafeMode()) {throw newSafeModeException(\"Cannot create file\"+ src,safeMode); }if(!DFSUtil.isValidName(src)) {throw newInvalidPathException(src);}",
+      "// Verify that the destination does not exist as a directory already.booleanpathExists =dir.exists(src);if(pathExists &&dir.isDir(src)) {throw newFileAlreadyExistsException(\"Cannot create file \"+ src+\"; already exists as a directory.\");}…",
+      "try{blockManager.verifyReplication(src, replication, clientMachine);booleancreate = flag.contains(CreateFlag.CREATE);finalINode myFile =dir.getINode(src);if(myFile ==null) {if(!create) {throw newFileNotFoundException(\"failed to overwrite or append to non-existent file \"+ src +\" on client \"+ clientMachine);}}else{// File exists - must be one of append or overwriteif(overwrite) { delete(src,true);}else{// Opening an existing file for write - may need to recover lease.recoverLeaseInternal(myFile, src, holder, clientMachine,false);if(!append) {throw newFileAlreadyExistsException(\"failed to create file \"+ src +\" on client \"+ clientMachine +\" because the file exists\"); }}}",
+      "finalDatanodeDescriptor clientNode =blockManager.getDatanodeManager().getDatanodeByHost(clientMachine);",
+      "if(append && myFile !=null) { ...",
+      "}else{// Now we can add the name to the filesystem. This file has no blocks associated with it.checkFsObjectLimit();",
+      "// increment global generation stamplonggenstamp = nextGenerationStamp();INodeFileUnderConstruction newNode =dir.addFile(src, permissions,",
+      "replication, blockSize, holder, clientMachine, clientNode, genstamp);if(newNode ==null) {throw newIOException(\"DIR* NameSystem.startFile: \"+\"Unable to add file to namespace.\");",
+      "}...}}}catch(IOException ie) {NameNode.stateChangeLog.warn(\"DIR* NameSystem.startFile: \"+ie.getMessage());throwie;}return null;}",
+      "",
+      "private voidrecoverLeaseInternal(...)throwsIOException {asserthasWriteLock();if(fileInode !=null&& fileInode.isUnderConstruction()) {INodeFileUnderConstruction pendingFile = (INodeFileUnderConstruction) fileInode;...if(force) {…",
+      "}else{assertlease.getHolder().equals(pendingFile.getClientName()) :\"Current lease holder \"+ lease.getHolder() +\" does not match file creator \"+ pendingFile.getClientName();//// If the original holder has not renewed in the last SOFTLIMIT// period, then start lease recovery.//if(lease.expiredSoftLimit()) {LOG.info(\"startFile: recover \"+ lease +\", src=\"+ src +\" client \"",
+      "+ pendingFile.getClientName());booleanisClosed = internalReleaseLease(lease, src,null);if(!isClosed)throw newRecoveryInProgressException(\"Failed to close file \"+ src +\". Lease recovery is in progress. Try again later.\");}else{finalBlockInfo lastBlock = pendingFile.getLastBlock();if(lastBlock !=null&& lastBlock.getBlockUCState() == BlockUCState.UNDER_RECOVERY) {throw newRecoveryInProgressException(\"Recovery in progress, file [\"+ src +\"], \"+\"lease owner [\"+ lease.getHolder() +\"]\");}else{throw newAlreadyBeingCreatedException(\"Failed to create file [\"+ src +\"] for [\"+ holder +\"] on client [\"+ clientMachine+\"], because this file is already being created by [\"+ pendingFile.getClientName() +\"] on [\"+ pendingFile.getClientMachine() +\"]\"); }}}}}",
+      "",
+      "privateOutputStreamcheckAndMarkRunningBalancer()throwsIOException {try{finalDataOutputStream out =fs.create(BALANCER_ID_PATH);out.writeBytes(InetAddress.getLocalHost().getHostName());out.flush();returnout;}catch(RemoteException e) {if(AlreadyBeingCreatedException.class.getName().equals(e.getClassName())){returnnull;}else{throwe; }}}",
+      "",
+      "· In NameNodeConnector constructor",
+      "// Check if there is another balancer running.// Exit if there is another one running.out= checkAndMarkRunningBalancer();",
+      "if(out==null) {throw newIOException(\"Another balancer is running\");}",
+      "So the client which running balancer command will occur the IOException.",
+      "",
+      ""
+    ]
+  }
+}

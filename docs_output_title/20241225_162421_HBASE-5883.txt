@@ -1,0 +1,105 @@
+{
+  "p": [
+    "HBase-5883"
+  ],
+  "Backup master is going down due to connection refused exception": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "BackupHMaster tries to connect the RegionServer which is hosting the ROOT"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“The active master node network was down for some time (This node contains Master,DN,ZK,RS). Here backup node got notification, and started to became active. Immediately backup node got aborted with the below exception.”",
+        "2012-04-09 10:42:24,270 INFO org.apache.hadoop.hbase.master.SplitLogManager: finished splitting (more than or equal to) 861248320 bytes in 4 log files in [hdfs://192.168.47.205:9000/hbase/.logs/HOST-192-168-47-202,60020,1333715537172-splitting] in 26374ms",
+        "2012-04-09 10:42:24,316FATALorg.apache.hadoop.hbase.master.HMaster: Master server abort: loaded coprocessors are: []",
+        "2012-04-09 10:42:24,333FATALorg.apache.hadoop.hbase.master.HMaster: Unhandled exception. Starting shutdown.",
+        "java.io.IOException: java.net.ConnectException: Connection refused",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupIOstreams(HBaseClient.java:375)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.getConnection(HBaseClient.java:1045)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:897)",
+        "at org.apache.hadoop.hbase.ipc.WritableRpcEngine$Invoker.invoke(WritableRpcEngine.java:150)",
+        "at $Proxy13.getProtocolVersion(Unknown Source)",
+        "at org.apache.hadoop.hbase.ipc.WritableRpcEngine.getProxy(WritableRpcEngine.java:183)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:303)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:280)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:332)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.waitForProxy(HBaseRPC.java:236)",
+        "at org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation.getHRegionConnection(HConnectionManager.java:1276)",
+        "at org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation.getHRegionConnection(HConnectionManager.java:1233)",
+        "at org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation.getHRegionConnection(HConnectionManager.java:1220)",
+        "at org.apache.hadoop.hbase.catalog.CatalogTracker.getCachedConnection(CatalogTracker.java:569)",
+        "at org.apache.hadoop.hbase.catalog.CatalogTracker.getRootServerConnection(CatalogTracker.java:369)",
+        "at org.apache.hadoop.hbase.catalog.CatalogTracker.waitForRootServerConnection(CatalogTracker.java:353)",
+        "at org.apache.hadoop.hbase.catalog.CatalogTracker.verifyRootRegionLocation(CatalogTracker.java:660)",
+        "at org.apache.hadoop.hbase.master.HMaster.assignRootAndMeta(HMaster.java:616)",
+        "at org.apache.hadoop.hbase.master.HMaster.finishInitialization(HMaster.java:540)",
+        "at org.apache.hadoop.hbase.master.HMaster.run(HMaster.java:363)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "Caused by: java.net.ConnectException: Connection refused",
+        "at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)",
+        "at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:567)",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:206)",
+        "at org.apache.hadoop.net.NetUtils.connect(NetUtils.java:488)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupConnection(HBaseClient.java:328)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupIOstreams(HBaseClient.java:362)",
+        "... 20 more",
+        "2012-04-09 10:42:24,336 INFO org.apache.hadoop.hbase.master.HMaster: Aborting",
+        "2012-04-09 10:42:24,336 DEBUG org.apache.hadoop.hbase.master.HMaster: Stopping service threads"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) When the backup HMaster becomes active, it will execute finishInitialization(). Before assigning the META and ROOT, it will verify if the ROOT region is deployed and accessible. When the backup HMaster tries to set up the connection with the RS which is currently hosting ROOT, ConnectException occurs and it is finally caught in HMaster.run(), leading to HMaster’s abort.",
+      "HMaster.run():",
+      "",
+      "",
+      "(2.2) From the log below, we can infer that ConnectException is packaged as an IOException, like:",
+      "new IOException(new ConnectException(\"Connection refused\"));",
+      "or something like: new IOException(connectException.toString());",
+      "2012-04-09 10:42:24,333FATALorg.apache.hadoop.hbase.master.HMaster: Unhandled exception. Starting shutdown.",
+      "java.io.IOException: java.net.ConnectException: Connection refused",
+      "If so, this exception is not handled by the code.",
+      "Based on the callstack contained in the FATAL log, we can get the control flow and the function in which the ConnectException occurs.",
+      "",
+      "After checking the above functions in the control flow, only waitForProxy() has a catch block for ConnectException, and only getCachedConnection() has a catch block for IOException.",
+      "",
+      "waitForProxy() will throw theIOException: java.net.ConnectException: Connection refused.",
+      "Then getCachedConnection() catches it.",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When the backup HMaster becomes active and initializes, it fails to connect the RS which is hosting ROOT region due to the ConnectException. The ConnectException is thrown and not handled correctly, which leads to HMaster’s abort."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Modify the exception handling for ConnectException and IOException of the functions which are on the callstack and will deal with the ConnectException or IOException, to make sure that the backup HMaster will not abort.",
+      "•src/main/java/org/apache/hadoop/hbase/ipc/HBaseRPC.java",
+      "",
+      "",
+      "",
+      "With the fix, even if the ConnectException is not handled in waitForProxy() and thrown, getCachedConnection() will just catches it. As a result, HMaster will not abort.",
+      "•src/main/java/org/apache/hadoop/hbase/catalog/CatalogTracker.java",
+      "",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster(s)."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "public voidabort(finalString msg,finalThrowable t) {if(cpHost!=null) {// HBASE-4014: dump a list of loaded coprocessors.LOG.fatal(\"Master server abort: loaded coprocessors are: \"+getLoadedCoprocessors());}",
+      "if(abortNow(msg, t)) {if(t !=null)LOG.fatal(msg, t);elseLOG.fatal(msg);this.abort=true;stop(\"Aborting\");}}",
+      "",
+      ""
+    ]
+  }
+}

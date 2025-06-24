@@ -1,0 +1,92 @@
+{
+  "p": [
+    "HBase-3989"
+  ],
+  "Error occured while RegionServer report to Master \"we are up\" should get master address again": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HRegionServer(client-side)reports toHMaster(server-side)",
+        "Standby HMasterbecomes theActive HMaster"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“Consider the following scenario which is similar with my problem:",
+        "1. Due to some unclear reason, the report to master got error. And retrying several times, but also failed.",
+        "2. During this time, the standby master becomes the active one. So the endless loop is still running, and it won't success, for the master address has updated, but it didn't know. And won't know again.”",
+        "Here is the log:",
+        "2011-06-13 11:25:12,236WARNorg.apache.hadoop.hbase.regionserver.HRegionServer: error telling master we are up",
+        "java.net.ConnectException:Connection refused",
+        "at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)",
+        "at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:574)",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:207)",
+        "at org.apache.hadoop.net.NetUtils.connect(NetUtils.java:419)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupIOstreams(HBaseClient.java:328)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.getConnection(HBaseClient.java:883)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:750)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC$Invoker.invoke(HBaseRPC.java:257)",
+        "at $Proxy5.regionServerStartup(Unknown Source)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.reportForDuty(HRegionServer.java:1511)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.tryReportForDuty(HRegionServer.java:1479)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.run(HRegionServer.java:571)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "2011-06-13 11:25:15,231 INFO org.apache.hadoop.hbase.regionserver.HRegionServer: Telling master at 157-5-111-22:20000 that we are up",
+        "2011-06-13 11:25:15,232WARNorg.apache.hadoop.hbase.regionserver.HRegionServer: error telling master we are up",
+        "java.net.ConnectException:Connection refused",
+        "at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)",
+        "at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:574)",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:207)",
+        "at org.apache.hadoop.net.NetUtils.connect(NetUtils.java:419)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupIOstreams(HBaseClient.java:328)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.getConnection(HBaseClient.java:883)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:750)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC$Invoker.invoke(HBaseRPC.java:257)",
+        "at $Proxy5.regionServerStartup(Unknown Source)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.reportForDuty(HRegionServer.java:1511)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.tryReportForDuty(HRegionServer.java:1479)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.run(HRegionServer.java:571)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "2011-06-13 11:25:18,225 INFO org.apache.hadoop.hbase.regionserver.HRegionServer: Telling master at 157-5-111-22:20000 that we are up"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "From the log, we see that the warnings and information comes repeatedly. And I think there are many same pieces in the log, although they are not posted here.",
+      "Based on the callstack of ConnectException, we can locate where the exception happens.",
+      "In HRegionServer.run(), it will call tryReportForDuty() to tell the HMaster that the current RS starts.",
+      "",
+      "Then reportForDury() is called by tryReportForDuty(). tryReportForDuty() will return true if reportForDuty is successfully invoked.",
+      "",
+      "When this ConnectionExceptions happens, the while loop inreportForDuty()cannot be broken.",
+      "And the warnings and infos we see in the log will print repeatedly. During this time, the standby HMaster becomes the active HMaster, but RS will continue to connect the old HMaster. So the endless loop is still running, and it will not success.",
+      "RS will get stuck."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When the RS tries to report to HMaster in a loop, the failing report will make it stuck. At this time, the standby HMaster becomes the active HMaster, and RS will not know this change, and it will continue to report to the old HMaster. RS cannot exit the loop and gets stuck."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "If the exception (related to the communication) occurs while reporting to Master, we should recheck the master address to avoid the address has been changed.",
+      "• src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java",
+      "",
+      "",
+      "KeeperException: A KeeperException is thrown if the ZooKeeper server signals an error or if there is a communication problem with the server."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The fix is in HRegionServer(s)."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      ""
+    ]
+  }
+}

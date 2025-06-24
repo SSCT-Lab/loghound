@@ -1,0 +1,118 @@
+{
+  "p": [
+    "MAPREDUCE-5169",
+    "Job recovery fails if job tracker is restarted after the job is submitted but before its initialized"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "JobClient:(client-side) JobTracker(JT): (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "(JobClient logs)",
+        "✦When the job begins to run, the exception occurs.",
+        "13/04/17 22:04:11 INFO mapred.JobClient: Running job: job_201304172049_0008",
+        "13/04/17 22:04:12 INFO mapred.JobClient: map 0% reduce 0%",
+        "13/04/17 22:04:32 INFO ipc.Client: Retrying connect to server: host:50300. Already tried 0 time(s); retry policy is MultipleLinearRandomRetry[6x10000ms, 10x60000ms]50300",
+        "java.io.IOException: The job appears to have been removed.",
+        "at org.apache.hadoop.mapred.JobClient$NetworkedJob.updateStatus(JobClient.java:241)",
+        "at org.apache.hadoop.mapred.JobClient$NetworkedJob.isComplete(JobClient.java:321)",
+        "at org.apache.hadoop.mapred.JobClient.monitorAndPrintJob(JobClient.java:1382)",
+        "at org.apache.hadoop.mapreduce.Job.waitForCompletion(Job.java:583)",
+        "at org.apache.hadoop.examples.WordCount.main(WordCount.java:82)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)",
+        "at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)",
+        "at java.lang.reflect.Method.invoke(Method.java:597)",
+        "at org.apache.hadoop.util.ProgramDriver$ProgramDescription.invoke(ProgramDriver.java:68)",
+        "at org.apache.hadoop.util.ProgramDriver.driver(ProgramDriver.java:139)",
+        "at org.apache.hadoop.examples.ExampleDriver.main(ExampleDriver.java:64)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)",
+        "at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)",
+        "at java.lang.reflect.Method.invoke(Method.java:597)",
+        "at org.apache.hadoop.util.RunJar.main(RunJar.java:160)",
+        "(JobTracker logs)",
+        "✦When the client submitted the job to JT, JT submitted the job to CapacityScheduler’s listener “JobQueuesManager”, and added the job into the waiting queue, then the job will be initialized by thread “initializationPoller”.",
+        "2013-04-17 22:04:11,305 INFO org.apache.hadoop.mapred.JobInProgress: job_201304172049_0008: nMaps=180 nReduces=1 max=-1checkTaskLimits()",
+        "2013-04-17 22:04:11,357 INFO org.apache.hadoop.mapred.JobQueuesManager: Job job_201304172049_0008 submitted to queue defaultJobQueuesManager.jobAdded()",
+        "2013-04-17 22:04:11,357 INFO org.apache.hadoop.mapred.JobTracker: Job job_201304172049_0008 added successfully for user 'hrt_qa' to queue 'default'JobStatus addJob(JobID jobId, JobInProgress job): Add a job to the jobtracker. This is the main logic of job submission.",
+        "2013-04-17 22:04:14,268 INFO org.apache.hadoop.mapred.JobInitializationPoller: Passing to Initializer Job Id :job_201304172049_0008 User: user Queue : defaultPrint log statements about which jobs are being passed to init-threads.",
+        "2013-04-17 22:04:15,181 INFO org.apache.hadoop.mapred.JobTracker: SHUTDOWN_MSG:",
+        "/************************************************************",
+        "SHUTDOWN_MSG: Shutting down JobTracker at",
+        "************************************************************/",
+        "2013-04-17 22:04:15,204 INFO org.apache.hadoop.mapred.JobInitializationPoller: Initializing job : job_201304172049_0008 in Queue default For user : user",
+        "2013-04-17 22:04:15,204 INFO org.apache.hadoop.mapred.JobTracker: Initializing job_201304172049_0008",
+        "2013-04-17 22:04:15,204 INFO org.apache.hadoop.mapred.JobInProgress: Initializing job_201304172049_0008",
+        "2013-04-17 22:04:30,900 INFO org.apache.hadoop.mapred.JobTracker: STARTUP_MSG:",
+        "/************************************************************",
+        "STARTUP_MSG: Starting JobTracker",
+        "STARTUP_MSG: host =",
+        "STARTUP_MSG: args = []",
+        "STARTUP_MSG: version =",
+        "STARTUP_MSG: build =",
+        "STARTUP_MSG: java = 1.6.0_31",
+        "************************************************************/",
+        "...",
+        "2013-04-17 22:04:31,862 WARN org.apache.hadoop.mapred.JobTracker: Job job_201304172049_0008 does not have valid info/token file so ignoring for recoveryisJobDirValid(JobID jobId)"
+      ]
+    }
+  },
+  "(2) Root Cause": {
+    "p": [
+      "If the job is submitted but before initialized, the job token hasn’t been generated or stored in JT. If the JT restarts at this time, the job will be ignored to recover due to the lack of valid info/token file. (job token is used for security authentication) Actually, the error is only related to one node (JT)."
+    ]
+  },
+  "(3) How to figure out the root cause based on logs": {
+    "p": [
+      "When the JobClient updates the job status from JT and get status “null”, it will throw the IOException “The job appears to have been removed”. The job status “null” indicates that there is no information about this job in JT.",
+      "Before the exception, the log info shows there is a connection retry from JobClient to JT, and the timestamp of this message is “13/04/17 22:04:32”. And we find the log message around this time in JT is “2013-04-17 22:04:31,862 WARN org.apache.hadoop.mapred.JobTracker: Job job_201304172049_0008 does not have valid info/token file so ignoring for recovery”.",
+      "JobTracker.main()",
+      "",
+      "offerService()",
+      "",
+      "initialize()",
+      "",
+      "public voidcheckAndAddJob(FileStatus status)throwsIOException {",
+      "String fileName = status.getPath().getName();",
+      "if(isJobNameValid(fileName) &&isJobDirValid(JobID.forName(fileName))) {",
+      "recoveryManager.addJobForRecovery(JobID.forName(fileName));",
+      "shouldRecover=true;// enable actual recovery if num-files > 1",
+      "}",
+      "}",
+      "",
+      "private booleanisJobDirValid(JobID jobId)throwsIOException {",
+      "booleanret =false;",
+      "Path jobInfoFile = getSystemFileForJob(jobId);",
+      "finalPath jobTokenFile = getTokenFileForJob(jobId);",
+      "JobConf job =newJobConf();",
+      "if(jobTokenFile.getFileSystem(job).exists(jobTokenFile)",
+      "&& jobInfoFile.getFileSystem(job).exists(jobInfoFile)) {",
+      "ret =true;",
+      "}else{",
+      "LOG.warn(\"Job \"+ jobId",
+      "+\" does not have valid info/token file so ignoring for recovery\");",
+      "}",
+      "returnret;",
+      "}",
+      ""
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Generate and store jobToken at job-submit along-with job-info file.",
+      "(Fixed one other bug alongside: job-info file shouldn't be written to HDFS under JT lock)"
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "Only one node (JobTracker)",
+      "• src/mapred/org/apache/hadoop/mapred/JobInProgress.java",
+      "• src/mapred/org/apache/hadoop/mapred/JobTracker.java",
+      ""
+    ]
+  }
+}

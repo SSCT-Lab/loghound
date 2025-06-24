@@ -1,0 +1,152 @@
+{
+  "p": [
+    "MAPREDUCE-3163",
+    "JobClient spews errors when killing MR2 job"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "JobClient (client-side) AM (server-side) RM (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "(JobClient logs)",
+        "[todd@c0309 hadoop-trunk-home]$ ./bin/hadoopjob -killjob_1318301330793_0001",
+        "DEPRECATED: Use of this script to execute mapred command is deprecated.",
+        "Instead use the mapred command for it.",
+        "WARNING: org.apache.hadoop.metrics.jvm.EventCounter is deprecated. Please use org.apache.hadoop.log.metrics.EventCounter in all the log4j.properties files.",
+        "11/10/10 20:26:28 WARN conf.Configuration: mapred.used.genericoptionsparser is deprecated. Instead, use mapreduce.client.genericoptionsparser.used",
+        "11/10/10 20:26:28 INFO ipc.YarnRPC: Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC",
+        "11/10/10 20:26:28 INFO mapred.ResourceMgrDelegate: Connecting to ResourceManager at c0309.hal.cloudera.com/172.29.81.91:40012",
+        "11/10/10 20:26:28 INFO ipc.HadoopYarnRPC: Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.yarn.api.ClientRMProtocol",
+        "11/10/10 20:26:28 INFO mapred.ResourceMgrDelegate: Connected to ResourceManager at c0309.hal.cloudera.com/172.29.81.91:40012",
+        "11/10/10 20:26:28 INFO mapred.ClientCache: Connecting to HistoryServer at: c0309.hal.cloudera.com:10020",
+        "11/10/10 20:26:28 INFO ipc.YarnRPC: Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC",
+        "11/10/10 20:26:28 INFO mapred.ClientCache: Connected to HistoryServer at: c0309.hal.cloudera.com:10020",
+        "11/10/10 20:26:28 INFO ipc.HadoopYarnRPC: Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.mapreduce.v2.api.MRClientProtocol",
+        "11/10/10 20:26:29 INFO mapred.ClientServiceDelegate: Tracking Url of JOB is c0312.hal.cloudera.com:38448We can get the details of job execution by accessing the job’s tracking URL",
+        "11/10/10 20:26:29 INFO mapred.ClientServiceDelegate: Connecting to c0312.hal.cloudera.com:44028",
+        "11/10/10 20:26:29 INFO ipc.YarnRPC: Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC",
+        "11/10/10 20:26:29 INFO ipc.HadoopYarnRPC: Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.mapreduce.v2.api.MRClientProtocol",
+        "11/10/10 20:26:30 INFO mapred.ClientServiceDelegate: Failed to contact AM/History for job job_1318301330793_0001 Will retry..",
+        "java.lang.reflect.UndeclaredThrowableException",
+        "at org.apache.hadoop.mapreduce.v2.api.impl.pb.client.MRClientProtocolPBClientImpl.getJobReport(MRClientProtocolPBClientImpl.java:111)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)",
+        "at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)",
+        "at java.lang.reflect.Method.invoke(Method.java:597)",
+        "at org.apache.hadoop.mapred.ClientServiceDelegate.invoke(ClientServiceDelegate.java:266)The patch acts on this method. “Failed to contact AM/History for job…” and the following exception were printed by this method.",
+        "at org.apache.hadoop.mapred.ClientServiceDelegate.getJobStatus(ClientServiceDelegate.java:341)",
+        "at org.apache.hadoop.mapred.YARNRunner.killJob(YARNRunner.java:465)",
+        "at org.apache.hadoop.mapreduce.Job.killJob(Job.java:591)",
+        "at org.apache.hadoop.mapreduce.tools.CLI.run(CLI.java:258)",
+        "at org.apache.hadoop.util.ToolRunner.run(ToolRunner.java:69)",
+        "at org.apache.hadoop.util.ToolRunner.run(ToolRunner.java:83)",
+        "at org.apache.hadoop.mapred.JobClient.main(JobClient.java:1072)",
+        "Caused by: com.google.protobuf.ServiceException: java.io.IOException: Failed on local exception: java.io.EOFException; Host Details : local host is: \"c0309.hal.cloudera.com/172.29.81.91\"; destination host is: \"\"c0312.hal.cloudera.com\":44028;",
+        "at org.apache.hadoop.yarn.ipc.ProtoOverHadoopRpcEngine$Invoker.invoke(ProtoOverHadoopRpcEngine.java:139)",
+        "at $Proxy8.getJobReport(Unknown Source)",
+        "at org.apache.hadoop.mapreduce.v2.api.impl.pb.client.MRClientProtocolPBClientImpl.getJobReport(MRClientProtocolPBClientImpl.java:104)",
+        "... 12 more",
+        "Caused by: java.io.IOException: Failed on local exception: java.io.EOFException; Host Details : local host is: \"c0309.hal.cloudera.com/172.29.81.91\"; destination host is: \"\"c0312.hal.cloudera.com\":44028;",
+        "at org.apache.hadoop.net.NetUtils.wrapException(NetUtils.java:619)",
+        "at org.apache.hadoop.ipc.Client.call(Client.java:1089)",
+        "at org.apache.hadoop.yarn.ipc.ProtoOverHadoopRpcEngine$Invoker.invoke(ProtoOverHadoopRpcEngine.java:136)",
+        "... 14 more",
+        "Caused by:java.io.EOFExceptionThis exception is mainly used by data input streams to signal end of stream.",
+        "at java.io.DataInputStream.readInt(DataInputStream.java:375)",
+        "at org.apache.hadoop.ipc.Client$Connection.receiveResponse(Client.java:817)",
+        "at org.apache.hadoop.ipc.Client$Connection.run(Client.java:755)",
+        "11/10/10 20:26:30 INFO mapred.ClientServiceDelegate: Application state is completed.FinalApplicationStatus=UNDEFINED. Redirecting to job history server"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "When user inputs “job -kill” command, JobClient-side YARNRunner will invoke “killJob” method. At this point, if the job is not running, kill signal will be sent to RM, else sent to AM.",
+      "The “killJob” method in YARNRunner is as follows:",
+      "publicvoidkillJob(JobID arg0)throwsIOException, InterruptedException {",
+      "/* check if the status is not running, if not send kill to RM */",
+      "JobStatus status =clientCache.getClient(arg0).getJobStatus(arg0);",
+      "if(status.getState() != JobStatus.State.RUNNING) {resMgrDelegate.killApplication(TypeConverter.toYarn(arg0).getAppId());",
+      "return;",
+      "}",
+      "try{/* send a kill to the AM */",
+      "clientCache.getClient(arg0).killJob(arg0);",
+      "longcurrentTimeMillis = System.currentTimeMillis();",
+      "longtimeKillIssued = currentTimeMillis;",
+      "while((currentTimeMillis < timeKillIssued +10000L) && (status.getState()!=JobStatus.State.KILLED)) {",
+      "try{ Thread.sleep(1000L);",
+      "}catch(InterruptedException ie) {break; }",
+      "currentTimeMillis = System.currentTimeMillis();",
+      "status =clientCache.getClient(arg0).getJobStatus(arg0);",
+      "}//while",
+      "}catch(IOException io) {LOG.debug(\"Error when checking for application status\", io); }",
+      "if(status.getState()!=JobStatus.State.KILLED) {resMgrDelegate.killApplication(TypeConverter.toYarn(arg0).getAppId()); }",
+      "}",
+      "In this method, since the job was running, the kill signal was sent to AM. In the while loop of this method, it will periodically query the JobStatus until the JobStatus=State.KILLED or beyond the time limit.",
+      "The “if” statement at the end of this will make sure the job is killed finally: it will send the kill request to RM and call RM’s forceKillApplication() method.",
+      "The exception happened when invoking getJobStatus().",
+      "The control flow is as follows.",
+      "In setupIOstreams, it will invoke connection.run(), which starts the connection thread that waits for responses. The connection thread will wait till someone signals it to start reading RPC response (i.e. invoking receiveResponse()).",
+      "",
+      "The return values of readInt() are the next four bytes of this input stream, interpreted as an int.",
+      "If this input stream reaches the end before reading four bytes, it throws EOFException.",
+      "It is likely that something is wrong with AM when AM is killing the job, so JobClient fails to getJobReport at a certain point.",
+      "We also see the following log infomation after the exception.",
+      "11/10/10 20:26:30 INFO mapred.ClientServiceDelegate: Application state is completed.FinalApplicationStatus=UNDEFINED. Redirecting to job history server",
+      "",
+      "There are four status forFinalApplicationStatus:",
+      "FAILED : Application which failed.",
+      "KILLED : Application which was terminated by a user or admin.",
+      "SUCCEEDED : Application which finished successfully.",
+      "UNDEFINED : Undefined state when either the application has not yet finished.",
+      "So the job is actually killed, but not as expected (FinalApplicationStatus=KILLED), due to AM’s error.",
+      "",
+      "getFinalApplicationStatus(): Get the final finish status of the application."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "Based on the analysis above, the root cause should be AM’s error. Since there isn’t any information provided on AM, we have no idea what’s the problem in AM.",
+      "Referring to the comments in the bug report: “Looks like it’s not just job kill, but anything that makes AM exit ungracefully, cause this error. Easy way to reproduce is just make the AM exit before completing successfully and similar behavior occurs for the client.”"
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Simple patch to only throw out exceptions in DEBUG mode or when really necessary. (fixing the bug effect)",
+      "Although the JobClient reported some exceptions, the job is actually killed finally. The developers think the exceptions shouldn’t “affect” the JobClient, so the patch will make it print the exceptions under DEBUG mode.",
+      "Since the job can be killed finally, this patch is acceptable."
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "• hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/src/main/java/org/apache/hadoop/mapred/ClientServiceDelegate.java",
+      "This fix is in method invoke(), which is used when RPC call is needed.",
+      "}catch(InvocationTargetException e){",
+      "if (e.getTargetException() instanceof YarnRemoteException) {",
+      "-LOG.warn(\"Exception thrown by remote end.\", e",
+      "-.getTargetException());",
+      "+LOG.warn(\"Error from remote end: \" + e",
+      "+.getTargetException().getLocalizedMessage());",
+      "+LOG.debug(\"Tracing remote error \", e.getTargetException());",
+      "throw (YarnRemoteException) e.getTargetException();",
+      "} // if",
+      "-LOG.info(\"Failed to contact AM/History for job \" + jobIdThe log information and the exception are printed here.",
+      "-+ \" Will retry..\", e.getTargetException());",
+      "+LOG.info(\"Failed to contact AM/History for job \" + jobId +",
+      "+\" retrying..\");",
+      "+LOG.debug(\"Failed exception on AM/History contact\",",
+      "+e.getTargetException());",
+      "forceRefresh = true;",
+      "} catch(Exception e){",
+      "LOG.info(\"Failed to contact AM/History for job \" + jobId",
+      "- + \" Will retry..\", e);",
+      "+ + \" Will retry..\");",
+      "LOG.debug(\"Failing to contact application master\", e);",
+      "forceRefresh = true;",
+      "}"
+    ]
+  }
+}

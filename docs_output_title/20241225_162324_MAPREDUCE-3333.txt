@@ -1,0 +1,112 @@
+{
+  "p": [
+    "MAPREDUCE-3333",
+    "MR AM for sort-job going out of memory"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "AM (client-side) NM (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Description: “The usual sort job on a 350 node cluster hung due to OutOfMemory and eventually failed after an hour instead of the usual odd 20 minutes.”",
+        "(based on AM logs) The error shows “container launch failed”.",
+        "2011-11-02 11:40:36,438ERROR[ContainerLauncher #258] org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl: Container launch failedforcontainer_1320233407485_0002",
+        "_01_001434 : java.lang.reflect.UndeclaredThrowableException",
+        "at org.apache.hadoop.yarn.api.impl.pb.client.ContainerManagerPBClientImpl.startContainer(ContainerManagerPBClientImpl.java:88)",
+        "at org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl$EventProcessor.run(ContainerLauncherImpl.java:290)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "Caused by: com.google.protobuf.ServiceException: java.io.IOException: Failed on local exception:java.io.IOException: Couldn't set up IO streams; Host Details : local host is:\"gsbl91281.blue.ygrid.yahoo.com/98.137.101.189\"; destination host is:\"\"gsbl91525.blue.ygrid.yahoo.com\":45450;",
+        "at org.apache.hadoop.yarn.ipc.ProtoOverHadoopRpcEngine$Invoker.invoke(ProtoOverHadoopRpcEngine.java:139)",
+        "at $Proxy20.startContainer(Unknown Source)",
+        "at org.apache.hadoop.yarn.api.impl.pb.client.ContainerManagerPBClientImpl.startContainer(ContainerManagerPBClientImpl.java:81)",
+        "... 4 more",
+        "Caused by: java.io.IOException: Failed on local exception:java.io.IOException: Couldn't set up IO streams;Host Details : local host is:\"gsbl91281.blue.ygrid.yahoo.com/98.137.101.189\"; destination host is:\"\"gsbl91525.blue.ygrid.yahoo.com\":45450;",
+        "at org.apache.hadoop.net.NetUtils.wrapException(NetUtils.java:655)",
+        "at org.apache.hadoop.ipc.Client.call(Client.java:1089)",
+        "at org.apache.hadoop.yarn.ipc.ProtoOverHadoopRpcEngine$Invoker.invoke(ProtoOverHadoopRpcEngine.java:136)",
+        "... 6 more",
+        "Caused by: java.io.IOException: Couldn't set up IO streams",
+        "at org.apache.hadoop.ipc.Client$Connection.setupIOstreams(Client.java:621)",
+        "at org.apache.hadoop.ipc.Client$Connection.access$2000(Client.java:205)",
+        "at org.apache.hadoop.ipc.Client.getConnection(Client.java:1195)",
+        "at org.apache.hadoop.ipc.Client.call(Client.java:1065)",
+        "... 7 more",
+        "Caused by: java.lang.OutOfMemoryError: unable to create new native thread",
+        "at java.lang.Thread.start0(Native Method)",
+        "at java.lang.Thread.start(Thread.java:597)",
+        "at org.apache.hadoop.ipc.Client$Connection.setupIOstreams(Client.java:614)",
+        "... 10 more"
+      ]
+    }
+  },
+  "(2) Root Cause": {
+    "p": [
+      "It is related to RPC level threads’ upper limit. We create one connection per container to a NM (because of per-container token) and this per-container connection wasn't closed after its use. So, the number or RPC level threads gradually exceeds the upper limit (the maximum number of processes on the node). Then it appears “out-of-memory error”."
+    ]
+  },
+  "(3) How to figure out the root cause based on logs": {
+    "p": [
+      "The error shows “container launch failed” and throws exception:",
+      "java.lang.reflect.UndeclaredThrowableException",
+      "caused by: java.io.IOException: Couldn't set up IO streams;",
+      "caused by: java.io.IOException: Couldn't set up IO streams;",
+      "caused by: java.io.IOException: Couldn't set up IO streams;",
+      "caused by: java.lang.OutOfMemoryError: unable to create new native thread;",
+      "The last “caused by” indicates the real cause."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Set the idle time for connections to zero.(fix the real cause)"
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "• hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-app/src/main/java/org/apache/hadoop/mapreduce/v2/app/launcher/ContainerLauncher.java",
+      "/**",
+      "* Maximum of 1 minute timeout for a Node to react to the command",
+      "*/",
+      "- static final int DEFAULT_NM__COMMAND_TIMEOUT = 60000;",
+      "+ static final int DEFAULT_NM_COMMAND_TIMEOUT = 60000;",
+      "",
+      "• hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-app/src/main/java/org/apache/hadoop/mapreduce/v2/app/launcher/ContainerLauncherImpl.java",
+      "- // have a cache/map of proxies so as to avoid creating multiple RPC",
+      "- // client connection objects for the same container.",
+      "- private Map<ContainerId, ContainerManager> clientCache",
+      "- = new HashMap<ContainerId, ContainerManager>();",
+      "-",
+      "public ContainerLauncherImpl(AppContext context) { super(ContainerLauncherImpl.class.getName());",
+      "this.context = context;",
+      "}",
+      "",
+      "@Override",
+      "- public synchronized void init(Configuration conf) {",
+      "- this.recordFactory = RecordFactoryProvider.getRecordFactory(conf);",
+      "+ public synchronized void init(Configuration config) {",
+      "+ Configuration conf = new Configuration(config);",
+      "+ conf.setInt(",
+      "+CommonConfigurationKeysPublic.IPC_CLIENT_CONNECTION_MAXIDLETIME_KEY,",
+      "+0);",
+      "this.limitOnPoolSize = conf.getInt(",
+      "MRJobConfig.MR_AM_CONTAINERLAUNCHER_THREAD_COUNT_LIMIT,",
+      "MRJobConfig.DEFAULT_MR_AM_CONTAINERLAUNCHER_THREAD_COUNT_LIMIT);",
+      "this.nmTimeOut = conf.getInt(ContainerLauncher.MR_AM_NM_COMMAND_TIMEOUT,",
+      "- ContainerLauncher.DEFAULT_NM__COMMAND_TIMEOUT);",
+      "+ ContainerLauncher.DEFAULT_NM_COMMAND_TIMEOUT);",
+      "+ this.rpc = YarnRPC.create(conf);",
+      "super.init(conf);",
+      "}",
+      "• hadoop-mapreduce-project/hadoop-yarn/hadoop-yarn-common/src/main/java/org/apache/hadoop/yarn/api/impl/pb/client/ContainerManagerPBClientImpl.java",
+      "• hadoop-mapreduce-project/hadoop-yarn/hadoop-yarn-common/src/main/java/org/apache/hadoop/yarn/factories/RpcClientFactory.java",
+      "• hadoop-mapreduce-project/hadoop-yarn/hadoop-yarn-common/src/main/java/org/apache/hadoop/yarn/factories/impl/pb/RpcClientFactoryPBImpl.java",
+      "• hadoop-mapreduce-project/hadoop-yarn/hadoop-yarn-common/src/main/java/org/apache/hadoop/yarn/ipc/HadoopYarnProtoRPC.java",
+      "…",
+      ""
+    ]
+  }
+}

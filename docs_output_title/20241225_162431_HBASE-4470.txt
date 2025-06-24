@@ -1,0 +1,111 @@
+{
+  "p": [
+    "HBase-4470"
+  ],
+  "ServerNotRunningException coming out of assignRootAndMeta kills the Maste": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster (client-side)connects toHRegionServer (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“When the master starts it verifies the locations of root and meta before assigning them, if the server is started but not running you'll get this:” (HMaster log)",
+        "2011-09-23 04:47:44,859WARNorg.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation: RemoteException connecting to RS",
+        "org.apache.hadoop.ipc.RemoteException: org.apache.hadoop.hbase.ipc.ServerNotRunningException: Server is not running yet",
+        "at org.apache.hadoop.hbase.ipc.HBaseServer$Handler.run(HBaseServer.java:1038)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:771)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC$Invoker.invoke(HBaseRPC.java:257)",
+        "at $Proxy6.getProtocolVersion(Unknown Source)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:419)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:393)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:444)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.waitForProxy(HBaseRPC.java:349)",
+        "at org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation.getHRegionConnection(HConnectionManager.java:969)",
+        "at org.apache.hadoop.hbase.catalog.CatalogTracker.getCachedConnection(CatalogTracker.java:388)",
+        "at org.apache.hadoop.hbase.catalog.CatalogTracker.getMetaServerConnection(CatalogTracker.java:287)",
+        "at org.apache.hadoop.hbase.catalog.CatalogTracker.verifyMetaRegionLocation(CatalogTracker.java:484)",
+        "at org.apache.hadoop.hbase.master.HMaster.assignRootAndMeta(HMaster.java:441)",
+        "at org.apache.hadoop.hbase.master.HMaster.finishInitialization(HMaster.java:388)",
+        "at org.apache.hadoop.hbase.master.HMaster.run(HMaster.java:282)",
+        "Then, theServerNotRunningExceptionin the warning above will make the HMaster abort."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Based on the call stack in the warning log, we can get the control flow to see how HMaster gets this",
+      "ServerNotRunningException and abort.",
+      "",
+      "",
+      "In function getHRegionConnection(),HBaseRPC.waitForProxy()is called to establish an RPC for this RS, and it throws the exception.",
+      "",
+      "",
+      "The ServerNotRunningException will be thrown layer by layer, and finally caught in function run(). As a result, HMaster aborts.",
+      "",
+      "",
+      "(2.2) How ServerNotRunningException generates?",
+      "From the top frame of the exception’s callstack, we can see ServerNotRunningException generates in HBaseServer’s Handler.run().",
+      "org.apache.hadoop.ipc.RemoteException: org.apache.hadoop.hbase.ipc.ServerNotRunningException: Server is not running yet",
+      "at org.apache.hadoop.hbase.ipc.HBaseServer$Handler.run(HBaseServer.java:1038)",
+      "",
+      "After check the source code, we can get the control flow of starting HRegionServer.",
+      "",
+      "",
+      "Function HBaseServer.start() will start the RS services, and it must be called before any calls will be handled.HBaseServer.start():",
+      "/** Starts the service. Must be called before any calls will be handled. */public voidstart() {",
+      "startThreads();openServer();}",
+      "",
+      "In HBaseServer.start(), when startThreads() executes, the region server can start accepting RPCs, but it will throw SerevrNotRunningException until openServer() runs.",
+      "",
+      "-----------------------------------------------------------------------------------------------------------------------------------------------------------------",
+      "public voidopenServer() {started=true; }",
+      "“started” will only be set true in openServer().",
+      "Bothhandlers[i].start()andpriorityHandlers[i].start()will execute Handler.run().",
+      "",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "During HMaster initialization, HMaster tries to connect to the RS which hosting the META through RPC. If the RS is slow coming up and not finishing “start” totally, RS will throwServerNotRunningException. And this exception will make HMaster abort."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Add the exception handling.",
+      "The fixed function is on the callstack (marked green on page1).",
+      "• src/main/java/org/apache/hadoop/hbase/catalog/CatalogTracker.java",
+      "",
+      "",
+      "With the fix, if ServerNotRunningException occurs, verifyMetaRegionLocation() will return false, and META region will be reassigned.",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The fix is in HMaster."
+    ]
+  },
+  "(6) Notes": {
+    "p": [
+      "Although the log about HMaster’s shutdown is not provided in this bug report, the log fromHBASE-6151shows us the FATAL information. (HBASE-6151 duplicates the current bug HBASE-4470)",
+      "2012-05-23 16:49:22,745FATALorg.apache.hadoop.hbase.master.HMaster:Unhandled exception. Starting shutdown.",
+      "org.apache.hadoop.hbase.ipc.ServerNotRunningException: org.apache.hadoop.hbase.ipc.ServerNotRunningException: Server is not running yet",
+      "at org.apache.hadoop.hbase.ipc.HBaseServer$Handler.run(HBaseServer.java:1038)",
+      "at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)",
+      "at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)",
+      "at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)",
+      "at java.lang.reflect.Constructor.newInstance(Constructor.java:513)",
+      "at org.apache.hadoop.hbase.RemoteExceptionHandler.decodeRemoteException(RemoteExceptionHandler.java:96)",
+      "at org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation.getHRegionConnection(HConnectionManager.java:1240)",
+      "at org.apache.hadoop.hbase.catalog.CatalogTracker.getCachedConnection(CatalogTracker.java:444)",
+      "at org.apache.hadoop.hbase.catalog.CatalogTracker.getMetaServerConnection(CatalogTracker.java:343)",
+      "at org.apache.hadoop.hbase.catalog.CatalogTracker.verifyMetaRegionLocation(CatalogTracker.java:540)",
+      "at org.apache.hadoop.hbase.master.HMaster.assignRootAndMeta(HMaster.java:474)",
+      "at org.apache.hadoop.hbase.master.HMaster.finishInitialization(HMaster.java:412)",
+      ""
+    ]
+  }
+}

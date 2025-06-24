@@ -1,0 +1,72 @@
+{
+  "p": [
+    "MAPREDUCE-4457",
+    "mr job invalid transition TA_TOO_MANY_FETCH_FAILURE at FAILED"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "Description: we saw a job go into the ERROR state from an invalid state transition. It looks like we possibly got 2 TA_TOO_MANY_FETCH_FAILURE events. The first one moved it to FAILED and then the second one failed because no valid transition.",
+        "Logs in the description is as follows:",
+        "2012-07-16 08:49:53,600 INFO [AsyncDispatcher event handler]",
+        "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl:attempt_1342238829791_2501_m_007743_0TaskAttempt Transitioned from SUCCEEDED to FAILED",
+        "2012-07-16 08:49:53,600 INFO [AsyncDispatcher event handler]",
+        "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl:attempt_1342238829791_2501_m_008850_0TaskAttempt Transitioned from SUCCEEDED to FAILED",
+        "2012-07-16 08:49:53,600 INFO [AsyncDispatcher event handler]",
+        "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl:attempt_1342238829791_2501_m_017344_1000TaskAttempt Transitioned from RUNNING to SUCCESS_CONTAINER_CLEANUP",
+        "2012-07-16 08:49:53,601ERROR[AsyncDispatcher event handler]",
+        "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl: Can't handle this event at current state forattempt_1342238829791_2501_m_000027_0",
+        "org.apache.hadoop.yarn.state.InvalidStateTransitonException: Invalid event:",
+        "TA_TOO_MANY_FETCH_FAILURE at FAILED",
+        "at org.apache.hadoop.yarn.state.StateMachineFactory.doTransition(StateMachineFactory.java:301)",
+        "at org.apache.hadoop.yarn.state.StateMachineFactory.access$300(StateMachineFactory.java:43)",
+        "at org.apache.hadoop.yarn.state.StateMachineFactory$InternalStateMachine.doTransition(StateMachineFactory.java:443)",
+        "at org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl.handle(TaskAttemptImpl.java:954)",
+        "at org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl.handle(TaskAttemptImpl.java:133)",
+        "at org.apache.hadoop.mapreduce.v2.app.MRAppMaster$TaskAttemptEventDispatcher.handle(MRAppMaster.java:913)",
+        "at org.apache.hadoop.mapreduce.v2.app.MRAppMaster$TaskAttemptEventDispatcher.handle(MRAppMaster.java:905)",
+        "at org.apache.hadoop.yarn.event.AsyncDispatcher.dispatch(AsyncDispatcher.java:126)",
+        "at org.apache.hadoop.mapreduce.v2.app.recover.RecoveryService$RecoveryDispatcher.realDispatch(RecoveryService.java:285)",
+        "at org.apache.hadoop.mapreduce.v2.app.recover.RecoveryService$RecoveryDispatcher.dispatch(RecoveryService.java:281)",
+        "at org.apache.hadoop.yarn.event.AsyncDispatcher$1.run(AsyncDispatcher.java:75)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "2012-07-16 08:49:53,601 INFO [AsyncDispatcher event handler]",
+        "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl:attempt_1342238829791_2501_m_029091_1000TaskAttempt Transitioned from RUNNING to SUCCESS_CONTAINER_CLEANUP",
+        "2012-07-16 08:49:53,601 INFO [IPC Server handler 17 on 47153]",
+        "org.apache.hadoop.mapred.TaskAttemptListenerImpl: Status update fromattempt_1342238829791_2501_r_000461_1000"
+      ]
+    }
+  },
+  "(2) Root Cause": {
+    "p": [
+      "The event “JOB_TASK_ATTEMPT_FETCH_FAILURE” is produced by TaskAttemptListener.",
+      "When a JobImp gets a JOB_TASK_ATTEMPT_FETCH_FAILURE, it checks to see if the failure percentage is too high (50% or more of running reducers are complaining about it and at least 3 reducer attempts have tried to get the data and failed). The JobImpl stores the fetch failure count for each map attempt as it see the failures. If the failures get high enough, the JobImpl will send a TA_TOO_MANY_FETCH_FAILURE event to the map task attempt.",
+      "The first one moved it to FAILED and then the second one failed because no valid transition. (so only need to handle the second one)"
+    ]
+  },
+  "(3) How to figure out the root cause based on logs": {
+    "p": [
+      "It may happen among multiple nodes, since it is related to several reduce attempt tasks.",
+      "According to the log messages, we only know that there are different attempt map tasks:",
+      "attempt_1342238829791_2501_m_007743_0",
+      "attempt_1342238829791_2501_m_008850_0",
+      "attempt_1342238829791_2501_m_017344_1000",
+      "According to the description “It looks like we possibly got 2 TA_TOO_MANY_FETCH_FAILURE events. The first one moved it to FAILED and then the second one failed because no valid transition.”",
+      "The logs has shown only one TA_TOO_MANY_FETCH_FAILURE event, so it should be the second.",
+      "By the developer: “The only scenario in which I can see this happening is a derivative of the following. Assume we have a single map task, and 6 reduce tasks. All six reduce tasks try to fetch from the map task at almost exactly the same time. They all fail and report back that they failed. After the first three report back the failure percent of running tasks is now exactly 50%, and is 3 or more, so the TA_TOO_MANY_FETCH_FAILURE event is sent and the state is reset. The next three reducer fetch failures are processed and we now have 3 failures which again is exactly 50%, and 3 or more, total failures resulting in another TA_TOO_MANY_FETCH_FAILURE event being sent.”"
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "We could either update the JobImpl to not send the event twice, or we could update the TaskAttemptImpl to handle getting it twice."
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "Only one file is modified, but it may run in different nodes.",
+      "update the TaskAttemptImpl to handle getting the event twice.",
+      "· hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-app/src/main/java/org/apache/hadoop/mapreduce/v2/app/job/impl/TaskAttemptImpl.java",
+      ""
+    ]
+  }
+}

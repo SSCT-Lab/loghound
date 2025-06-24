@@ -1,0 +1,84 @@
+{
+  "p": [
+    "HBase-5063"
+  ],
+  "RegionServers fail to report to backup HMaster after primary goes down": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster1 (old HM) HMaster2 (new HM, backup master)RegionServersreport toHMaster"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Description:",
+        "“1. Setup cluster with two HMasters",
+        "2. Observe that HM1 is up and that all RSs are in the RegionServer list on web page.",
+        "3. Kill (not even -9) the active HMaster",
+        "4. Wait for ZK to time out (default 3 minutes).",
+        "5. Observe that HM2 is now active. Tables may show up but RegionServers never report on web page. Existing connections are fine. New connections cannot find regionservers.”",
+        "“Here's the exception – unfortunately it doesn't say which master it is unable to connect to.”",
+        "11/12/17 18:50:24WARNregionserver.HRegionServer:Unable to connect to master. Retrying. Error was:",
+        "java.net.ConnectException: Connection refused",
+        "at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)",
+        "at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:574)",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:206)",
+        "at org.apache.hadoop.net.NetUtils.connect(NetUtils.java:408)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupConnection(HBaseClient.java:328)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupIOstreams(HBaseClient.java:362)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.getConnection(HBaseClient.java:1024)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:876)",
+        "at org.apache.hadoop.hbase.ipc.WritableRpcEngine$Invoker.invoke(WritableRpcEngine.java:150)",
+        "at $Proxy8.getProtocolVersion(Unknown Source)",
+        "at org.apache.hadoop.hbase.ipc.WritableRpcEngine.getProxy(WritableRpcEngine.java:183)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:303)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:280)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.getProxy(HBaseRPC.java:332)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC.waitForProxy(HBaseRPC.java:236)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.getMaster(HRegionServer.java:1616)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.tryRegionServerReport(HRegionServer.java:787)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.run(HRegionServer.java:674)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "“Note:",
+        "· If we replace a new HM1 in the same place and kill HM2, the cluster functions normally again after recovery. This sees to indicate that regionservers are stuck trying to talk to the old HM1.”"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) When the active HMaster HM1 is killed, it will not send heartbeats to ZK, and the session between HM1 and ZK will expire out (default 3 minutes). The inactive HMaster listens for notifications of the active HMaster failure, and if the active HMaster HM1 fails, the inactive HMaster HM2 becomes active.",
+      "(2.2) Based on the description “RegionServers never report on web page”, we know that the exception posted above should occur in all the RSs’ logs. From the callstack, the ConnectException occurs ingetMaster()when HRegionServer executes tryRegionServerReport().",
+      "HRegionServer will periodically (interval:3s) report to HMaster by calling tryRegionServerReport().",
+      "(HRegionServer.run() -> tryRegionServerReport() -> getMaster())",
+      "In the condition of the first while loop, we will get the currentmasterServerNamefrom ZK through getMasterAddress().When HM1 goes down, RS will still get HM1 for the current HMaster from ZK (ZK timeout in 3mins).",
+      "In the second while loop, RS tries to setup the RPC connection with HM1, and gets connection exception when calling HBaseRPC.waitForProxy(). Then RS will get stuck in this while loop and continue to connect HM1. Obviously, there is no chance to succeed.",
+      "",
+      "(2.3) Therefore, RS will never know HM2 is the active master, and it fails to report to the new HMaster. Based on the analysis above, we can infer that the exception is related to HM1, rather than HM2. Besides, the note contained in the description can also verify this: “If we replace a new HM1 in the same place and kill HM2, the cluster functions normally again after recovery. This sees to indicate that regionservers are stuck trying to talk to the old HM1.”",
+      "When we replace a new HM1 in the same place and kill HM2, all RSs can run normally, since the master address which RS uses to connect master is always HM1’s address."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When HM1 goes down, RS still gets HM1 for the current HMaster from ZK (ZK timeout in 3mins). And RS will get stuck when setting up the RPC conncection to HM1.",
+      "Even if the new active HMaster HM2 is updated in ZK, RS has no chance to get HM2’s address, and fails to report to HM2."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Move the check from the first while loop into the second while loop, and remove the first loop, so that RS will not get stuck in a bad connection.",
+      "not change the exception itself",
+      "• src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java"
+    ]
+  },
+  "": {
+    "p": [
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HRegionServers The fixed function is on callstack.",
+      ""
+    ]
+  }
+}

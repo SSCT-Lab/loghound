@@ -1,0 +1,98 @@
+{
+  "p": [
+    "ZooKeeper-1382"
+  ],
+  "Zookeeper server holds onto dead/expired session ids in the watch data structures": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "ZKClientconnects toZK server 223(follower) ZK server 225 (leader)",
+        "ZKClientreconnects toZK server 226 (follower)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "There are 4 servers in the zookeeper cluster - 223, 224, 225 (leader), 226 and ZkClient is used to connect to the cluster. When ZKClient connects to server 223, a GC happens on ZKClient and makes it pause, which also leads to the session timeout. Then ZKClient tries to connect to another server 226.",
+        "“I've observed that zookeeper server holds onto expired session ids in the watcher data structures. The result is the wchp command reports session ids that cannot be found through cons/dump and those expired session ids sit there maybe until the server is restarted.”",
+        "wchp: List detailed information on watches for the server, by path. This outputs a list of paths (znodes) with associated sessions. (1 session à >=1 watches)",
+        "cons: Provide detailed information on client connections.",
+        "Here are snippets from the client and the server logs that lead to this state, for one particular session id0x134485fd7bcb26f.",
+        "From the application log: (ZKClient)",
+        "①application.log.2012-01-26-325.gz:2012/01/26 04:56:36.177 INFO [ClientCnxn] [main-SendThread(223.prod:12913)] [application Session establishment completeon server 223.prod/172.17.135.38:12913, sessionid =0x134485fd7bcb26f, negotiated timeout = 6000",
+        "⑤application.log.2012-01-27.gz:2012/01/27 09:52:37.714 INFO [ClientCnxn] [main-SendThread(223.prod:12913)] [application] Client session timed out, have not heard from server in 9827ms for sessionid0x134485fd7bcb26f, closing socket connection and attempting reconnect",
+        "⑦application.log.2012-01-27.gz:2012/01/27 09:52:38.191 INFO [ClientCnxn] [main-SendThread(226.prod:12913)] [application] Unable to reconnect to ZooKeeper service, session0x134485fd7bcb26fhas expired, closing socket connection",
+        "From the leader zk, 225:",
+        "③zookeeper.log.2012-01-27-leader-225.gz:2012-01-27 09:52:34,010 - INFO [SessionTracker:ZooKeeperServer@314] - Expiring session0x134485fd7bcb26f, timeout of 6000ms exceeded",
+        "③zookeeper.log.2012-01-27-leader-225.gz:2012-01-27 09:52:34,010 - INFO [ProcessThread:-1:PrepRequestProcessor@391] - Processed session termination for sessionid:0x134485fd7bcb26f",
+        "On the server 223, to which the client was initially connected to:",
+        "②zookeeper.log.2012-01-26-223.gz:2012-01-26 04:56:36,173 - INFO [CommitProcessor:1:NIOServerCnxn@1580] - Established session0x134485fd7bcb26fwith negotiated timeout 6000 for client /172.17.136.82:45020",
+        "④zookeeper.log.2012-01-27-223.gz:2012-01-27 09:52:34,018 - INFO [CommitProcessor:1:NIOServerCnxn@1435] - Closed socket connection for client /172.17.136.82:45020 which had sessionid0x134485fd7bcb26f",
+        "From the server 226, to which the client reconnected to:",
+        "⑥2012-01-27 09:52:38,190 - INFO [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:12913:NIOServerCnxn@770] - Client attempting to renew session 0x134485fd7bcb26f at /172.17.136.82:49367",
+        "⑦2012-01-27 09:52:38,191 - INFO [QuorumPeer:/0.0.0.0:12913:NIOServerCnxn@1573] - Invalid session 0x134485fd7bcb26f for client /172.17.136.82:49367, probably expired",
+        "⑦2012-01-27 09:52:38,191 - INFO [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:12913:NIOServerCnxn@1435] - Closed socket connection for client /172.17.136.82:49367 which had sessionid 0x134485fd7bcb26f",
+        "",
+        "wchpoutput from 226, taken on 01/30 -",
+        "nnarkhed-ld:zk-cons-wchp-2012013000 nnarkhed$ grep 0x134485fd7bcb26f226.*wchp| wc -l",
+        "3(3 watches with expired session id)",
+        "wchpoutput from 223, taken on 01/30 -",
+        "nnarkhed-ld:zk-cons-wchp-2012013000 nnarkhed$ grep 0x134485fd7bcb26f223.*wchp | wc -l",
+        "0",
+        "consoutput from 223 and 226, taken on 01/30 -",
+        "nnarkhed-ld:zk-cons-wchp-2012013000 nnarkhed$ grep 0x134485fd7bcb26f226.*cons | wc -l",
+        "0(no sessions)",
+        "nnarkhed-ld:zk-cons-wchp-2012013000 nnarkhed$ grep 0x134485fd7bcb26f223.*cons | wc -l",
+        "0",
+        "“So, what seems to have happened is that the ZKClient was able to re-register the watches on the new server (226), after it got disconnected from 223, inspite of having an expired session id.”"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "From the log, we can get the following process:",
+      "①②ZKClient sets up the connection to server 223, with sessionId0x134485fd7bcb26f",
+      "③Since ZKClient goes into a GC pause, the leader expires the session and proposes closing the session to the followers. This is handled by leader’s SessionTracker.",
+      "④Server 223 closes the socket connection to the ZKClient, and all the information related to this session will be cleared (including the session itself, the ZNode created by it, and the watches registered by it).",
+      "⑤ZKClient notices that the session times out, and tries to reconnect another server 226.",
+      "⑥⑦When ZKClient connects to server 226, it will send ConnectReqeust with the previous sessionId.",
+      "Server 226 receives this ConnectRequest, then executesreadConnectRequest()→processConnectRequest()",
+      "",
+      "Since the sessionId != 0, it means that the server needs to recover the previous connection.",
+      "The server will first closeSession(), then reopenSession().",
+      "In reopenSession(), the validation of the session is checked.",
+      "",
+      "Since the sessionId is expired, touSession() cannot find the sessionId, and returns FALSE.",
+      "So rc = FALSE",
+      "",
+      "Since valid == FALSE,finishSessionInit()will set sessionTimeout = 0 in the response which to be sent to the ZKClient.",
+      "",
+      "Then functioncnxn.enableRecv()is called, it will set the connection status, andenablereceiving the ZKClient request.",
+      "**************************",
+      "On ZKClient side, when it receives the response from server 226 and finds that sessionTimeout is 0, which means the session is expired, the Expired event will be triggered and SessionExpiredException will be thrown.",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "Before the ZKClient receives the close connection response from server 226, it can still send the “setWatch” request to server 226. If we executecnxn.enableRecv(),“setWatch” request from this ZKClient will be received and processed, then server 226 will register the watch(s) for the session (with the expired sessionId). As a result, the watch(s) with the expired will not be deleted, although the session does not exist any more.",
+      "timing?",
+      "the watches are left on the servers, for expired sessions, effectively causing a memory leak."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Enable reads on the connection only if the session is found to be valid.fixing the root cause.",
+      "•src/java/main/org/apache/zookeeper/server/ZooKeeperServer.java",
+      "",
+      "For testing",
+      "•src/java/main/org/apache/zookeeper/server/NIOServerCnxn.java",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "ZK server(s).",
+      ""
+    ]
+  }
+}

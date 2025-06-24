@@ -1,0 +1,138 @@
+{
+  "p": [
+    "Cassandra-6622"
+  ],
+  "Streaming session failures during node replace of same address": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "node .72sends stream request tonode .80"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "<1> node x.x.x.72 is dead",
+        "<2> node x.x.x.80's FailureDetector (FD) keeps notifying its listener to convict .72 as PHI for .72 > threshold, every minute. (Although .82 knows that .72 is down, it will still keep checking .72 to see whether it comes back. The PHI value for .72 is continuously increasing)",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:23,656 Gossiper.java (line 598) Performing status check ...",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:23,657 FailureDetector.java (line 229) PHI for /x.x.x.72 : 36643.639468390524",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:23,657 FailureDetector.java (line 233) notifying listeners that /x.x.x.72 is down",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:24,659 Gossiper.java (line 598) Performing status check ...",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:24,660 FailureDetector.java (line 229) PHI for /x.x.x.72 : 36644.432127252854",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:24,660 FailureDetector.java (line 233) notifying listeners that /x.x.x.72 is down",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:25,662 Gossiper.java (line 598) Performing status check ...",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:25,662 FailureDetector.java (line 229) PHI for /x.x.x.72 : 36645.22442135811",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:25,663 FailureDetector.java (line 233) notifying listeners that /x.x.x.72 is down",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:26,664 Gossiper.java (line 598) Performing status check ...",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:26,665 FailureDetector.java (line 229) PHI for /x.x.x.72 : 36646.016701132285",
+        "TRACE [GossipTasks:1] 2014-02-08 18:55:26,665 FailureDetector.java (line 233) notifying listeners that /x.x.x.72 is down",
+        "...",
+        "<3> node x.x.x.72 is restarted with replace_address=x.x.x.72 at 18:56:27,806 (The administrator replaced the dead node with a new node, and still use the same ip address x.x.x.72)",
+        "INFO [main] 2014-02-08 18:56:27,806 CassandraDaemon.java (line 130) Logging initialized",
+        "INFO [main] 2014-02-08 18:56:27,833 YamlConfigurationLoader.java (line 76) Loading settings from file:/home/y/libexec64/cassandra/conf/cassandra.yaml",
+        "<4> node x.x.x.72: Gossip thread starts at 18:56:33,308",
+        "INFO [main] 2014-02-08 18:56:33,308 StorageService.java (line 627) Starting up server gossip",
+        "<5> node x.xx.72: start stream request at 18:56:35,443 (When Cassandra node starts, it will exchange data with the other nodes through bootstrap)",
+        "INFO [main] 2014-02-08 18:56:35,405 StorageService.java (line 947) JOINING: Starting to bootstrap...",
+        "INFO [CompactionExecutor:1] 2014-02-08 18:56:35,432 CompactionTask.java (line 275) Compacted 4 sstables to [/home/y/var/cassandra/data/system/local/system-local-jb-5,]. 755 bytes to 538 (~71% of original) in 25ms = 0.020523MB/s. 4 total partitions merged to 1. Partition merge counts were {4:1, }",
+        "INFO [main] 2014-02-08 18:56:35,443 StreamResultFuture.java (line 82) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653]Executing streaming plan for Bootstrap",
+        "INFO [main] 2014-02-08 18:56:35,443 StreamResultFuture.java (line 86) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Beginning stream session with /x.x.x.80",
+        "INFO [main] 2014-02-08 18:56:35,444 StreamResultFuture.java (line 86) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Beginning stream session with /x.x.x.81",
+        "INFO [main] 2014-02-08 18:56:35,444 StreamResultFuture.java (line 86) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Beginning stream session with /x.x.x.73",
+        "INFO [STREAM-IN-/x.x.x.81] 2014-02-08 18:56:35,462 StreamResultFuture.java (line 181) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Session with /x.x.x.81 is complete",
+        "<6> node x.x.x.80: get the stream request at 18:56:35,450",
+        "INFO[STREAM-INIT-/x.x.x.72:47408] 2014-02-08 18:56:35,450 StreamResultFuture.java (line 116) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653]Received streaming plan for Bootstrap",
+        "INFO [STREAM-IN-/x.x.x.72] 2014-02-08 18:56:35,460 ColumnFamilyStore.java (line 784) Enqueuing flush of Memtable-facetrevs4@509747825(251160/2013133 serialized/live bytes, 20934 ops)",
+        "<7> node x.x.x.80: at 18:56:36,090, still hasn't seen the gossip from .72, and the PHI value for .72 is still increasing",
+        "TRACE [GossipTasks:1] 2014-02-08 18:56:36,090 FailureDetector.java (line 229)PHI for /x.x.x.72 : 36700.87918907657",
+        "TRACE [GossipTasks:1] 2014-02-08 18:56:36,090 FailureDetector.java (line 233) notifying listeners that /x.x.x.72 is down",
+        "<8> node x.x.x.80: Since the PHI value for .72 exceeds a certain value, .82 closes the stream session.",
+        "INFO [GossipTasks:1] 2014-02-08 18:56:36,090 StreamResultFuture.java (line 181) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Session with /x.x.x.72 is complete",
+        "WARN [GossipTasks:1] 2014-02-08 18:56:36,091 StreamResultFuture.java (line 210) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Stream failed",
+        "<9> node x.x.x.80: At this time, .80 receives the gossip from .72(with a new generation). Then gossiper thread on x.x.x.80 clears the interval times for .72, and resets its PHI.",
+        "DEBUG [GossipStage:1] 2014-02-08 18:56:36,097 Gossiper.java (line 790)Clearing interval times for /x.x.x.72 due to generation change",
+        "TRACE [GossipStage:1] 2014-02-08 18:56:36,097 FailureDetector.java (line 203) reporting /x.x.x.72",
+        "...",
+        "TRACE [GossipStage:1] 2014-02-08 18:56:36,097 Gossiper.java (line 946) /x.x.x.72local generation 1391830955, remote generation 1391885793",
+        "TRACE [GossipStage:1] 2014-02-08 18:56:36,097 Gossiper.java (line 951) Updating heartbeat state generation to 1391885793 from 1391830955 for /x.x.x.72",
+        "TRACE [GossipStage:1] 2014-02-08 18:56:36,097 Gossiper.java (line 886) Adding endpoint state for /x.x.x.72",
+        "...",
+        "<10> node x.x.x.80: PHI score for .72 at 18:56:37,094 (Since the session between .80 & .72 has already been closed, when .80 tries to sendMessage, the ERROR happens )",
+        "TRACE [GossipTasks:1] 2014-02-08 18:56:37,093 Gossiper.java (line 598) Performing status check ...",
+        "...",
+        "TRACE [GossipTasks:1] 2014-02-08 18:56:37,094 FailureDetector.java (line 229)PHI for /x.x.x.72 : 0.06483452387313912",
+        "TRACE [GossipTasks:1] 2014-02-08 18:56:37,094 FailureDetector.java (line 229) PHI for /x.x.x.81 : 0.7806744414980482",
+        "TRACE [GossipTasks:1] 2014-02-08 18:56:37,094 FailureDetector.java (line 229) PHI for /x.x.x.71 : 1.7235166979455117",
+        "TRACE [GossipTasks:1] 2014-02-08 18:56:37,094 FailureDetector.java (line 229) PHI for /x.x.x.84 : 0.8088014574340049",
+        "ERROR[STREAM-IN-/x.x.x.72] 2014-02-08 18:56:37,105 StreamSession.java (line 418) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Streaming error occurred",
+        "java.lang.RuntimeException: Outgoing stream handler has been closed",
+        "at org.apache.cassandra.streaming.ConnectionHandler.sendMessage(ConnectionHandler.java:170)",
+        "at org.apache.cassandra.streaming.StreamSession.prepare(StreamSession.java:444)",
+        "at org.apache.cassandra.streaming.StreamSession.messageReceived(StreamSession.java:366)",
+        "at org.apache.cassandra.streaming.ConnectionHandler$IncomingMessageHandler.run(ConnectionHandler.java:289)",
+        "at java.lang.Thread.run(Thread.java:724)",
+        "INFO [STREAM-IN-/x.x.x.72] 2014-02-08 18:56:37,108 StreamResultFuture.java (line 181) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Session with /x.x.x.72 is complete",
+        "WARN [STREAM-IN-/x.x.x.72] 2014-02-08 18:56:37,108 StreamResultFuture.java (line 210) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Stream failed"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) After .72 is replaced with a new node, from log <6> <7>, we see that .80 receives the streaming request before it receives the gossip message from .72.",
+      "In <7>, before .80 receives the gossip from .72, the PHI for .72 is still increasing.",
+      "TRACE [GossipTasks:1] 2014-02-08 18:56:36,090 FailureDetector.java (line 229)PHI for /x.x.x.72 : 36700.87918907657",
+      "TRACE [GossipTasks:1] 2014-02-08 18:56:36,090 FailureDetector.java (line 233) notifying listeners that /x.x.x.72 is down",
+      "In <8>, when the PHI is larger than a certain threshold, StreamSession will close the session.",
+      "INFO [GossipTasks:1] 2014-02-08 18:56:36,090 StreamResultFuture.java (line 181) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Session with /x.x.x.72 is complete",
+      "WARN [GossipTasks:1] 2014-02-08 18:56:36,091 StreamResultFuture.java (line 210) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Stream failed",
+      "",
+      "",
+      "StreamSession",
+      "",
+      "",
+      "(2.2) From <9>, right after that .80 receives the gossip from .72(with a new generation). Then gossiper thread on x.x.x.80 clears the interval times for .72, and resets its PHI.",
+      "DEBUG [GossipStage:1] 2014-02-08 18:56:36,097 Gossiper.java (line 790) Clearing interval times for /x.x.x.72 due to generation change",
+      "In <10>, since the stream session between .80 & .72 has already been closed, when .80 tries to sendMessage, the ERROR happens.",
+      "ERROR[STREAM-IN-/x.x.x.72] 2014-02-08 18:56:37,105 StreamSession.java (line 418) [Stream #bb897500-90f2-11e3-9d67-d5d417af8653] Streaming error occurred",
+      "java.lang.RuntimeException: Outgoing stream handler has been closed",
+      "at org.apache.cassandra.streaming.ConnectionHandler.sendMessage(ConnectionHandler.java:170)",
+      "at org.apache.cassandra.streaming.StreamSession.prepare(StreamSession.java:444)",
+      "at org.apache.cassandra.streaming.StreamSession.messageReceived(StreamSession.java:366)",
+      "at org.apache.cassandra.streaming.ConnectionHandler$IncomingMessageHandler.run(ConnectionHandler.java:289)",
+      "at java.lang.Thread.run(Thread.java:724)",
+      "(2.3) Why there is no enough time for new node’s gossip before starting bootstrap? (bootstrap means data exchange, which is realized by streaming)",
+      "When a new Cassandra node starts, it is initialized in CassandraDaemon.setup():",
+      "",
+      "",
+      "The patch conditionally determines sleep length based on whether the IP is the same or not.",
+      "“However, instead of sleeping for BROADCAST_INTERVAL we can save half the time and sleep for RING_DELAY, since if gossip hasn't propagated fully by then there are bigger problems.”",
+      "",
+      "The reason for just sleeping for RING_DELAY is:",
+      "“What we do during bootstrap is to announce the range, but with replacement that shouldn't be needed. ”"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "Since the dead node .72 is replaced with a new node using the same ip address. Before .72 starts streaming (bootstrap), the sleep() for waiting for gossip propagation is not executed. When .82 receives the streaming request from .72, it has not receives gossip from .72, and the increasing PHI value for .72 exceeds a certain value, which makes .80 close the StreamSession. So the streaming between these two nodes fails."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Delaying the streaming(bootstrap) until gossip has propagated.",
+      "•src/java/org/apache/cassandra/service/StorageService.java",
+      "see part(2) The fixed function is not on the callstack of RuntimeException."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "all Cassandra nodes",
+      ""
+    ]
+  }
+}

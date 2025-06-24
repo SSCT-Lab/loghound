@@ -1,0 +1,107 @@
+{
+  "p": [
+    "HDFS-720"
+  ],
+  "NPE in BlockReceiver$PacketResponder.run(BlockReceiver.java:923)": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "two DataNodes in the pipeline: DataNode1 (client-side) DataNode2 (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“Running some loadings on hdfs I had one of these on the DN XX.XX.XX.139:51010:”",
+        "The following log is from the DataNode (denoted as DN2) who is receiving data from upstream DataNode(denoted as DN1):",
+        "2009-10-21 04:57:02,755 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: Receiving block blk_6345892463926159834_1029src: /XX,XX,XX.140:37890dest: /XX.XX.XX.139:51010",
+        "2009-10-21 04:57:02,829 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: PacketResponder blk_6345892463926159834_1029 1Exception java.lang.NullPointerException",
+        "at org.apache.hadoop.hdfs.server.datanode.BlockReceiver$PacketResponder.run(BlockReceiver.java:923)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "DN2(XX.XX.XX.139:51010) is receiving blk_6345892463926159834_1029 from DN1(XX,XX,XX.140:37890), and NPE occurs unexpectedly.",
+        "On DN1(XX,XX,XX.140) , it looks like this:",
+        "2009-10-21 04:57:01,866 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: Receiving block blk_6345892463926159834_1029 src: /XX.XX.XX.140:37385 dest: /XX.XX.XX140:51010",
+        "2009-10-21 04:57:02,836 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: PacketResponder 2 for block blk_6345892463926159834_1029 terminating",
+        "2009-10-21 04:57:02,885 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: DatanodeRegistration(XX.XX.XX.140:51010, storageID=DS-1292310101-208.76.44.140-51010-1256100924816, infoPort=51075, ipcPort=51020):Exception writingblock blk_6345892463926159834_1029tomirrorXX.XX.XX.139:51010(DN2)",
+        "java.io.IOException: Connection reset by peer",
+        "at sun.nio.ch.FileDispatcher.write0(Native Method)",
+        "at sun.nio.ch.SocketDispatcher.write(SocketDispatcher.java:29)",
+        "at sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:104)",
+        "at sun.nio.ch.IOUtil.write(IOUtil.java:75)",
+        "at sun.nio.ch.SocketChannelImpl.write(SocketChannelImpl.java:334)",
+        "at org.apache.hadoop.net.SocketOutputStream$Writer.performIO(SocketOutputStream.java:55)",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.doIO(SocketIOWithTimeout.java:142)",
+        "at org.apache.hadoop.net.SocketOutputStream.write(SocketOutputStream.java:146)",
+        "at org.apache.hadoop.net.SocketOutputStream.write(SocketOutputStream.java:107)",
+        "at java.io.BufferedOutputStream.write(BufferedOutputStream.java:105)",
+        "at java.io.DataOutputStream.write(DataOutputStream.java:90)",
+        "at org.apache.hadoop.hdfs.server.datanode.BlockReceiver.receivePacket(BlockReceiver.java:466)",
+        "at org.apache.hadoop.hdfs.server.datanode.BlockReceiver.receivePacket(BlockReceiver.java:434)",
+        "at org.apache.hadoop.hdfs.server.datanode.BlockReceiver.receiveBlock(BlockReceiver.java:573)",
+        "at org.apache.hadoop.hdfs.server.datanode.DataXceiver.opWriteBlock(DataXceiver.java:352)",
+        "at org.apache.hadoop.hdfs.protocol.DataTransferProtocol$Receiver.opWriteBlock(DataTransferProtocol.java:382)",
+        "at org.apache.hadoop.hdfs.protocol.DataTransferProtocol$Receiver.processOp(DataTransferProtocol.java:323)",
+        "at org.apache.hadoop.hdfs.server.datanode.DataXceiver.run(DataXceiver.java:111)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "DN1 is receiving the block from its upstream node and sending it to its downstream node DN2 by processing writeBlock operation “opWriteBlock”, and the IOException happens.",
+        "PacketResponder is responsible for processing responses from downstream datanodes in the pipeline and sends back replies to the originator."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) DataXceiver is a thread for processing incoming/outgoing data stream in each DataNode.",
+      "Based on the call stack in DN1’s log, we know that DN1’s DataXceiver is processing the operation opWriteBlock(). This operation is receiving block from the upstream node as well as writing this block to DN2, and the IOException shows that the connection through which DN1 outputs data to DN2 is closed. So there should be some error in DN2.",
+      "(2.2) Based on DN2’s log, we see that NullPointerException suddenly happens when DN2 is receiving the data from DN1. From the short call stack in its log, we can only know that NPE occurs in PacketResponder.run(). This thread will process incoming acks, and its code is as follows:",
+      "When NPE happens, one possibility is that some object is null, but its method is called or its attribute is used when it is null.",
+      "After checking the statements in this function (PacketResponder.run() code is in (4), it is likely that “pkt = null”:",
+      "Packet pkt = null;",
+      "…",
+      "pkt =ackQueue.getFirst();",
+      "expected = pkt.seqno;",
+      "The declaration of ackQueue is:",
+      "privateLinkedList<Packet>ackQueue=newLinkedList<Packet>();",
+      "/**@returnthe first element in this list*@throwsNoSuchElementException if this list is empty*/publicEgetFirst() {finalNode<E> f =first;if(f ==null)throw newNoSuchElementException();returnf.item;}",
+      "But LinkedList API shows that it throws NoSuchElementException it list is empty, so it seems that we would not get a NPE here.",
+      "One possibility is that LinkedList does not support concurrent accesses. So LinkedList.getFirst() may return null if there is another thread removing list elements.",
+      "(2.3) Then the developers did rerun, and did synchronization around each access to ackQueue, and found that they got rid of NPEs."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "So NPE is caused by unsynchronized access to ackQueue."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Add synchronization to accessing to ackQueue.",
+      "This patch will eliminate NullPointerException.",
+      "•src/java/org/apache/hadoop/hdfs/server/datanode/BlockReceiver.java",
+      "",
+      "Replace original removeFirst() with removeAckHead(), which is synchronized.",
+      "+/**+* Remove a packet from the head of the ack queue+*+* This should be called only when the ack queue is not empty+*/+private synchronized voidremoveAckHead() {",
+      "+ackQueue.removeFirst();+notifyAll();+}",
+      "The following code is PacketResponser.run()",
+      "/*** Thread to process incoming acks.*@seejava.lang.Runnable#run()*/public voidrun() {booleanlastPacketInBlock =false;final longstartTime =ClientTraceLog.isInfoEnabled() ? System.nanoTime() :0;while(running&&datanode.shouldRun&& !lastPacketInBlock) {",
+      "booleanisInterrupted =false;try{",
+      "Packet pkt =null;longexpected = -2;PipelineAck ack =newPipelineAck();longseqno = PipelineAck.UNKOWN_SEQNO;try{if(numTargets!=0&& !mirrorError) {// not the last DN & no mirror error// read an ack from downstream datanodeack.readFields(mirrorIn);if(LOG.isDebugEnabled()) {LOG.debug(\"PacketResponder \"+numTargets+\" got \"+ ack); }seqno = ack.getSeqno();}if(seqno != PipelineAck.UNKOWN_SEQNO||numTargets==0) {synchronized(this) {while(running&&datanode.shouldRun&&ackQueue.size() ==0) {if(LOG.isDebugEnabled()) {LOG.debug(\"PacketResponder \"+numTargets+\" seqno = \"+ seqno +\" for block \"+block+\" waiting for local datanode to finish write.\");}wait();}if(!running|| !datanode.shouldRun) {break; }pkt =ackQueue.getFirst();expected = pkt.seqno;",
+      "-notifyAll();if(numTargets>0&& seqno != expected) {throw newIOException(\"PacketResponder \"+numTargets+\" for block \"+block+\" expected seqno:\"+ expected +\" received:\"+ seqno);}",
+      "lastPacketInBlock = pkt.lastPacketInBlock;}}}catch(InterruptedException ine) { isInterrupted =true;}catch(IOException ioe) {if(Thread.interrupted()) { isInterrupted =true;}else{...}}",
+      "if(Thread.interrupted() || isInterrupted) {LOG.info(\"PacketResponder \"+block+\" \"+numTargets+\" : Thread is interrupted.\");running=false;continue;}",
+      "// If this is the last packet in block, then close block// file and finalize the block before responding successif(lastPacketInBlock) {receiver.close();final longendTime =ClientTraceLog.isInfoEnabled() ? System.nanoTime() :0;block.setNumBytes(replicaInfo.getNumBytes());datanode.data.finalizeBlock(block);",
+      "datanode.closeBlock(block, DataNode.EMPTY_DEL_HINT);if(ClientTraceLog.isInfoEnabled() &&receiver.clientName.length() >0) {longoffset =0;ClientTraceLog.info(String.format(DN_CLIENTTRACE_FORMAT,receiver.inAddr,receiver.myAddr,block.getNumBytes(),\"HDFS_WRITE\",receiver.clientName, offset,",
+      "datanode.dnRegistration.getStorageID(),block, endTime-startTime));}else{LOG.info(\"Received block \"+block+\" of size \"+block.getNumBytes() +\" from \"+receiver.inAddr);}}// construct my ack message",
+      "...PipelineAck replyAck =newPipelineAck(expected, replies);",
+      "// send my ack back to upstream datanodereplyAck.write(replyOut);replyOut.flush();if(LOG.isDebugEnabled()) {LOG.debug(\"PacketResponder \"+numTargets+\" for block \"+block+\" responded an ack: \"+ replyAck);}",
+      "if(pkt !=null) {",
+      "-// remove the packet from the queue",
+      "-ackQueue.removeFirst();+// remove the packet from the ack queue+removeAckHead();+// update bytes ackedif(replyAck.isSuccess() && pkt.lastByteInBlock>replicaInfo.getBytesAcked()) {replicaInfo.setBytesAcked(pkt.lastByteInBlock);}}}catch(IOException e) {LOG.warn(\"IOException in BlockReceiver.run(): \", e);if(running) {try{datanode.checkDiskError(e);// may throw an exception here}catch(IOException ioe) {LOG.warn(\"DataNode.chekDiskError failed in run() with: \", ioe);}LOG.info(\"PacketResponder \"+block+\" \"+numTargets+\" Exception \"+ StringUtils.stringifyException(e));running=false;if(!Thread.interrupted()) {// failure not caused by interruptionreceiverThread.interrupt();}}}catch(Throwable e) {if(running) {LOG.info(\"PacketResponder \"+block+\" \"+numTargets+\" Exception \"+ StringUtils.stringifyException(e));running=false;receiverThread.interrupt();}}}LOG.info(\"PacketResponder \"+numTargets+\" for block \"+block+\" terminating\");}"
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch will be applied in all DataNodes.",
+      "The patch is in BlockReceiver.java. and the modified function PacketResponder.run() is on DN2’s call stack. (NPE occurs in DN2)",
+      ""
+    ]
+  }
+}

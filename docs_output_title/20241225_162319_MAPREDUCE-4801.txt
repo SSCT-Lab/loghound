@@ -1,0 +1,134 @@
+{
+  "p": [
+    "MAPREDUCE-4801",
+    "ShuffleHandler can generate large logs due to prematurely closed channels"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "multiple worker nodes (NM running in each node): each node is the client-side and server-side at the same time."
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Description: Many nodes on a cluster ran out of disk space, because the NodeManager logs were huge. The logs showed many, many shuffle errors due to either ClosedChannelException or IOException from \"Connection reset by peer\" or \"Broken pipe\". Some sample exceptions:( in NodeManager logs)",
+        "2012-11-15 12:47:02,365 [New I/O server worker #1-14]ERRORorg.apache.hadoop.mapred.ShuffleHandler: Shuffle error:",
+        "java.io.IOException: Connection reset by peer",
+        "at sun.nio.ch.FileDispatcher.read0(Native Method)",
+        "at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:21)",
+        "at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:237)",
+        "at sun.nio.ch.IOUtil.read(IOUtil.java:204)",
+        "at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:236)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:321)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.processSelectedKeys(NioWorker.java:280)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:200)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "2012-11-15 12:47:02,366 [New I/O server worker #1-14]ERRORorg.apache.hadoop.mapred.ShuffleHandler: Shuffle error [id: 0x01901fc1, /xx.xx.xx.xx:xx => /xx.xx.xx.xx:xx] EXCEPTION:java.io.IOException: Connection reset by peer",
+        "2012-11-15 12:47:02,366 [New I/O server worker #1-14]ERRORorg.apache.hadoop.mapred.ShuffleHandler: Shuffle error:",
+        "java.nio.channels.ClosedChannelException",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.cleanUpWriteBuffer(NioWorker.java:616)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.close(NioWorker.java:592)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:355)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.processSelectedKeys(NioWorker.java:280)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:200)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "...",
+        "2012-11-15 12:47:02,367 [New I/O server worker #1-15]ERRORorg.apache.hadoop.mapred.ShuffleHandler: Shuffle error:",
+        "java.io.IOException: Broken pipe",
+        "at sun.nio.ch.FileDispatcher.write0(Native Method)",
+        "at sun.nio.ch.SocketDispatcher.write(SocketDispatcher.java:29)",
+        "at sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:100)",
+        "at sun.nio.ch.IOUtil.write(IOUtil.java:56)",
+        "at sun.nio.ch.SocketChannelImpl.write(SocketChannelImpl.java:334)",
+        "at org.jboss.netty.channel.socket.nio.SocketSendBufferPool$PooledSendBuffer.transferTo(SocketSendBufferPool.java:239)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.write0(NioWorker.java:469)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.writeFromUserCode(NioWorker.java:387)",
+        "at org.jboss.netty.channel.socket.nio.NioServerSocketPipelineSink.handleAcceptedSocket(NioServerSocketPipelineSink.java:137)",
+        "at org.jboss.netty.channel.socket.nio.NioServerSocketPipelineSink.eventSunk(NioServerSocketPipelineSink.java:76)",
+        "at org.jboss.netty.handler.codec.oneone.OneToOneEncoder.handleDownstream(OneToOneEncoder.java:68)",
+        "at org.jboss.netty.handler.stream.ChunkedWriteHandler.flush(ChunkedWriteHandler.java:255)",
+        "at org.jboss.netty.handler.stream.ChunkedWriteHandler.handleDownstream(ChunkedWriteHandler.java:124)",
+        "at org.jboss.netty.channel.Channels.write(Channels.java:611)",
+        "at org.jboss.netty.channel.Channels.write(Channels.java:578)",
+        "at org.jboss.netty.channel.AbstractChannel.write(AbstractChannel.java:259)",
+        "at org.apache.hadoop.mapred.ShuffleHandler$Shuffle.sendMapOutput(ShuffleHandler.java:477)",
+        "at org.apache.hadoop.mapred.ShuffleHandler$Shuffle.messageReceived(ShuffleHandler.java:397)",
+        "at org.jboss.netty.handler.stream.ChunkedWriteHandler.handleUpstream(ChunkedWriteHandler.java:148)",
+        "at org.jboss.netty.handler.codec.http.HttpChunkAggregator.messageReceived(HttpChunkAggregator.java:116)",
+        "at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:302)",
+        "at org.jboss.netty.handler.codec.replay.ReplayingDecoder.unfoldAndfireMessageReceived(ReplayingDecoder.java:522)",
+        "at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:506)",
+        "at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:443)",
+        "at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:274)",
+        "at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:261)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:349)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.processSelectedKeys(NioWorker.java:280)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:200)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "2012-11-15 12:47:02,367 [New I/O server worker #1-15]ERRORorg.apache.hadoop.mapred.ShuffleHandler: Shuffle error [id: 0x01fd225b, /xx.xx.xx.xx:xx => /xx.xx.xx.xx:xx] EXCEPTION:java.io.IOException: Broken pipe",
+        "2012-11-15 12:47:02,367 [New I/O server worker #1-15]ERRORorg.apache.hadoop.mapred.ShuffleHandler: Shuffle error:",
+        "java.nio.channels.ClosedChannelException",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.cleanUpWriteBuffer(NioWorker.java:636)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.close(NioWorker.java:592)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.write0(NioWorker.java:512)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.writeFromUserCode(NioWorker.java:387)",
+        "at org.jboss.netty.channel.socket.nio.NioServerSocketPipelineSink.handleAcceptedSocket(NioServerSocketPipelineSink.java:137)",
+        "at org.jboss.netty.channel.socket.nio.NioServerSocketPipelineSink.eventSunk(NioServerSocketPipelineSink.java:76)",
+        "at org.jboss.netty.handler.codec.oneone.OneToOneEncoder.handleDownstream(OneToOneEncoder.java:68)",
+        "at org.jboss.netty.handler.stream.ChunkedWriteHandler.flush(ChunkedWriteHandler.java:255)",
+        "at org.jboss.netty.handler.stream.ChunkedWriteHandler.handleDownstream(ChunkedWriteHandler.java:124)",
+        "at org.jboss.netty.channel.Channels.write(Channels.java:611)",
+        "at org.jboss.netty.channel.Channels.write(Channels.java:578)",
+        "at org.jboss.netty.channel.AbstractChannel.write(AbstractChannel.java:259)",
+        "at org.apache.hadoop.mapred.ShuffleHandler$Shuffle.sendMapOutput(ShuffleHandler.java:477)",
+        "at org.apache.hadoop.mapred.ShuffleHandler$Shuffle.messageReceived(ShuffleHandler.java:397)",
+        "at org.jboss.netty.handler.stream.ChunkedWriteHandler.handleUpstream(ChunkedWriteHandler.java:148)",
+        "at org.jboss.netty.handler.codec.http.HttpChunkAggregator.messageReceived(HttpChunkAggregator.java:116)",
+        "at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:302)",
+        "at org.jboss.netty.handler.codec.replay.ReplayingDecoder.unfoldAndfireMessageReceived(ReplayingDecoder.java:522)",
+        "at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:506)",
+        "at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:443)",
+        "at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:274)",
+        "at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:261)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:349)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.processSelectedKeys(NioWorker.java:280)",
+        "at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:200)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:619)",
+        "The IOExceptions are shown in many nodes(NodeManager). The containers running in each node may contain several map/reduce tasks."
+      ]
+    }
+  },
+  "(2) Root Cause": {
+    "p": [
+      "During reducers’ shuffle, when they receive the ShuffleHeader which containing the mapOutPut data size, the MergeManager decides it’s so much data that cannot receive right now. And it doesn’t read the subsequent map data and just closes the socket. Then that leads to IOExceptions when the ShuffleHandler tries to push the data to the closed socket. A large amount of exceptions result in the huge log files."
+    ]
+  },
+  "(3) How to figure out the root cause based on logs": {
+    "p": [
+      "According to the error messages, the errors come from “org.apache.hadoop.mapred.ShuffleHandler: Shuffle error”. It shows that the problem is caused by the shuffleHandler. In the logs, we can also find the info “at org.apache.hadoop.mapred.ShuffleHandler$Shuffle.sendMapOutput(ShuffleHandler.java:477)”. So we infer the IOException happens when sending the mapOutput during shuffle."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Filter and ignore the errors from closed connections and IOExceptions related to the client.",
+      "ShuffleHeader is parsed by Fetcher thread in Reducer, fetcher will call MergeManager, and in MergeManager, the function reserve() will choose to copy the data in memory or on disk based on the data size(compared with “mapreduce.reduce.memory.totalbytes”)."
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "• org/apache/hadoop/mapred/ShuffleHandler.java",
+      "Use pattern to identify errors related to the client and ignore the errors.",
+      "LOG.debug(\"Ignoring closed channel error\", cause);",
+      "LOG.debug(\"Ignoring client socket close\", cause);",
+      ""
+    ]
+  }
+}

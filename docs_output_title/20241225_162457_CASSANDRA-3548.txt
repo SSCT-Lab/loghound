@@ -1,0 +1,84 @@
+{
+  "p": [
+    "Cassandra-3548"
+  ],
+  "NPE in AntiEntropyService$RepairSession.completed()": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "Cassandra node Aruns RepairSession , andCassandra node Bis involved",
+        "node B fails during the RepairSession"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Observed on a 2 DC cluster, during a repair that spanned the DC's.",
+        "INFO [AntiEntropyStage:1] 2011-11-28 06:22:56,225 StreamingRepairTask.java (line 136) [streaming task #69187510-1989-11e1-0000-5ff37d368cb6] Forwarding streaming repair of 8602",
+        "ranges to /10.6.130.70 (to be streamed with /10.37.114.10)",
+        "...",
+        "INFO [AntiEntropyStage:66] 2011-11-29 11:20:57,109 StreamingRepairTask.java (line 253) [streaming task #69187510-1989-11e1-0000-5ff37d368cb6] task succeeded",
+        "ERROR[AntiEntropyStage:66] 2011-11-29 11:20:57,109 AbstractCassandraDaemon.java (line 133) Fatal exception in thread Thread[AntiEntropyStage:66,5,main]",
+        "java.lang.NullPointerException",
+        "at org.apache.cassandra.service.AntiEntropyService$RepairSession.completed(AntiEntropyService.java:712)",
+        "at org.apache.cassandra.service.AntiEntropyService$RepairSession$Differencer$1.run(AntiEntropyService.java:912)",
+        "at org.apache.cassandra.streaming.StreamingRepairTask$2.run(StreamingRepairTask.java:186)",
+        "at org.apache.cassandra.streaming.StreamingRepairTask$StreamingRepairResponse.doVerb(StreamingRepairTask.java:255)",
+        "at org.apache.cassandra.net.MessageDeliveryTask.run(MessageDeliveryTask.java:59)",
+        "at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)",
+        "at java.lang.Thread.run(Thread.java:679)",
+        "“One of the nodes involved in the repair session failed: (Not sure if this is from the same repair session as the streaming task above, but it illustrates the issue)”",
+        "ERROR[AntiEntropySessions:1] 2011-11-28 19:39:52,507 AntiEntropyService.java (line 688) [repair #2bf19860-197f-11e1-0000-5ff37d368cb6] session completed with the following error",
+        "java.io.IOException: Endpoint /10.29.60.10 died",
+        "at org.apache.cassandra.service.AntiEntropyService$RepairSession.failedNode(AntiEntropyService.java:725)",
+        "at org.apache.cassandra.service.AntiEntropyService$RepairSession.convict(AntiEntropyService.java:762)",
+        "at org.apache.cassandra.gms.FailureDetector.interpret(FailureDetector.java:192)",
+        "at org.apache.cassandra.gms.Gossiper.doStatusCheck(Gossiper.java:559)",
+        "at org.apache.cassandra.gms.Gossiper.access$700(Gossiper.java:62)",
+        "at org.apache.cassandra.gms.Gossiper$GossipTask.run(Gossiper.java:167)",
+        "at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:471)",
+        "at java.util.concurrent.FutureTask$Sync.innerRunAndReset(FutureTask.java:351)",
+        "at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:178)",
+        "at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:165)",
+        "at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:267)",
+        "at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)",
+        "at java.lang.Thread.run(Thread.java:679)"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) For ease of description, we suppose node A issues the Repair, node B is one of the nodes which are involved in the repair session, and node B fails during the repair. All the logs above come from node A.",
+      "Based on the callstacks from the two exceptions NPE & IOException, we can get the following control flow.",
+      "· When node A receives the streaming repair response from the other node, it calls StreamingRepairResponse.doVerb() to process the response. Then Differencer.run() will finally call completed(Differencer.this). The NPE happens when executing job.completedSynchronization(), since the “job” we get from activeJobs.get() is null.",
+      "· On node A, the GossipTask is running periodically. When a node is detected as failed (its PHI value exceeds a certain threshold), RepairSession.convict() will call failedNode() to stop all the jobs in this repair session, and activeJobs.clear() is executed.",
+      "So there is a race between activeJobs.get() and activeJobs.clear(): If node A fails node B before activeJob.get(), the object job is null. Then NPE happens when calling job.completedSynchronization().",
+      "",
+      "How does the IOException print?",
+      "When node A issues a repair session, RepairSession.runMayThrow() will be called:",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "During the repair session issued by node A, node B fails. Node A fails node B and will stop all the jobs by calling activeJobs.clear(). At this time, node A receives a stream repair response from a certain node, and will call activeJobs.get(). If the activeJobs are cleared already, the result of activeJobs.get will be null. Then calling the method of this null object throw NPE."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "In this bug, the IOException is allowed, and NPE is not expected.",
+      "The patch will eliminate the NPE by checking for null.",
+      "•src/java/org/apache/cassandra/service/AntiEntropyService.java",
+      "RepairSession.completed()",
+      "",
+      "Function completed() is on the callstack of NPE."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "Cassandra node(s)",
+      ""
+    ]
+  }
+}

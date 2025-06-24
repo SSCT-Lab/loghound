@@ -1,0 +1,123 @@
+{
+  "p": [
+    "HBase-8230"
+  ],
+  "Possible NPE on regionserver abort if replication service has not been started": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "RegionServer aborts due to the exception in NameNode"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“RegionServer got Exception on calling setupWALAndReplication, so entered abort flow. Since replicationSink had not been initialized yet, we got below exception:”",
+        "Exception in thread \"regionserver26003\" java.lang.NullPointerException",
+        "at org.apache.hadoop.hbase.replication.regionserver.Replication.join(Replication.java:129)",
+        "at org.apache.hadoop.hbase.replication.regionserver.Replication.stopReplicationService(Replication.java:120)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.join(HRegionServer.java:1803)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.run(HRegionServer.java:834)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "The log below shows that RS got exception on calling setupWALAndReplication, so entered abort flow.",
+        "2013-03-29 10:32:42,251 INFO [regionserver26003] STOPPED: Failed initialization org.apache.hadoop.hbase.regionserver.HRegionServer.stop(HRegionServer.java:1665)",
+        "2013-03-29 10:32:42,253 ERROR [regionserver26003] Failed init org.apache.hadoop.hbase.regionserver.HRegionServer.cleanup(HRegionServer.java:1161)",
+        "java.io.IOException: cannot get log writer",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.createWriter(HLog.java:757)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.createWriterInstance(HLog.java:701)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.rollWriter(HLog.java:637)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.rollWriter(HLog.java:582)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.<init>(HLog.java:436)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.<init>(HLog.java:362)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.instantiateHLog(HRegionServer.java:1327)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.setupWALAndReplication(HRegionServer.java:1316)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.handleReportForDutyResponse(HRegionServer.java:1030)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.run(HRegionServer.java:706)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "2013-03-29 10:32:42,260 FATAL [regionserver26003] ABORTING region server om-host2,26003,1364524173470: Unhandled exception: cannot get log writer org.apache.hadoop.hbase.regionserver.HRegionServer.abort(HRegionServer.java:1737)",
+        "java.io.IOException: cannot get log writer",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.createWriter(HLog.java:757)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.createWriterInstance(HLog.java:701)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.rollWriter(HLog.java:637)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.rollWriter(HLog.java:582)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.<init>(HLog.java:436)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.<init>(HLog.java:362)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.instantiateHLog(HRegionServer.java:1327)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.setupWALAndReplication(HRegionServer.java:1316)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.handleReportForDutyResponse(HRegionServer.java:1030)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.run(HRegionServer.java:706)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "Caused by: java.io.IOException: org.apache.hadoop.hdfs.server.namenode.SafeModeException: Cannot create file/hbase/.logs/om-host2,26003,1364524173470/om-host2%2C26003%2C1364524173470.1364524361366. Name node is in safe mode.",
+        "The reported blocks 14 has reached the threshold 0.9990 of total blocks 14. Safe mode will be turned off automatically in 21 seconds.",
+        "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.startFileInternal(FSNamesystem.java:1601)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.startFile(FSNamesystem.java:1547)",
+        "at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.create(NameNodeRpcServer.java:412)",
+        "at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolServerSideTranslatorPB.create(ClientNamenodeProtocolServerSideTranslatorPB.java:204)",
+        "at org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos$ClientNamenodeProtocol$2.callBlockingMethod(ClientNamenodeProtocolProtos.java:43664)",
+        "at org.apache.hadoop.ipc.ProtobufRpcEngine$Server$ProtoBufRpcInvoker.call(ProtobufRpcEngine.java:427)",
+        "at org.apache.hadoop.ipc.RPC$Server.call(RPC.java:924)",
+        "at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1710)",
+        "at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1706)",
+        "at java.security.AccessController.doPrivileged(Native Method)",
+        "at javax.security.auth.Subject.doAs(Subject.java:396)",
+        "at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1232)",
+        "at org.apache.hadoop.ipc.Server$Handler.run(Server.java:1704)",
+        "at org.apache.hadoop.hbase.regionserver.wal.SequenceFileLogWriter.init(SequenceFileLogWriter.java:209)",
+        "at org.apache.hadoop.hbase.regionserver.wal.HLog.createWriter(HLog.java:754)",
+        "... 10 more"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) According to the description, RS gets IOException “cannot get log writer” on calling setupWALAndReplication(), and enters abort flow. Then NPE occurs.",
+      "Combining the callstack (from NPE and IOException) and the source code, we can get the following control flow:",
+      "In HRegionServer.run(), handleReportForDutyResponse() calls setupWALAndReplication(), and it throws IOException. The “caused by” part in FATAL’s callstack indicates that SafeModeException comes from NameNode leads to the IOException, since NameNode is in safe mode, so RS fails to create the log writer.",
+      "",
+      "(2.2) The IOException thrown by handleReportForDutyResponse() will be caught in run(), then RS will go into abort flow, and join() will be executed.( join() executes after abort() )",
+      "",
+      "(2.3) Based on NPE callstack, NPE occurs in Replication.run(). Since both this.replication and this.trplicationManager will be instantiated in Replication.initialize(), we can infer that this.replicationSink is null.",
+      "Replication.join():",
+      "",
+      "After checking the source code, this.replicationSink will be instantiated when startServiceThreads() executes. However, due to the IOException when calling setupWALAndReplication(), startServiceThreads() will not execute, so this.replicationSink is null.",
+      "It seems that any exception occurs before startServiceThreads() may cause this NPE."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "Since NameNode is in safe mode, RS fails to create the log writer, i.e., NameNode’s SafeModeException leads to RS’s IOException, and this IOException makes RS abort.",
+      "In RS.run(), startServiceThreads() cannot execute due to the IOException, and this.replicationSink cannot be instantiated (null). When RS is exiting, NPE occurs.",
+      "In this bug, NameNode’s SafeModeException reveals the root cause."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Checking the value of this.replicationSink when calling Replication.run().exception handling problem",
+      "The fixed function is on NPE’s callstack.",
+      "•src/main/java/org/apache/hadoop/hbase/replication/regionserver/Replication.java",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HRegionServer(s)"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

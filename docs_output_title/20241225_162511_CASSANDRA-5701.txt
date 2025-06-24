@@ -1,0 +1,122 @@
+{
+  "p": [
+    "Cassandra-5701",
+    "Apache.Cassandra.Cassandra.get_count will disconnect but not throw InvalidRequestException when column family is not existed."
+  ],
+  "(1) Log information": {
+    "p": [
+      "When using get_count interface defined in Cassandra.thrift, the Cassandra Server (1.2.4) closes the connection from Client when column family does not exist in keyspace but not throw InvalidRequestException. system.log showed this:",
+      "ERROR [RPC-Thread:3373] 2013-06-26 14:23:09,264 TNonblockingServer.java (line 638) Unexpected exception while invoking!",
+      "java.lang.IllegalArgumentException: Unknown table/cf pair (Keyspace1.Standard)",
+      "at org.apache.cassandra.db.Table.getColumnFamilyStore(Table.java:165)",
+      "at org.apache.cassandra.thrift.CassandraServer.get_count(CassandraServer.java:471)",
+      "at org.apache.cassandra.thrift.Cassandra$Processor$get_count.getResult(Cassandra.java:3381)",
+      "at org.apache.cassandra.thrift.Cassandra$Processor$get_count.getResult(Cassandra.java:3369)",
+      "at org.apache.thrift.ProcessFunction.process(ProcessFunction.java:32)",
+      "at org.apache.thrift.TBaseProcessor.process(TBaseProcessor.java:34)",
+      "at org.apache.thrift.server.TNonblockingServer$FrameBuffer.invoke(TNonblockingServer.java:632)",
+      "at org.apache.cassandra.thrift.CustomTHsHaServer$Invocation.run(CustomTHsHaServer.java:109)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(Unknown Source)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)",
+      "at java.lang.Thread.run(Unknown Source)"
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Thrift is an RPC framework. In this bug, Thrift is used as client to communicate with Cassandra server. TNonblockingServer is one of the NIO services provided by Thrift. The ERROR log prints on server side.",
+      "Based on the stack trace and the source code, we know that Table.getColumnFamilyStore() is invoked by CassandraServer.get_count() as follows.",
+      "public intget_count(ByteBuffer key, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level)",
+      "throwsInvalidRequestException, UnavailableException, TimedOutException",
+      "{...",
+      "try",
+      "{ ThriftClientState cState = state();",
+      "String keyspace = cState.getKeyspace();",
+      "cState.hasColumnFamilyAccess(keyspace, column_parent.column_family, Permission.SELECT);",
+      "Table table = Table.open(keyspace);",
+      "ColumnFamilyStore cfs = table.getColumnFamilyStore(column_parent.column_family);",
+      "...",
+      "while(true){...}",
+      "returntotalCount;",
+      "}",
+      "catch(RequestValidationException e)",
+      "{",
+      "throwThriftConversion.toThrift(e);",
+      "}",
+      "finally",
+      "{",
+      "Tracing.instance().stopSession();",
+      "}",
+      "}",
+      "",
+      "publicColumnFamilyStoregetColumnFamilyStore(String cfName)",
+      "{",
+      "UUID id = Schema.instance.getId(name, cfName);",
+      "if(id ==null)",
+      "throw newIllegalArgumentException(String.format(\"Unknown table/cf pair (%s.%s)\",name, cfName));",
+      "returngetColumnFamilyStore(id);",
+      "}",
+      "Finally, theIllegalArgumentExceptionis caught by TNonblockingServer.invoke(), and the connection to client will be closed. As a result, client does not know what happened.",
+      "public voidinvoke() {",
+      "TTransport inTrans = getInputTransport();",
+      "TProtocol inProt = inputProtocolFactory_.getProtocol(inTrans);",
+      "TProtocol outProt = outputProtocolFactory_.getProtocol(getOutputTransport());",
+      "",
+      "try {",
+      "processorFactory_.getProcessor(inTrans).process(inProt, outProt);",
+      "responseReady();",
+      "return;",
+      "} catch (TException te) {",
+      "LOGGER.warn(\"Exception while invoking!\", te);",
+      "} catch (Exception e) {",
+      "LOGGER.error(\"Unexpected exception while invoking!\", e);",
+      "}",
+      "// This will only be reached when there is an exception.",
+      "state_ =AWAITING_CLOSE;",
+      "requestSelectInterestChange();",
+      "}"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The exception thrown by getColumnFamilyStore cannot be handled by the outside callers.",
+      "When the exception happens on RPC server side, the connection to client is closed but the error message will not be notified to the client."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fixing the failure. Add error handling.",
+      "Add a catch clause to handle IllegalArgumentException and throw a InvalidRequestException which will be picked up by the client.",
+      "•/src/java/org/apache/cassandra/thrift/CassandraServer.java",
+      "public intget_count(ByteBuffer key, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level)",
+      "throwsInvalidRequestException, UnavailableException, TimedOutException",
+      "{...",
+      "try",
+      "{ ThriftClientState cState = state();",
+      "String keyspace = cState.getKeyspace();",
+      "cState.hasColumnFamilyAccess(keyspace, column_parent.column_family, Permission.SELECT);",
+      "Table table = Table.open(keyspace);",
+      "ColumnFamilyStore cfs = table.getColumnFamilyStore(column_parent.column_family);",
+      "...",
+      "while(true) {...}",
+      "returntotalCount;",
+      "}",
+      "+catch(IllegalArgumentException e)",
+      "+{",
+      "+throw new InvalidRequestException(e.getMessage());",
+      "+}",
+      "catch(RequestValidationException e)...",
+      "{",
+      "throwThriftConversion.toThrift(e);",
+      "}",
+      "finally ...",
+      "}",
+      "",
+      ""
+    ]
+  },
+  "": {
+    "p": [
+      ""
+    ]
+  }
+}

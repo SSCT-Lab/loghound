@@ -1,0 +1,83 @@
+{
+  "p": [
+    "HBase-9773"
+  ],
+  "Master aborted when hbck asked the master to assign a region that was already online": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "Client (client-side) HMaster (server-side)",
+        "HMaster(client-side) sents CLOSE RPC to HRegionServer (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Running hbck command at the client side: hbck (HBaseFsck) is a tool for checking for region consistency and table integrity problems and repairing a corrupted HBase.",
+        "The sequence of events that happened:",
+        "1. The hbck tool couldn't communicate with the RegionServer hosting namespace regiondue to some security exceptions. hbckINCORRECTLY assumed the region was not deployed.",
+        "In output.log (client side):",
+        "2013-10-12 10:42:57,067|beaver.machine|INFO|ERROR: Region { meta => hbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a., hdfs => hdfs://gs-hdp2-secure-1381559462-hbase-12.cs1cloud.internal:8020/apps/hbase/data/data/hbase/namespace/a0ac0825ba2d0830614e7f808f31787a, deployed => }not deployed on any region server.",
+        "2013-10-12 10:42:57,067|beaver.machine|INFO|Trying to fix unassigned region...",
+        "2. This led to the hbck tool trying to tell the master to \"assign\" the region.",
+        "In HMaster log:",
+        "2013-10-12 10:52:35,960 INFO [RpcServer.handler=4,port=60000] master.HMaster:Client=hbase//172.18.145.105assignhbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a.",
+        "3. The HMaster went through the steps - sent a CLOSE to the RegionServer hosting namespace region. From HMaster log:",
+        "2013-10-12 10:52:35,981 DEBUG [RpcServer.handler=4,port=60000] master.AssignmentManager:Sent CLOSE togs-hdp2-secure-1381559462-hbase-1.cs1cloud.internal,60020,1381564439794for regionhbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a.",
+        "4. The HMaster then tried to assign the namespace region to a RegionServer, and in the process ABORTED. From HMaster log:",
+        "2013-10-12 10:52:36,025 DEBUG [RpcServer.handler=4,port=60000] master.AssignmentManager:No previous transition plan found (or ignoring an existing plan) forhbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a.; generated random plan=hri=hbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a., src=, dest=gs-hdp2-secure-1381559462-hbase-9.cs1cloud.internal,60020,1381564439807; 4 (online=4, available=4) available servers, forceNewPlan=true",
+        "2013-10-12 10:52:36,026FATAL[RpcServer.handler=4,port=60000] master.HMaster:Master server abort: loaded coprocessors are: [org.apache.hadoop.hbase.security.access.AccessController]",
+        "2013-10-12 10:52:36,027FATAL[RpcServer.handler=4,port=60000] master.HMaster:Unexpected state: {a0ac0825ba2d0830614e7f808f31787astate=OPEN, ts=1381564451344, server=gs-hdp2-secure-1381559462-hbase-1.cs1cloud.internal,60020,1381564439794} ..Cannot transit it to OFFLINE.",
+        "java.lang.IllegalStateException: Unexpected state : {a0ac0825ba2d0830614e7f808f31787a state=OPEN, ts=1381564451344, server=gs-hdp2-secure-1381559462-hbase-1.cs1cloud.internal,60020,1381564439794} .. Cannot transit it to OFFLINE."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Based on the statements printed in the log and the source code, we can reconstruct the related control flow: (AM i.e. AssignManager)",
+      "",
+      "",
+      "",
+      "(2.2) We can see that in functionsetOfflineInZooKeeper(), the variable “state” is neither “Closed” nor “Offline”(state==Open), which leads to the HMaster abort.",
+      "Based on the control flow, we know that the value of “state” depends on functionforceRegionStateToOffline(region, forceNewPlan).",
+      "",
+      "",
+      "",
+      "",
+      "FunctionserverManager.sendRegionClose()will send an CLOSE RPC to the specified server to close the specified region. Return true if server acknowledged close, false if not.",
+      "We can get thatserverManager.sendRegionClose()returns true, sinceLOG.debug(\"Sent CLOSE to \"+ server +\" for region \"+region.getRegionNameAsString());",
+      "is printed.",
+      "Although HMaster sends CLOSE RPC to the specified server to close the specified region, and the return value is TRUE, the specified region is not closed actually.(Because the region is closed asynchronously)"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "On client side, hbck couldn't communicate with the region due to some security exceptions. hbck INCORRECTLY assumed the region was not deployed, and this led to the master \"assign\" the region. The HMaster sent CLOSE RPC to the RegionServer to close the specified region, which seems to be successful but the specified region is still online actually. When HMaster continue to assign, the wrong region state made HMaster abort(crash)."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Call function regionOffline(region) to make sure the region state will be offline.",
+      "• hbase-server/src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      "",
+      "transitionInZK: closes the specified region and will use or not use ZK during the close according to the specified flag."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "One node: HMaster.",
+      "The patch is in function unassign(), which is in HMaster.AssignManager.java. No callstack in the log."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

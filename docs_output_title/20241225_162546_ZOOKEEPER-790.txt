@@ -1,0 +1,132 @@
+{
+  "p": [
+    "ZooKeeper-790"
+  ],
+  "Last processed zxid set prematurely while establishing leadership": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "server1fails to join the ensemble(server2: leader server3: follower)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Scenario:",
+        "server1 cannot join the ensemble which consists of server2 and server3.",
+        "In server1’s log, we find that the following logs keeps printing:",
+        "2010-07-15 02:39:43,105 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FileSnap@82] - Reading snapshot /data/zookeeper/version-2/snapshot.2300001ac2",
+        "2010-07-15 02:39:43,321 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@649] -New election. My id = 1, Proposed zxid = 154618826848",
+        "2010-07-15 02:39:43,322 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@689] - Notification: 1,154618826848,4, 1, LOOKING, LOOKING,1",
+        "...",
+        "2010-07-15 02:39:43,325 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@799] - Notification: 2,146030952153,3, 1, LOOKING, LEADING,2",
+        "2010-07-15 02:39:43,326 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@799] - Notification: 2,146030952153,3, 1, LOOKING, FOLLOWING,3",
+        "2010-07-15 02:39:43,326 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:QuorumPeer@642] - FOLLOWING",
+        "...",
+        "2010-07-15 02:39:43,339 -FATAL[QuorumPeer:/0:0:0:0:0:0:0:0:2181:Follower@71] - Leader epoch23is less than our epoch24",
+        "2010-07-15 02:39:43,339 -WARN[QuorumPeer:/0:0:0:0:0:0:0:0:2181:Follower@82] - Exception when following the leader",
+        "java.io.IOException: Error: Epoch of leader is lower",
+        "at org.apache.zookeeper.server.quorum.Follower.followLeader(Follower.java:73)",
+        "at org.apache.zookeeper.server.quorum.QuorumPeer.run(QuorumPeer.java:644)",
+        "2010-07-15 02:39:43,340 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:Follower@166] - shutdown called",
+        "java.lang.Exception: shutdown Follower",
+        "at org.apache.zookeeper.server.quorum.Follower.shutdown(Follower.java:166)",
+        "at org.apache.zookeeper.server.quorum.QuorumPeer.run(QuorumPeer.java:648)",
+        "2010-07-15 02:39:43,340 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:QuorumPeer@620] - LOOKING",
+        "The logs above show that every time when server1 starts leader election, it will soon fail with the FATAL: “Leader epoch 23 is less than our epoch 24”, and this process repeats. The notifications from server2 and server3 show that server2 is leader, and server3 is follower."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Since server1 rejects the current leader (server2) due to the wrong epoch “Leader epoch 23 is less than our epoch 24”, we need to figure out why server1’s epoch is 24. Then we find the related logs on server1 from its restart.",
+      "These timestamps show where the follower was stopped. It also shows when it was turned back on.",
+      "2010-07-15 02:35:36,398 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:NIOServerCnxn@1661] - Established session 0x229aa13cfc6276b with negotiated timeout 10000 for client /10.209.45.114:34562",
+      "2010-07-15 02:39:18,907 - INFO [main:QuorumPeerConfig@90] - Reading configuration from: /etc/zookeeper/conf/zoo.cfg",
+      "(2.2)",
+      "2010-07-15 02:39:20,072 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:QuorumPeer@620] -LOOKING",
+      "2010-07-15 02:39:20,074 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@649] - New election. My id = 1, Proposed zxid =150323862210epoch: 0x23",
+      "...",
+      "2010-07-15 02:39:20,077 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@689] - Notification: 1,150323862210, 1, 1, LOOKING, LOOKING,1epoch: 0x23",
+      "2010-07-15 02:39:20,087 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@689] - Notification: 2,146030952153, 3, 1, LOOKING, LOOKING,2epoch: 0x22",
+      "...",
+      "2010-07-15 02:39:20,088 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@689] - Notification: 3,146030952153, 3, 1, LOOKING, LOOKING,3epoch: 0x22",
+      "...",
+      "2010-07-15 02:39:20,089 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:QuorumPeer@654] –LEADING",
+      "When server1 restarts, it goes into LOOKING state, and initiates leader election by executing lookForLeader().",
+      "From the log, we know that after the election, server1 goes into LEADING state, and will executes leader.lead().",
+      "",
+      "(2.3) In leader.lead(), both the epoch and zxid will increase and the zxid will be written into the database.",
+      "before: server1’s zxid: 150323862210 epoch: the highest 6 bits (10,0011) i.e., 0x23",
+      "then: server1’s epoch increases: 10,0100 i.e., 0x24, zxid: 154618826848",
+      "Then in the while loop, server1 will verify the quorum by receiving ack from the other peers within a limited time period.",
+      "",
+      "Then we see the following log, which means that server1 fails to get quorum verifier.",
+      "2010-07-15 02:39:43,083 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:Leader@390] - Shutdown called",
+      "java.lang.Exception: shutdown Leader! reason:Waiting for a quorum of followers, only synced with: 1:",
+      "at org.apache.zookeeper.server.quorum.Leader.shutdown(Leader.java:390)",
+      "at org.apache.zookeeper.server.quorum.Leader.lead(Leader.java:314)",
+      "at org.apache.zookeeper.server.quorum.QuorumPeer.run(QuorumPeer.java:657)",
+      "However, the zxid has already been updated before the leader could connect to a quorum of followers.",
+      "(2.4) After this, server1 will exit LEADING state, and goes into LOOKING state again, then starts leader election and fails soon. The following process repeats.",
+      "2010-07-15 02:39:43,085 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:QuorumPeer@620] - LOOKING",
+      "2010-07-15 02:39:43,105 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FileSnap@82] - Reading snapshot /data/zookeeper/version-2/snapshot.2300001ac2",
+      "2010-07-15 02:39:43,321 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@649] -New election. My id = 1, Proposed zxid = 154618826848",
+      "2010-07-15 02:39:43,322 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@689] - Notification: 1,154618826848, 4, 1, LOOKING, LOOKING,1",
+      "...",
+      "2010-07-15 02:39:43,325 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@799] - Notification: 2,146030952153, 3, 1, LOOKING, LEADING,2",
+      "2010-07-15 02:39:43,326 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:FastLeaderElection@799] - Notification: 2,146030952153, 3, 1, LOOKING, FOLLOWING,3",
+      "2010-07-15 02:39:43,326 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:QuorumPeer@642] -FOLLOWING",
+      "...",
+      "2010-07-15 02:39:43,339 -FATAL[QuorumPeer:/0:0:0:0:0:0:0:0:2181:Follower@71] - Leader epoch23is less than our epoch24",
+      "2010-07-15 02:39:43,339 -WARN[QuorumPeer:/0:0:0:0:0:0:0:0:2181:Follower@82] - Exception when following the leader",
+      "java.io.IOException: Error: Epoch of leader is lower",
+      "at org.apache.zookeeper.server.quorum.Follower.followLeader(Follower.java:73)",
+      "at org.apache.zookeeper.server.quorum.QuorumPeer.run(QuorumPeer.java:644)",
+      "2010-07-15 02:39:43,340 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:Follower@166] - shutdown called",
+      "java.lang.Exception: shutdown Follower",
+      "at org.apache.zookeeper.server.quorum.Follower.shutdown(Follower.java:166)",
+      "at org.apache.zookeeper.server.quorum.QuorumPeer.run(QuorumPeer.java:648)",
+      "2010-07-15 02:39:43,340 - INFO [QuorumPeer:/0:0:0:0:0:0:0:0:2181:QuorumPeer@620] - LOOKING",
+      "From the log, we see that after server1 initiates leader election, it goes into FOLLOWING state first, then fails with FATAL.",
+      "",
+      "In followLeader(), server1 will check if the leader zxid is lower that its zxid.",
+      "",
+      "Then server1 will goes into LOOKING state in QuorumPeer.run(), and the same story repeats."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When the server goes into LEADING state, and executes Leader.lead(), it sets the last processed zxid to the new epoch even before connecting to a quorum of followers. Once this server drops leadership, it has a higher zxid than the other peers. Consequently, it rejects current leader and goes back to LOOKING state again and it will never join the ensemble."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The patch moves two function calls (zk.startup()andzk.getZKDatabase().setlastProcessedZxid()) so that a leader only starts up and sets the last processed zxid after it has a quorum of supporters.",
+      "Fix the root cause.",
+      "• src/java/main/org/apache/zookeeper/server/quorum/Leader.java",
+      "",
+      "",
+      "",
+      "• src/java/main/org/apache/zookeeper/server/NIOServerCnxn.java",
+      "class NIOServerCnxn",
+      "",
+      "",
+      "",
+      "Move the initialization of the database in startup() to startdata().",
+      "“There are two reasons for doing it. First, it didn't sound like a good idea to throw exceptions or catch exceptions in processAck, and they were only necessary because of the call to startup(). Second, the method startup() in ZooKeeperServer throws these exceptions because of loadData(), which is called separately in Leader.lead(), so it is not necessary to call it in processAck after hearing from a quorum.”",
+      "• src/java/main/org/apache/zookeeper/server/ZooKeeperServer.java",
+      "",
+      "• src/java/main/org/apache/zookeeper/server/quorum/LearnerHandler.java",
+      "",
+      "It waits in LearnerHandler.run() until the leader ready before it starts the while(true) loop. It also had to receive an ack before executing the code to wait, otherwise the leader would never receive acks and form a quorum, thuscausing the system to halt.",
+      "",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "zk servers.",
+      ""
+    ]
+  }
+}

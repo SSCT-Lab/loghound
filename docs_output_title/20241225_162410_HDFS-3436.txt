@@ -1,0 +1,134 @@
+{
+  "p": [
+    "HDFS-3436"
+  ],
+  "adding new datanode to existing pipeline fails in case of Append/Recovery": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "DFSClient (client-side)asksDN1(or DN2)(server-side)to transfer block",
+        "DN1(or DN2) (client-side)transfers block toDN4(server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Senario: There are 4 DNs in the cluster; File is written to 3DNs, DN1->DN2->DN3; Stop DN3; Now append is called.",
+        "DFSClient:",
+        "2012-04-24 22:06:09,947INFO hdfs.DFSClient (DFSOutputStream.java:createBlockOutputStream(1063)) - Exception in createBlockOutputStream",
+        "java.io.IOException: Bad connect ack with firstBadLink as *******:50010",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.createBlockOutputStream(DFSOutputStream.java:1053)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.setupPipelineForAppendOrRecovery(DFSOutputStream.java:943)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.run(DFSOutputStream.java:461)",
+        "After append is called, it finds that DN3 is broken when set up the pipeline for append",
+        "2012-04-24 22:06:09,947WARN hdfs.DFSClient (DFSOutputStream.java:setupPipelineForAppendOrRecovery(916)) -Error Recoveryfor block BP-1023239-10.18.40.233-1335275282109:blk_296651611851855249_1253 in pipeline *****:50010, ******:50010, *****:50010:bad datanode******:50010(DN3)",
+        "Since there is a bad datanode(DN3) in pipeline, it starts error recovery for the block.",
+        "2012-04-24 22:06:10,072WARN hdfs.DFSClient (DFSOutputStream.java:run(549)) - DataStreamer Exception",
+        "java.io.EOFException: Premature EOF: no length prefix available",
+        "at org.apache.hadoop.hdfs.protocol.HdfsProtoUtil.vintPrefixed(HdfsProtoUtil.java:162)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.transfer(DFSOutputStream.java:866)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.addDatanode2ExistingPipeline(DFSOutputStream.java:843)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.setupPipelineForAppendOrRecovery(DFSOutputStream.java:934)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.run(DFSOutputStream.java:461)",
+        "When setup the pipeline for recovery, a new datanode DN4 will be added to the pipeline, then the block will be transferred from DN1(or DN2) to DN4.",
+        "During this recovery, EOF exception happens. When “Premature EOF: no length prefix available” occurs, it is likely that DataNode has stopped the data transfer, and it does not respond to DFSClient, so DFSClient will not be able to write and read data.",
+        "2012-04-24 22:06:10,072WARN hdfs.DFSClient (DFSOutputStream.java:hflush(1515)) - Error while syncing",
+        "java.io.EOFException: Premature EOF: no length prefix available",
+        "at org.apache.hadoop.hdfs.protocol.HdfsProtoUtil.vintPrefixed(HdfsProtoUtil.java:162)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.transfer(DFSOutputStream.java:866)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.addDatanode2ExistingPipeline(DFSOutputStream.java:843)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.setupPipelineForAppendOrRecovery(DFSOutputStream.java:934)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.run(DFSOutputStream.java:461)",
+        "java.io.EOFException: Premature EOF: no length prefix available",
+        "at org.apache.hadoop.hdfs.protocol.HdfsProtoUtil.vintPrefixed(HdfsProtoUtil.java:162)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.transfer(DFSOutputStream.java:866)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.addDatanode2ExistingPipeline(DFSOutputStream.java:843)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.setupPipelineForAppendOrRecovery(DFSOutputStream.java:934)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.run(DFSOutputStream.java:461)",
+        "Now append to file fails due to addDatanode2ExistingPipeline is failed.",
+        "DataNode side: (the log is from DN1 or DN2, which is assigned to transfer the block to DN4)",
+        "2012-05-17 15:39:12,261ERRORdatanode.DataNode (DataXceiver.java:run(193)) - host0.foo.com:49744:DataXceiver error processing TRANSFER_BLOCK operation src: /127.0.0.1:49811 dest: /127.0.0.1:49744",
+        "java.io.IOException: BP-2001850558-xx.xx.xx.xx-1337249347060:blk_-8165642083860293107_1002 is neither a RBW nor a Finalized, r=ReplicaBeingWritten, blk_-8165642083860293107_1003, RBW",
+        "getNumBytes() = 1024",
+        "getBytesOnDisk() = 1024",
+        "getVisibleLength()= 1024",
+        "getVolume() = E:\\MyWorkSpace\\branch-2\\Test\\build\\test\\data\\dfs\\data\\data1\\current",
+        "getBlockFile() = E:\\MyWorkSpace\\branch-2\\Test\\build\\test\\data\\dfs\\data\\data1\\current\\BP-2001850558-xx.xx.xx.xx-1337249347060\\current\\rbw\\blk_-8165642083860293107",
+        "bytesAcked=1024",
+        "bytesOnDisk=102",
+        "at org.apache.hadoop.hdfs.server.datanode.DataNode.transferReplicaForPipelineRecovery(DataNode.java:2038)",
+        "at org.apache.hadoop.hdfs.server.datanode.DataXceiver.transferBlock(DataXceiver.java:525)",
+        "at org.apache.hadoop.hdfs.protocol.datatransfer.Receiver.opTransferBlock(Receiver.java:114)",
+        "at org.apache.hadoop.hdfs.protocol.datatransfer.Receiver.processOp(Receiver.java:78)",
+        "at org.apache.hadoop.hdfs.server.datanode.DataXceiver.run(DataXceiver.java:189)",
+        "at java.lang.Thread.run(Unknown Source)",
+        ""
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Based on the Iog from DataNode, we see that DN1 (or DN2) is assigned to transfer the block with GengenerationStamp (GS) 1002, but it only has the version with GS 1003 for this block.",
+      "Based on the callstack from DFSClient side, we can get the control flow. Combined with the related source code, we can figure out the details when executing the append operation.",
+      "1) When the file is written to 3DNs: DN1->DN2->DN3, GS for these blocks is 1002.",
+      "2) Now DN3 is stopped.",
+      "3) Now append is called. For this append, Client will try to create the pipeline DN1->DN2->DN3.",
+      "At this time, function setupPipelineForAppendOrRecovery() is called for append.",
+      "3.a) GS will be updated in DataNode’s volumeMap to 1003.",
+      "3.b) Datanode will try to connect to next DN in pipeline. Since DN3 is down, the IOException will be thrown and it finds DN3 is broken (“Bad connect ack with firstBadLinkas *******:50010”). Now the GS in DN1 and DN2 is already updated to 1003, but DFSClient has not updated it (still 1002).",
+      "4) Now DFSClient will try to rebuild the pipeline. At this time, function setupPipelineForAppendOrRecovery() is called for recovery, and a new datanode DN4 is added to the pipeline. Then client will ask DN1 or DN2 to transfer the block to DN4 with GS 1002.",
+      "5) Since DN1 and DN2 do not have block with GS 1002, so transfer will fail and DFSClient append will also fail. That is, the IOException occurrs in DN side “java.io.IOException: BP-2001850558-xx.xx.xx.xx-1337249347060:blk_-8165642083860293107_1002 is neither a RBW nor a Finalized, …” leads to client side “EOFException: Premature EOF: no length prefix available”."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When DFSClient tries to recover the pipeline for append, a new DN is added. But client asks the existing DN to transfer the block to DN4 with an incorrect GS, so the DN which is assigned to transfer the block fails."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "When DataNode transfers replica, it should first call getStoredBlock() to get the block which is already stored on it, then use the stored block to call isValidRbw() and isValidBlock().",
+      "This patch will eliminate the DataNode-side IOException, as a result, client side will not fail.",
+      "• hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/DataNode.java",
+      "/*** Transfer a replica to the datanode targets.*/voidtransferReplicaForPipelineRecovery(finalExtendedBlock b,finalDatanodeInfo[] targets,finalString client)throwsIOException {final longstoredGS;final longvisible;finalBlockConstructionStage stage;//get replica information",
+      "synchronized(data) {",
+      "+Block storedBlock = data.getStoredBlock(b.getBlockPoolId(),",
+      "+b.getBlockId());",
+      "+if (null == storedBlock) {",
+      "+throw new IOException(b + \" not found in datanode.\");",
+      "+}",
+      "+storedGS = storedBlock.getGenerationStamp();",
+      "+if (storedGS < b.getGenerationStamp()) {",
+      "+throw new IOException(storedGS",
+      "++ \" = storedGS < b.getGenerationStamp(), b=\" + b);",
+      "+}",
+      "+// Update the genstamp with storedGS",
+      "+b.setGenerationStamp(storedGS);",
+      "if(data.isValidRbw(b)) {stage = BlockConstructionStage.TRANSFER_RBW;}else if(data.isValidBlock(b)) {stage = BlockConstructionStage.TRANSFER_FINALIZED;}else{finalString r =data.getReplicaString(b.getBlockPoolId(), b.getBlockId());throw newIOException(b +\" is neither a RBW nor a Finalized, r=\"+ r);}",
+      "-storedGS =data.getStoredBlock(b.getBlockPoolId(),-b.getBlockId()).getGenerationStamp();-if(storedGS < b.getGenerationStamp()) {-throw newIOException(-storedGS +\" = storedGS < b.getGenerationStamp(), b=\"+ b);-}visible =data.getReplicaVisibleLength(b);}--//set storedGS and visible length-b.setGenerationStamp(storedGS);",
+      "+//set visible lengthb.setNumBytes(visible);",
+      "if(targets.length>0) {newDataTransfer(targets, b, stage, client).run();}}"
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch is in DataNodes."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "DataStreamer.run()",
+      "/** streamer thread is the only thread that opens streams to datanode,* and closes them. Any error recovery is also done by this thread.*/public voidrun() {…while(!streamerClosed&&dfsClient.clientRunning) {// if the Responder encountered an error, shutdown Responderif(hasError&&response!=null) {…}Packet one =null;try{// process datanode IO errors if anybooleandoSleep =false;if(hasError&&errorIndex>=0) { doSleep = processDatanodeError(); }synchronized(dataQueue) {// wait for a packet to be sent.longnow = System.currentTimeMillis();while((!streamerClosed&& !hasError&&dfsClient.clientRunning&&dataQueue.size() ==0&&(stage!= BlockConstructionStage.DATA_STREAMING||stage== BlockConstructionStage.DATA_STREAMING&&now - lastPacket <dfsClient.getConf().socketTimeout/2)) || doSleep ) {…try{dataQueue.wait(timeout);}catch(InterruptedException e) { }doSleep =false;now = System.currentTimeMillis();}// whileif(streamerClosed||hasError|| !dfsClient.clientRunning) {continue; }// get packet to be sent.if(dataQueue.isEmpty()) {…// heartbeat packet}else{…// regular data packet}}//synchronizedassertone !=null;// get new block from namenode.if(stage== BlockConstructionStage.PIPELINE_SETUP_CREATE) {…}else if(stage== BlockConstructionStage.PIPELINE_SETUP_APPEND) {…",
+      "setupPipelineForAppendOrRecovery();initDataStreaming();}…// send the packetByteBuffer buf = one.getBuffer();synchronized(dataQueue) {…// move packet from dataQueue to ackQueue}…// write out data to remote datanodeblockStream.write(buf.array(), buf.position(), buf.remaining());blockStream.flush();lastPacket = System.currentTimeMillis();…if(streamerClosed||hasError|| !dfsClient.clientRunning) {continue; }…",
+      "}catch(Throwable e) { DFSClient.LOG.warn(\"DataStreamer Exception\", e);if(einstanceofIOException) { setLastException((IOException)e); }hasError=true;if(errorIndex== -1) {// not a datanode errorstreamerClosed=true;}}}// whilecloseInternal();}",
+      "DataStreamer. setupPipelineForAppendOrRecovery()private booleansetupPipelineForAppendOrRecovery()throwsIOException {// check number of datanodesif(nodes==null||nodes.length==0) {String msg =\"Could not get block locations. \"+\"Source file\\\"\"+src+\"\\\"- Aborting...\";DFSClient.LOG.warn(msg);setLastException(newIOException(msg));streamerClosed=true;return false;}",
+      "booleansuccess =false;longnewGS =0L;while(!success && !streamerClosed&&dfsClient.clientRunning) {booleanisRecovery =hasError;// remove bad datanode from list of datanodes.// If errorIndex was not set (i.e. appends), then do not remove// any datanodesif(errorIndex>=0) {StringBuilder pipelineMsg =newStringBuilder();for(intj =0; j <nodes.length; j++) {pipelineMsg.append(nodes[j]);if(j <nodes.length-1) {pipelineMsg.append(\", \");}}if(nodes.length<=1) {lastException=newIOException(\"All datanodes \"+ pipelineMsg +\" are bad. Aborting...\");streamerClosed=true;return false;}DFSClient.LOG.warn(\"Error Recovery for block \"+block+\" in pipeline \"+ pipelineMsg +\": bad datanode \"+nodes[errorIndex]);failed.add(nodes[errorIndex]);DatanodeInfo[] newnodes =newDatanodeInfo[nodes.length-1];System.arraycopy(nodes,0, newnodes,0,errorIndex);System.arraycopy(nodes,errorIndex+1, newnodes,errorIndex, newnodes.length-errorIndex);nodes= newnodes;hasError=false;lastException=null;errorIndex= -1;}",
+      "// Check if replace-datanode policy is satisfied.if(dfsClient.dtpReplaceDatanodeOnFailure.satisfy(blockReplication,nodes,isAppend,isHflushed)) {addDatanode2ExistingPipeline();}",
+      "// get a new generation stamp and an access tokenLocatedBlock lb =dfsClient.namenode.updateBlockForPipeline(block,dfsClient.clientName);newGS = lb.getBlock().getGenerationStamp();accessToken= lb.getBlockToken();",
+      "// set up the pipeline again with the remaining nodessuccess =createBlockOutputStream(nodes, newGS, isRecovery);",
+      "}// while",
+      "if(success) {// update pipeline at the namenodeExtendedBlock newBlock =newExtendedBlock(block.getBlockPoolId(),block.getBlockId(),block.getNumBytes(), newGS);dfsClient.namenode.updatePipeline(dfsClient.clientName,block, newBlock,nodes);// update client side generation stampblock= newBlock;}return false;// do not sleep, continue processing}",
+      "",
+      ""
+    ]
+  }
+}

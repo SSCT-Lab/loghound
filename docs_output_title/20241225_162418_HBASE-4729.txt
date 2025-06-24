@@ -1,0 +1,107 @@
+{
+  "p": [
+    "",
+    "HBase-4729"
+  ],
+  "Clash between region unassign and splitting kills the master": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster tries to unassgin the regionwhileRegionServer is splitting the region"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Description: “I was running an online alter while regions were splitting, and suddenly the master died and left my table half-altered.”",
+        "What killed the master: (HMaster log)",
+        "2011-11-02 17:06:44,428FATALorg.apache.hadoop.hbase.master.HMaster:Unexpected ZK exception creating node CLOSING",
+        "org.apache.zookeeper.KeeperException$NodeExistsException: KeeperErrorCode =NodeExistsfor /hbase/unassigned/f7e1783e65ea8d621a4bc96ad310f101",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:110)",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:42)",
+        "at org.apache.zookeeper.ZooKeeper.create(ZooKeeper.java:637)",
+        "at org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper.createNonSequential(RecoverableZooKeeper.java:459)",
+        "at org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper.create(RecoverableZooKeeper.java:441)",
+        "at org.apache.hadoop.hbase.zookeeper.ZKUtil.createAndWatch(ZKUtil.java:769)",
+        "at org.apache.hadoop.hbase.zookeeper.ZKAssign.createNodeClosing(ZKAssign.java:568)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.unassign(AssignmentManager.java:1722)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.unassign(AssignmentManager.java:1661)",
+        "at org.apache.hadoop.hbase.master.BulkReOpen$1.run(BulkReOpen.java:69)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "“A znode was created because the region server was splitting the region 4 seconds before:” (RS log)",
+        "2011-11-02 17:06:40,704 INFO org.apache.hadoop.hbase.regionserver.SplitTransaction:Starting split of regionTestTable,0012469153,1320253135043.f7e1783e65ea8d621a4bc96ad310f101.",
+        "2011-11-02 17:06:40,704 DEBUG org.apache.hadoop.hbase.regionserver.SplitTransaction: regionserver:62023-0x132f043bbde0710Creating ephemeral node forf7e1783e65ea8d621a4bc96ad310f101in SPLITTING state",
+        "2011-11-02 17:06:40,751 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:62023-0x132f043bbde0710 Attempting to transition nodef7e1783e65ea8d621a4bc96ad310f101from RS_ZK_REGION_SPLITTING to RS_ZK_REGION_SPLITTING",
+        "...",
+        "2011-11-02 17:06:44,061 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:62023-0x132f043bbde0710 Successfully transitioned nodef7e1783e65ea8d621a4bc96ad310f101from RS_ZK_REGION_SPLITTINGto RS_ZK_REGION_SPLIT",
+        "2011-11-02 17:06:44,061 INFO org.apache.hadoop.hbase.regionserver.SplitTransaction: Still waiting on the master to process the split forf7e1783e65ea8d621a4bc96ad310f101",
+        "“Now that the master is dead the region server is spewing those last two lines like mad.”"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) When the user is doing alter operation, HMaster will first unassign the corresponding region. From the callstack of NodeExistsException in HMaster log, we see that AssignmentManager.unassign() calls ZKAssign.createNodeClosing() to create a ZNode in ZK (/hbase/unassigned/f7e1783e65ea8d621a4bc96ad310f101) for regionf7e1783e65ea8d621a4bc96ad310f101. It fails since the ZNode for this region already exists, so ZK throws NodeExistsException, which makes HMaster abort.",
+      "(2.2) In RS log, the following INFO keeps printing (“spewing those last two lines like mad”) (a part of symptom)",
+      "2011-11-02 17:06:44,061 INFO org.apache.hadoop.hbase.regionserver.SplitTransaction: Still waiting on the master to process the split forf7e1783e65ea8d621a4bc96ad310f101",
+      "From RS log, we know that RS just finished splitting regionf7e1783e65ea8d621a4bc96ad310f101, and it is waiting HMaster to process the split: If HMaster successfully acknowledges the split region, it will delete the ZNode in ZK.",
+      "We also notice that in RS log, when RS is doing region split, it will first create a ZNode for this region. This ZNode leads to NodeExistsException when HMaster tries to unassign().",
+      "2011-11-02 17:06:40,704 DEBUG org.apache.hadoop.hbase.regionserver.SplitTransaction: regionserver:62023-0x132f043bbde0710 Creating ephemeral node for f7e1783e65ea8d621a4bc96ad310f101 in SPLITTING state",
+      "(2.3) From the related source code, we can get the following control flow:",
+      "",
+      "When RS is splitting the region, createDaughters() will call createNodeSplitting() to create a ZNode in ZK for this region. If the ZNode is created successfully, the ZooKeeperWatcher on HMaster will detect this event, and HMaster will add this region into its RIT(regionsInTransition) (callingaddSplittingToRIT()), which will modifyregionsInTransition.",
+      "When HMaster is doing region unassignment, if the current region in not in RIT, a ZNode will be created in ZK for this region. In this bug, it happens that when checking the RIT state of the region, addSplittingToRIT() (which is triggered by region splitting) has not been executed. So HMaster will create the ZNode for this region, which leads to NodeExistsException and HMaster abort.",
+      "On RS, when it finishes region splitting, it will call transitionZKNode() to tell HMaster about split by updating ZK (RS_ZK_REGION_SPLITTINGàRS_ZK_REGION_SPLIT). Triggered by the NodeDataChanged(), HMaster will call SplitRegionHandler to delete the corresponding ZNode. RS will periodically check if HMaster acknowledges the split by checking this.znodeVersion (when tickleNodeSplit returns -1 it means the ZNode does not exist).",
+      "Since HMaster aborts due to the exception, it will never delete the ZNode, which will make RS print “Still waiting on the master to process the split for...” continuously."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When RS is doing region splitting, HMaster tries to unassign this region. Because of the improper timing, the region has not been added into HMaster’s RIT (when splitting), so unassign() will create the ZNode for this region. Since the ZNode already exists (when splitting), ZK fails to create the ZNode and throws NodeExistsExcetpion, which makes HMaster abort.",
+      "On RS side, when it finishes splitting, it is waiting HMaster to delete the ZNode, since HMaster aborts, the ZNode will never be deleted, and RS keeps printing the “Still waiting on the master to process the split for...”."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Allow that a region may be in SPLITTING or SPLIT state when we try to put it in CLOSING state.",
+      "Skip unassign when splitting is being executed, and just make the unassign fail silently (without aborting HMaster)because we presume the region being unassigned no longer exists (it has been split out of existence).",
+      "Fix the exception handling. The main fix is in AssignmentManager.java",
+      "•src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      "Remove debugLog method. It is odd that the message log level would vary by the region. This methodis also used in other function in this file. Replacing all debugLog() with LOG.debug().",
+      "-private voiddebugLog(HRegionInfo region, String string) {-if(region.isMetaTable() || region.isRootRegion()) {-LOG.info(string);-}else{-LOG.debug(string);-}-}",
+      "",
+      "/*** Unassigns the specified region.*<p>",
+      "-* Updates the RegionState and sends the CLOSE RPC.+*Updates the RegionState and sends the CLOSE RPC unless region is being+*split by regionserver; then the unassign fails (silently) because we+*presume the region being unassigned no longer exists (its been split out+*of existence).TODO: What to do if split fails and is rolled back and+* parent is revivified?*<p>* If a RegionPlan is already set, it will remain.**@paramregionserver to be unassigned*/",
+      "public voidunassign(HRegionInfo region) { unassign(region,false); }",
+      "/*** Unassigns the specified region.*<p>",
+      "-* Updates the RegionState and sends the CLOSE RPC.+* Updates the RegionState and sends the CLOSE RPC unless region is being+* split by regionserver; then the unassign fails (silently) because we+* presume the region being unassigned no longer exists (its been split out+* of existence).TODO: What to do if split fails and is rolled back and+* parent is revivified?*<p>* If a RegionPlan is already set, it will remain.**@paramregionserver to be unassigned*@paramforceif region should be closed even if already closing*/public voidunassign(HRegionInfo region,booleanforce) {",
+      "-debugLog(region,\"Starting unassignment of region \"++//TODO: Method needs refactoring. Ugly buried returns throughout. Beware!+LOG.debug(\"Starting unassignment of region \"+region.getRegionNameAsString() +\" (offlining)\");synchronized(this.regions) {// Check if this region is currently assignedif(!regions.containsKey(region)) {",
+      "-debugLog(region,\"Attempted to unassign region \"++LOG.debug(\"Attempted to unassign region \"+region.getRegionNameAsString() +\" but it is not \"+\"currently assigned anywhere\");return;))String encodedName = region.getEncodedName();// Grab the state of this region and synchronize on itRegionState state;intversionOfClosingNode = -1;synchronized(regionsInTransition) {state =regionsInTransition.get(encodedName);if(state ==null) {// Create the znode in CLOSING statetry{versionOfClosingNode = ZKAssign.createNodeClosing(master.getZooKeeper(), region,master.getServerName());if(versionOfClosingNode == -1) {LOG.debug(\"Attempting to unassign region \"+region.getRegionNameAsString() +\" but ZK closing node \"+\"can't be created.\");return;}}catch(KeeperException e) {+if(einstanceofNodeExistsException) {+// Handle race between master initiated close and regionserver+// orchestrated splitting.See if existing node is in a+//SPLITTING or SPLIT state. If so, the regionserver started+//an op on node before we could get our CLOSING in. Deal.+NodeExistsException nee = (NodeExistsException)e;+String path = nee.getPath();+try{+if(isSplitOrSplitting(path)) {if current region is split or splitting, just skip unassign.+LOG.debug(path +\" is SPLIT or SPLITTING; \"++\"skipping unassign because region no longer exists -- its split\");+return;+}+}catch(KeeperException.NoNodeException ke) {This may fail if the SPLIT or SPLITTING znode gets cleaned up before we can get data from it.+LOG.warn(\"Failed getData on SPLITTING/SPLIT at \"+ path ++\"; presuming split and that the region to unassign, \"++encodedName +\", no longer exists -- confirm\", ke);+return;+}catch(KeeperException ke) {For unexpected zk exception, we should abort the master instead of logging error.+LOG.error(\"Unexpected zk state\", ke);+ke = e;+}+}+// If we get here, don't understand whats going on -- abort.master.abort(\"Unexpected ZK exception creating node CLOSING\", e);return;}state =newRegionState(region, RegionState.State.PENDING_CLOSE);regionsInTransition.put(encodedName, state);}else if(force && (state.isPendingClose() || state.isClosing())) {",
+      "-debugLog(region,",
+      "-\"Attempted to unassign region \"+ region.getRegionNameAsString() +",
+      "-\" which is already \"+ state.getState() +",
+      "-\" but forcing to send a CLOSE RPC again \");+LOG.debug(\"Attempting to unassign region \"+ region.getRegionNameAsString() ++\" which is already \"+ state.getState() ++\" but forcing to send a CLOSE RPC again \");state.update(state.getState());}else{",
+      "-debugLog(region, (\"Attempting to unassign region \"++LOG.debug(\"Attempting to unassign region \"+region.getRegionNameAsString() +\" but it is \"+-\"already in transition (\"+ state.getState() +\")\");",
+      "+\"already in transition (\"+ state.getState() +\", force=\"+ force +\")\");return;}}// Send CLOSE RPCServerName server =null;synchronized(this.regions) { server =regions.get(region); }try{//TODO: We should consider making this look more like it does for the// region open where we catch all throwables and never abortif(serverManager.sendRegionClose(server, state.getRegion(),versionOfClosingNode)) {",
+      "-debugLog(region,(\"Sent CLOSE to \"+ server +\" for region \"++LOG.debug(\"Sent CLOSE to \"+ server +\" for region \"+region.getRegionNameAsString());return;)",
+      "// This never happens. Currently regionserver close always return true.LOG.warn(\"Server \"+ server +\" region CLOSE RPC returned false for \"+region.getRegionNameAsString());)catch(NotServingRegionException nsre) {...}catch(Throwable t) {if(tinstanceofRemoteException) {t = ((RemoteException)t).unwrapRemoteException();if(tinstanceofNotServingRegionException) {...}// RS is already processing this region, only need to update the timestampif(tinstanceofRegionAlreadyInTransitionException) {",
+      "-debugLog(region,\"update \"+ state +\" the timestamp.\");+LOG.debug(\"update \"+ state +\" the timestamp.\");state.update(state.getState());}}LOG.info(\"Server \"+ server +\" returned \"+ t +\" for \"+ region.getEncodedName());// Presume retry or server will expire.}}",
+      "+/**",
+      "+*@parampath+*@returnTrue if znode is in SPLIT or SPLITTING state.+*@throwsKeeperException Can happen if the znode went away in meantime.+*/+private booleanisSplitOrSplitting(finalString path)throwsKeeperException {+booleanresult =false;+// This may fail if the SPLIT or SPLITTING znode gets cleaned up before we+// can get data from it.+RegionTransitionData data = ZKAssign.getData(master.getZooKeeper(), path);+EventType evt = data.getEventType();+switch(evt) {+caseRS_ZK_REGION_SPLIT:+caseRS_ZK_REGION_SPLITTING:+result =true;+break;+default:+break;+}+returnresult;+}",
+      "• src/main/java/org/apache/hadoop/hbase/regionserver/SplitTransaction.java",
+      "/*** Creates a new ephemeral node in the SPLITTING state for the specified region.* Create it ephemeral in case regionserver dies mid-split.**<p>Does not transition nodes from other states. If a node already exists* for this region, a {@linkNodeExistsException} will be thrown.**@paramzkwzk reference*@paramregionregion to be created as offline*@paramserverNameserver event originates from*@returnVersion of znode created.",
+      "+*@throwsKeeperException*@throwsIOException*/private static intcreateNodeSplitting(finalZooKeeperWatcher zkw,finalHRegionInfo region,finalServerName serverName)",
+      "Minor javadoc fix.",
+      "",
+      "• src/main/java/org/apache/hadoop/hbase/zookeeper/ZKTable.java",
+      "/*** Gets a list of all the tables set as disabled in zookeeper.*@throwsKeeperException*/private voidpopulateTableStates()throwsKeeperException {synchronized(this.cache) {List<String> children = ZKUtil.listChildrenNoWatch(this.watcher,this.watcher.tableZNode);+if(children ==null)return;for(String child: children) {TableState state =getTableState(this.watcher, child);if(state !=null)this.cache.put(child, state);}}}",
+      "Allow that enable/disable directory may not exist."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster"
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "p": [
+    "Cassandra-6098",
+    "NullPointerException causing query timeout"
+  ],
+  "(1) Log information": {
+    "p": [
+      "A common SELECT query could not be completed failing with.",
+      "Request did not complete within rpc_timeout.",
+      "output.log showed this:",
+      "ERROR 15:38:04,036 Exception in thread Thread[ReadStage:170,5,main]",
+      "java.lang.RuntimeException: java.lang.NullPointerException",
+      "at org.apache.cassandra.service.StorageProxy$DroppableRunnable.run(StorageProxy.java:1867)",
+      "at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)",
+      "at java.lang.Thread.run(Thread.java:724)",
+      "Caused by: java.lang.NullPointerException",
+      "at org.apache.cassandra.db.index.composites.CompositesIndexOnRegular.isStale(CompositesIndexOnRegular.java:97)",
+      "at org.apache.cassandra.db.index.composites.CompositesSearcher$1.computeNext(CompositesSearcher.java:247)",
+      "at org.apache.cassandra.db.index.composites.CompositesSearcher$1.computeNext(CompositesSearcher.java:102)",
+      "at com.google.common.collect.AbstractIterator.tryToComputeNext(AbstractIterator.java:143)",
+      "at com.google.common.collect.AbstractIterator.hasNext(AbstractIterator.java:138)",
+      "at org.apache.cassandra.db.ColumnFamilyStore.filter(ColumnFamilyStore.java:1651)",
+      "at org.apache.cassandra.db.index.composites.CompositesSearcher.search(CompositesSearcher.java:50)",
+      "at org.apache.cassandra.db.index.SecondaryIndexManager.search(SecondaryIndexManager.java:525)",
+      "at org.apache.cassandra.db.ColumnFamilyStore.search(ColumnFamilyStore.java:1639)",
+      "at org.apache.cassandra.db.RangeSliceCommand.executeLocally(RangeSliceCommand.java:135)",
+      "at org.apache.cassandra.service.StorageProxy$LocalRangeSliceRunnable.runMayThrow(StorageProxy.java:1358)",
+      "at org.apache.cassandra.service.StorageProxy$DroppableRunnable.run(StorageProxy.java:1863)"
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "This happens only when querying for some particular values on a secondary index.",
+      "Based on the line number in the stack trace, we can locate the statement where the NPE triggers.",
+      "public booleanisStale(IndexedEntry entry, ColumnFamilydata,longnow) CompositesIndexOnRegular.java",
+      "{",
+      "ByteBuffer bb = entry.indexedEntryNameBuilder.copy().add(columnDef.name).build();",
+      "Column liveColumn =data.getColumn(bb);",
+      "if(liveColumn ==null|| liveColumn.isMarkedForDelete(now))",
+      "return true;",
+      "",
+      "ByteBuffer liveValue = liveColumn.value();",
+      "returncolumnDef.getValidator().compare(entry.indexValue.key, liveValue) !=0;",
+      "}",
+      "Particularly, we can infer that the variable data is null referenced.",
+      "The value is passing from the parameters, and in the caller function of isStale(), we have the following:",
+      "privateColumnFamilyStore.AbstractScanIteratorgetIndexedIterator(finalExtendedFilter filter)",
+      "{...",
+      "return newColumnFamilyStore.AbstractScanIterator()",
+      "{...",
+      "protectedRowcomputeNext()",
+      "{...",
+      "while(true)",
+      "{...",
+      "while(!indexColumns.isEmpty() &&columnsCount<=limit)",
+      "{...",
+      "ColumnFamily newData =baseCfs.getColumnFamily(newQueryFilter(dk,baseCfs.name, dataFilter,filter.timestamp));",
+      "",
+      "-if(index.isStale(entry,newData, filter.timestamp))",
+      "+if(newData ==null||index.isStale(entry, newData,filter.timestamp))",
+      "{",
+      "index.delete(entry);",
+      "continue;",
+      "}",
+      "...",
+      "}",
+      "}",
+      "}",
+      "public voidclose()throwsIOException {}",
+      "};",
+      "}"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The null variable is referenced without checking."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fixing the error. Add null value check for the variable.",
+      "•/src/java/org/apache/cassandra/db/index/composites/CompositesSearcher.java",
+      "As shown in (2)",
+      "In index.isStale(), index could be one of the three: CompositesIndexOnRegular, CompositesIndexOnPartitionKey, and CompositesIndexOnClusteringKey.",
+      "There is no need to add value check inside the isStale().",
+      "•/src/java/org/apache/cassandra/db/index/composites/CompositesIndexOnPartitionKey.java",
+      "public booleanisStale(IndexedEntry entry, ColumnFamily data,longnow)",
+      "{",
+      "-returndata == null || data.hasOnlyTombstones(now);",
+      "+returndata.hasOnlyTombstones(now);",
+      "}",
+      "",
+      "•/src/java/org/apache/cassandra/db/index/composites/CompositesIndexOnClusteringKey.java",
+      "public booleanisStale(IndexedEntry entry, ColumnFamily data,longnow)",
+      "{",
+      "-returndata == null || data.hasOnlyTombstones(now);",
+      "+returndata.hasOnlyTombstones(now);",
+      "}",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

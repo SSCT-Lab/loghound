@@ -1,0 +1,128 @@
+{
+  "p": [
+    "MAPREDUCE-3531",
+    "Sometimes java.lang.IllegalArgumentException: Invalid key to HMAC computation in NODE_UPDATE also causing RM to stop scheduling"
+  ],
+  "(1) Log information": {
+    "p": [
+      "Started 350 cluster. Submmited large sleep job.",
+      "Found that job was not running as RM has not allocated resouces to it.",
+      "The following log comes from RM.",
+      "2011-12-01 11:56:25,200 INFO org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler: nodeUpdate: <NMHost>:48490 clusterResources: memory: 3225600",
+      "2011-12-01 11:56:25,202ERRORorg.apache.hadoop.yarn.server.resourcemanager.ResourceManager: Error in handling event",
+      "typeNODE_UPDATEto the scheduler",
+      "java.lang.IllegalArgumentException: Invalid key to HMAC computation",
+      "at org.apache.hadoop.security.token.SecretManager.createPassword(SecretManager.java:141)",
+      "at org.apache.hadoop.yarn.server.security.ContainerTokenSecretManager.createPassword(ContainerTokenSecretManager.java:61)",
+      "atorg.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.LeafQueue.createContainer(LeafQueue.java:1108)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.LeafQueue.getContainer(LeafQueue.java:1091)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.LeafQueue.assignContainer(LeafQueue.java:1137)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.LeafQueue.assignNodeLocalContainers(LeafQueue.java:1001)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.LeafQueue.assignContainersOnNode(LeafQueue.java:973)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.LeafQueue.assignContainers(LeafQueue.java:760)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.ParentQueue.assignContainersToChildQueues(ParentQueue.java:583)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.ParentQueue.assignContainers(ParentQueue.java:513)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler.nodeUpdate(CapacityScheduler.java:569)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler.handle(CapacityScheduler.java:611)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler.handle(CapacityScheduler.java:77)",
+      "at org.apache.hadoop.yarn.server.resourcemanager.ResourceManager$SchedulerEventDispatcher$EventProcessor.run(ResourceManager.java:294)",
+      "at java.lang.Thread.run(Thread.java:619)",
+      "Caused by: java.security.InvalidKeyException: Secret key expected",
+      "at com.sun.crypto.provider.HmacCore.a(DashoA13*..)",
+      "at com.sun.crypto.provider.HmacSHA1.engineInit(DashoA13*..)",
+      "at javax.crypto.Mac.init(DashoA13*..)",
+      "at org.apache.hadoop.security.token.SecretManager.createPassword(SecretManager.java:139)",
+      "... 14 more",
+      ""
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Based on the stack trace contained in the log, and the source code, we can get the following information.",
+      "ERROR is printed in SchedulerEventDispatcher$EventProcessor.run() in ResourceManager.java, when handling event NODE_UPDATE.",
+      "private final classEventProcessorimplementsRunnable {",
+      "@Override",
+      "public voidrun() {",
+      "SchedulerEvent event;",
+      "while(!Thread.currentThread().isInterrupted()) {",
+      "try{",
+      "event =eventQueue.take();",
+      "}catch(InterruptedException e) {",
+      "LOG.error(\"Returning, interrupted : \"+ e);return;//TODO: Kill RM.",
+      "}",
+      "try{",
+      "scheduler.handle(event);",
+      "}catch(Throwable t) {",
+      "LOG.error(\"Error in handling event type \"+ event.getType() +\" to the scheduler\", t);",
+      "return;//TODO: Kill RM.",
+      "}",
+      "}",
+      "}",
+      "}",
+      "",
+      "IllegalArgumentException is thrown by createPassword() in SecretManager.java",
+      "/**",
+      "* Compute HMAC of the identifier using the secret key and return the",
+      "* output as password",
+      "*@paramidentifierthe bytes of the identifier",
+      "*@paramkeythe secret key",
+      "*@returnthe bytes of the generated password",
+      "*/",
+      "protected static byte[]createPassword(byte[] identifier, SecretKey key) {",
+      "Mac mac =threadLocalMac.get();",
+      "try{",
+      "mac.init(key);",
+      "}catch(InvalidKeyException ike) {",
+      "throw newIllegalArgumentException(\"Invalid key to HMAC computation\",ike);",
+      "}",
+      "returnmac.doFinal(identifier);",
+      "}",
+      "",
+      "And SecretManager$ createPassword()is called by the following method in ContainerTokenSecretManager.java",
+      "Map<String, SecretKey>secretkeys=",
+      "newConcurrentHashMap<String, SecretKey>();",
+      "",
+      "public byte[] createPassword(ContainerTokenIdentifier identifier) {",
+      "LOG.debug(\"Creating password for \"+ identifier.getContainerID()",
+      "+\" to be run on NM \"+ identifier.getNmHostAddress() +\" \"",
+      "+this.secretkeys.get(identifier.getNmHostAddress()));",
+      "returncreatePassword(identifier.getBytes(),",
+      "this.secretkeys.get(identifier.getNmHostAddress()));",
+      "}",
+      "However, based on the limited log, it is difficult to figure out the root cause."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When multiple threads call createPassword() almost simultaneously, they all try to visit the variable secretkeys, this may cause data race since the variable is not threadsafe."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fixing the error.",
+      "Change secretkeys from HashMap to ConcurrentHashMap.",
+      "",
+      "The fixed file is on the stack trace.",
+      "•hadoop-mapreduce-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-common/src/main/java/org/apache/hadoop/yarn/server/security/ContainerTokenSecretManager.java",
+      "@@ -34,9 +34,9 @@ public class ContainerTokenSecretManager extends",
+      "private static Log LOG = LogFactory",
+      ".getLog(ContainerTokenSecretManager.class);",
+      "- private Map<String, SecretKey> secretkeys =",
+      "- new HashMap<String, SecretKey>();",
+      "-",
+      "+ Map<String, SecretKey>secretkeys=",
+      "+ newConcurrentHashMap<String, SecretKey>();",
+      "+",
+      "// Used by master for generation of secretyKey per host",
+      "public SecretKey createAndGetSecretKey(CharSequence hostName) {",
+      "String hostNameStr = hostName.toString();",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch will work on RM",
+      ""
+    ]
+  }
+}

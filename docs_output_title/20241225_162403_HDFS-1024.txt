@@ -1,0 +1,149 @@
+{
+  "p": [
+    "HDFS-1024"
+  ],
+  "SecondaryNamenode fails to checkpoint because namenode fails with CancelledKeyException": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "SecondaryNameNode (client-side) NameNode (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "SecondaryNameNode (2NN) periodically fetches the namespace image (file fsimage) and the edit logs (file edits) from NameNode (NN), and merge them into a new image file, then send it back to NN. And the error happens when 2NN is fetching files from NN.",
+        "NN fails with CancelledKeyException. The NN log shows the following:",
+        "WARN org.mortbay.log: Committed before 410 GetImage failed. java.nio.channels.CancelledKeyException",
+        "at sun.nio.ch.SelectionKeyImpl.ensureValid(SelectionKeyImpl.java:55)",
+        "at sun.nio.ch.SelectionKeyImpl.interestOps(SelectionKeyImpl.java:59)",
+        "at org.mortbay.io.nio.SelectChannelEndPoint.updateKey(SelectChannelEndPoint.java:324)",
+        "at org.mortbay.io.nio.SelectChannelEndPoint.blockWritable(SelectChannelEndPoint.java:278)",
+        "at org.mortbay.jetty.AbstractGenerator$Output.blockForOutput(AbstractGenerator.java:542)",
+        "at org.mortbay.jetty.AbstractGenerator$Output.flush(AbstractGenerator.java:569)",
+        "at org.mortbay.jetty.HttpConnection$Output.flush(HttpConnection.java:946)",
+        "at org.mortbay.jetty.AbstractGenerator$Output.write(AbstractGenerator.java:646)",
+        "at org.mortbay.jetty.AbstractGenerator$Output.write(AbstractGenerator.java:577)",
+        "at org.apache.hadoop.hdfs.server.namenode.TransferFsImage.getFileServer(TransferFsImage.java:127)",
+        "at org.apache.hadoop.hdfs.server.namenode.GetImageServlet.doGet(GetImageServlet.java:49)",
+        "at javax.servlet.http.HttpServlet.service(HttpServlet.java:707)",
+        "at javax.servlet.http.HttpServlet.service(HttpServlet.java:820)",
+        "at org.mortbay.jetty.servlet.ServletHolder.handle(ServletHolder.java:502)",
+        "at org.mortbay.jetty.servlet.ServletHandler.handle(ServletHandler.java:363)",
+        "at org.mortbay.jetty.security.SecurityHandler.handle(SecurityHandler.java:216)",
+        "at org.mortbay.jetty.servlet.SessionHandler.handle(SessionHandler.java:181)",
+        "at org.mortbay.jetty.handler.ContextHandler.handle(ContextHandler.java:766)",
+        "at org.mortbay.jetty.webapp.WebAppContext.handle(WebAppContext.java:417)",
+        "at org.mortbay.jetty.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:230)",
+        "at org.mortbay.jetty.handler.HandlerWrapper.handle(HandlerWrapper.java:152)",
+        "at org.mortbay.jetty.Server.handle(Server.java:324)",
+        "at org.mortbay.jetty.HttpConnection.handleRequest(HttpConnection.java:534)",
+        "at org.mortbay.jetty.HttpConnection$RequestHandler.headerComplete(HttpConnection.java:864)",
+        "at org.mortbay.jetty.HttpParser.parseNext(HttpParser.java:533)",
+        "at org.mortbay.jetty.HttpParser.parseAvailable(HttpParser.java:207)",
+        "at org.mortbay.jetty.HttpConnection.handle(HttpConnection.java:403)",
+        "at org.mortbay.io.nio.SelectChannelEndPoint.run(SelectChannelEndPoint.java:409)",
+        "at org.mortbay.thread.QueuedThreadPool$PoolThread.run(QueuedThreadPool.java:522)",
+        "The 2NN log is as follows:",
+        "2010-03-03 23:33:05,598 INFO org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode: Downloadedfile fsimagesize2337800192bytes.",
+        "2010-03-03 23:38:50,550 INFO org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode: Downloaded file edits size 254702213 bytes.",
+        "The 2NN log shows that it believes that the fsimage is only about 2 GB. The size of the actual fsimage was more than 8 GB, but 2NN pulled in only 2.33 GB of that file.",
+        "2NN does not detect the case that the transfer of the fsimage file was incomplete. And it will proceed ahead with the checkpoint."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) In the call stack from NN’s log, we see thatCancelledKeyExceptionoccurs when TransferFsImage.getFileServer() is called by GetImageServlet .doGet().",
+      "·CancelledKeyException throws when an attempt is made to use a selection key that is no longer valid.",
+      "·class GetImageServlet is used in Namesystem's jetty to retrieve a file. Typically used by the Secondary NameNode to retrieve image and edit file for periodic checkpointing.",
+      "·TransferFsImage.getFileServer() is a server-side method to respond to a getfile http request. Copy the contents of the local file into the output stream.",
+      "However, the CancelledKeyException happens in the under layer communication, and it is hard to find the error reason.",
+      "(2.2) Although there are no logs provided showing the following state of 2NN, we can infer that when 2NN is merging the fsimage and edit logs, there must be some errors due to the imcomplete fsimage."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When CancelledKeyException happens during the fsimage transfer, 2NN fetches a part of the fsimage but does not detect it and proceeds ahead with the checkpoint, which will fail later."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "In 2NN.doCheckpoint(), after NN executing rollEditLog(), it will return a CheckpointSignature “sig”.",
+      "So the idea of the patch is: this “sig” should include the size of the fsimage, then the 2NN can validate whether the size of the fsimage that it downloads from the NN matches the value stored in the “sig”.",
+      "voiddoCheckpoint()throwsIOException {",
+      "startCheckpoint();// Do the required initialization of the merge work area.",
+      "// Tell the namenode to start logging transactions in a new edit file// Retuns a token that would be used to upload the merged image.CheckpointSignaturesig= (CheckpointSignature)namenode.rollEditLog();…downloadCheckpointFiles(sig);// Fetch fsimage and editsdoMerge(sig);// Do the mergeputFSImage(sig);// Upload the new image into the NameNode.",
+      "…namenode.rollFsImage();checkpointImage.endCheckpoint();LOG.warn(\"Checkpoint done. New Image Size: \"+…);}",
+      "",
+      "The fixes are as follows:",
+      "·TransferFsImage.java",
+      "ogetFileServer() : the fix is for testing, this function is called by GetImageServlet.doGet() when NN sends data(on NN’s call stack)",
+      "ogetFileClient(): client side parses and validate Content-Length(not on the call stack)",
+      "·GetImageServlet.java, doGet(): server side set the Content-Length when sending data(on NN’s call stack)",
+      "• src/hdfs/org/apache/hadoop/hdfs/server/namenode/TransferFsImage.java",
+      "//This class provides fetching a specified file from the NameNode.classTransferFsImageimplementsFSConstants {",
+      "+public final staticStringCONTENT_LENGTH=\"Content-Length\";+",
+      "private booleanisGetImage;",
+      "/*** A server-side method to respond to a getfile http request* Copies the contents of the local file into the output stream.*/static voidgetFileServer(OutputStream outstream, File localfile)throwsIOException {…try{infile =newFileInputStream(localfile);if(ErrorSimulator.getErrorSimulation(2)&& localfile.getAbsolutePath().contains(\"secondary\")) {// throw exception only when the secondary sends its imagethrow newIOException(\"If this exception is not caught by the \"+\"name-node fs image will be truncated.\");}++if(ErrorSimulator.getErrorSimulation(3)this code is for testing+&& localfile.getAbsolutePath().contains(\"fsimage\")) {+// Test sending image shorter than localfile+longlen = localfile.length();+buf =new byte[(int)Math.min(len/2,BUFFER_SIZE)];+// This will read at most half of the image+// and the rest of the image will be sent over the wire+infile.read(buf);+}…",
+      "}finally{if(infile !=null) { infile.close(); }}}",
+      "/*** Client-side Method to fetch file from a server* Copies the response from the URL to a list of local files.*/static voidgetFileClient(String fsName, String id, File[] localPath)throwsIOException {",
+      "…",
+      "// open connection to remote serverURL url =newURL(str.toString());URLConnection connection = url.openConnection();+longadvertisedSize;+String contentLength = connection.getHeaderField(CONTENT_LENGTH);+if(contentLength !=null) {2NN parses the Conten-Length contained in the HTTP header+advertisedSize = Long.parseLong(contentLength);+}else{+throw newIOException(CONTENT_LENGTH+\" header is not provided \"++\"by the namenode when trying to fetch \"+ str);+}+longreceived =0;InputStream stream = connection.getInputStream();FileOutputStream[] output =null;try{…// read the data from NN",
+      "}finally{stream.close();if(output !=null) {…}+if(received != advertisedSize) {On the client side(2NN), once the read is over we check if the number of bytes we read is equal to that advertised in Content-Length and throw IOException if it is not.+throw newIOException(\"File \"+ str +\" received length \"+ received ++\" is not of the advertised size \"++advertisedSize);+}}//finally}",
+      "how this IOException is handled, referring (6).",
+      "",
+      "•src/hdfs/org/apache/hadoop/hdfs/server/namenode/GetImageServlet.java",
+      "When 2NN requests image and edit file, on NN side, GetImageServlet.doGet() will be used in Namesystem's jetty to retrieve a file. Therefore, set Content-Length as a general HTTP header.",
+      "",
+      "public voiddoGet(HttpServletRequest request, HttpServletResponse response)",
+      "throwsServletException, IOException {…",
+      "try{",
+      "ServletContext context = getServletContext();",
+      "FSImage nnImage = (FSImage)context.getAttribute(\"name.system.image\");",
+      "TransferFsImage ff =newTransferFsImage(pmap, request, response);",
+      "if(ff.getImage()) {",
+      "+response.setHeader(TransferFsImage.CONTENT_LENGTH,when transferring image file to 2NN",
+      "+String.valueOf(nnImage.getFsImageName().length()));",
+      "// send fsImage",
+      "TransferFsImage.getFileServer(response.getOutputStream(),",
+      "nnImage.getFsImageName());",
+      "}else if(ff.getEdit()) {",
+      "+response.setHeader(TransferFsImage.CONTENT_LENGTH,when transferring edit logs to 2NN",
+      "+String.valueOf(nnImage.getFsEditName().length()));",
+      "// send edits",
+      "TransferFsImage.getFileServer(response.getOutputStream(),",
+      "nnImage.getFsEditName());",
+      "}else if(ff.putImage()) {// issue a HTTP get request to download the new fsimage",
+      "…",
+      "}",
+      "}catch(Exception ie) {…",
+      "}finally{ response.getOutputStream().close(); }",
+      "}",
+      "}",
+      "The patch does not fix the underlying issue and only protects HDFS from corrupting the image in the case when the partial image will be valid and will substitute the correct one."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch will be applied in NameNode and SecondaryNameNode."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "The IOException will be finally caught by SecondaryNameNode.run(), and some error messages will be printed to show that exception occurs when doing Checkpoint.",
+      "public voidrun() {…while(shouldRun) {…",
+      "try{longnow = System.currentTimeMillis();longsize =namenode.getEditLogSize();if(size >=checkpointSize||",
+      "now >=lastCheckpointTime+1000*checkpointPeriod) {doCheckpoint();",
+      "lastCheckpointTime= now;}}catch(IOException e) {LOG.error(\"Exception in doCheckpoint: \");LOG.error(StringUtils.stringifyException(e));e.printStackTrace();}catch(Throwable e) {LOG.error(\"Throwable Exception in doCheckpoint: \");LOG.error(StringUtils.stringifyException(e));e.printStackTrace();Runtime.getRuntime().exit(-1);}}}",
+      "voiddoCheckpoint()throwsIOException {// Do the required initialization of the merge work area.startCheckpoint();// Tell the namenode to start logging transactions in a new edit file// Returns a token that would be used to upload the merged image.CheckpointSignature sig =namenode.rollEditLog();…downloadCheckpointFiles(sig);// Fetch fsimage and editsdoMerge(sig);// Do the merge…}",
+      "private voiddownloadCheckpointFiles(CheckpointSignature sig)throwsIOException {…// get fsimage…TransferFsImage.getFileClient(fsName, fileid, srcNames);LOG.info(\"Downloaded file \"+ srcNames[0].getName() +\" size \"+ srcNames[0].length() +\" bytes.\");// get edits file…TransferFsImage.getFileClient(fsName, fileid, srcNames);",
+      "LOG.info(\"Downloaded file \"+ srcNames[0].getName() +\" size \"+ srcNames[0].length() +\" bytes.\");checkpointImage.checkpointUploadDone();}",
+      "",
+      "static voidgetFileClient(String fsName, String id, File[] localPath)",
+      "throwsIOException {…try{…",
+      "}finally{…",
+      "if(received != advertisedSize) {",
+      "throw newIOException(\"File \"+ str +\" received length \"+ received +\" is not of the advertised size \"+ advertisedSize);}}}"
+    ]
+  }
+}

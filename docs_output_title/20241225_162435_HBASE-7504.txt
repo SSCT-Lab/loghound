@@ -1,0 +1,94 @@
+{
+  "p": [
+    "HBase-7504"
+  ],
+  "-ROOT- may be offline forever after FullGC of RS (Bug; Major)": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMasteris notifiled byZKto shut downRegionServer"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Description:",
+        "1. FullGC happens on ROOT regionserver.",
+        "2. ZK session timeout, master expires the RegionServer and submits to ServerShutdownHandler",
+        "3. RegionServer completes the FullGC",
+        "4. In the process of ServerShutdownHandler, verifyRootRegionLocation returns true",
+        "5. ServerShutdownHandler skips assigning ROOT region",
+        "6. RegionServer aborts itself because it receives YouAreDeadException after a RegionServer report",
+        "7. ROOT is offline now, and won't be assigned any more unless we restart master",
+        "HMaster log: HMaster calls ServerShutdownHandler to process the RS.",
+        "2012-10-31 19:51:39,043 DEBUG org.apache.hadoop.hbase.master.ServerManager:Added=dw88.kgb.sqa.cm4,60020,1351671478752 todead servers, submitted shutdown handler to be executed, root=true, meta=false",
+        "2012-10-31 19:51:39,045 INFO org.apache.hadoop.hbase.master.handler.ServerShutdownHandler: Splitting logs for dw88.kgb.sqa.cm4,60020,1351671478752",
+        "2012-10-3119:51:50,113INFO org.apache.hadoop.hbase.master.handler.ServerShutdownHandler:Server dw88.kgb.sqa.cm4,60020,1351671478752was carrying ROOT.Trying to assign.",
+        "2012-10-3119:52:15,939DEBUG org.apache.hadoop.hbase.master.ServerManager:Server REPORT rejected; currently processing dw88.kgb.sqa.cm4,60020,1351671478752as dead server",
+        "2012-10-31 19:52:15,945 INFO org.apache.hadoop.hbase.master.handler.ServerShutdownHandler: Skipping log splitting for dw88.kgb.sqa.cm4,60020,1351671478752",
+        "RegionServer log: RS finishes full GC and will resume.",
+        "2012-10-3119:52:15,923WARN org.apache.hadoop.hbase.util.Sleeper: We slept 229128ms instead of 100000ms, this is likely due to a long garbage collecting pause and it's usually bad, seehttp://hbase.apache.org/book.html#trouble.rs.runtime.zkexpired",
+        "After this, RS will send report to HMaster, but receives “YouAreDeadException” and aborts itself. (there will be FATAL log when RS aborts)"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Full GC will clean the entire heap, and the JVM will do a long running garbage collecting which is known as “stop-the-world”. When stop-the-world occurs, every thread except for the threads needed for the GC will stop their tasks. The interrupted tasks will resume only after the GC task has completed.",
+      "(2.2) During full GC, since the RegionServer’s local ZooKeeper client cannot send heartbeats to ZK, the session times out. Then ZK will delete the corresponding ephemeral znode for this RS. HMaster will monitor this “nodeDeleted” event through RegionServerTracker, and it calls expireServer() to shut down this RS.",
+      "In expireServer(), this RS will be first added into deadservers list. Since the RS is carrying ROOT, MetaServerShutdownHandler is called to process this RS.",
+      "",
+      "",
+      "MetaServerShutdownHandler extends from ServerShutdownHandler, and the process() function is executed. Then function verifyAndAssignRootWithRetries() is called to assign ROOT.",
+      "",
+      "",
+      "Then function verifyAndAssignRoot() is called, which will make sure that before assign the ROOT region, it has not been assigned elsewhere.",
+      "",
+      "",
+      "Then verifyRootRegionLocation() is called to verify if ROOT is deployed and accessible.",
+      "",
+      "At this time, the RS which is carrying ROOT finishes full GC, and the paused threads resume. So in verifyRootRegionLocation(), we can successfully connect to the RS and get the regionInfo of ROOT. And the function returns TRUE.",
+      "As a result, assignRoot() will not be executed, and HMaster skips assigning ROOT.",
+      "From the log, we can see that when HMaster’ ServerShutdownHandler is going to assign ROOT, the RS resumes, since it sends report to HMaster.",
+      "HMaster:",
+      "",
+      "(2.3) On RS side, when it resumes after full GC, it sends report to HMaster (calling tryRegionServerReport() periodically in HRegionServer.run()).",
+      "Since RS has already been added into HMaster’s deadservers list, HMaster will throw YouAreDeadException. When RS catches this exception, it aborts. Therefore, the ROOT region which is hosted by this RS will not be available.",
+      "HRegionServer.run()",
+      "",
+      "(2.4) ROOT is offline now, and will not be assigned."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The full GC on RS makes ZK think the RS dies, and HMaster is notified by ZK to shut down this RS, which is carrying ROOT. When HMaster tries to verify the current ROOT location, the RS resumes, so HMaster skips assigning ROOT. Then RS aborts due to the report failure (YouAreDeadException) from HMaster, and ROOT will be offline. Since the ROOT is no longer to be assigned, it will not be available.",
+      "The root cause is full GC, which makes RS stop for some time. What happens after that is related to the timing."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "When calling verifyAndAssignRootWithRetries(), if the assignRoot() is not executed, meanwhile, the current ROOT location(which is recorded in ZK) is the RS which is to be shut down, we will throw IOException to make sure the ROOT will be assigned during the retries.",
+      "• src/main/java/org/apache/hadoop/hbase/master/handler/ServerShutdownHandler.java",
+      "",
+      "",
+      "server.getCatalogTracker().getRootLocation() will read the current ROOT location from ZK.",
+      "",
+      "With the fix, when the same scenario happens as in this bug, verifyAndAssignRoot() will throwIOException(\"-ROOT- is onlined on the dead server \"+ serverName)",
+      "And this exception will be caught in verifyAndAssignRootWithRetries(). After the thread sleeps for a while, it will call verifyAndAssignRoot() again.",
+      "At this time, since the RS is shut down due to YouAreDeadException, verifyRootRegionLocation() will return FALSE, then assignRoot() will execute.",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

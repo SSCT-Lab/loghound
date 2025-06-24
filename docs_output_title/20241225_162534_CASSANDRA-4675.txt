@@ -1,0 +1,88 @@
+{
+  "p": [
+    "Cassandra-4675",
+    "NPE in NTS when using LQ against a node (DC) that doesn't have replica"
+  ],
+  "(1) Log information": {
+    "p": [
+      "In a NetworkTopologyStrategy where there are 2 DC:",
+      "Address DC Rack Status State Load Owns Token",
+      "85070591730234615865843651857942052864",
+      "127.0.0.1 dc1 r1 Up Normal 115.78 KB 50.00% 0",
+      "127.0.0.2 dc2 r1 Up Normal 129.3 KB 50.00% 85070591730234615865843651857942052864",
+      "There is a keyspeace that has replica 1 of the dc (dc1).",
+      "But if connect to a node in dc2, using LOCAL_QUORUM, get NPE in the Cassandra node's log:",
+      "[default@unknown] consistencylevel as LOCAL_QUORUM;",
+      "Consistency level is set to 'LOCAL_QUORUM'.",
+      "[default@unknown] use Keyspace3;",
+      "Authenticated to keyspace: Keyspace3",
+      "[default@Keyspace3] get testcf[utf8('k1')][utf8('c1')];",
+      "Internal error processing get",
+      "org.apache.thrift.TApplicationException: Internal error processing get",
+      "at org.apache.thrift.TApplicationException.read(TApplicationException.java:108)",
+      "at org.apache.cassandra.thrift.Cassandra$Client.recv_get(Cassandra.java:511)",
+      "at org.apache.cassandra.thrift.Cassandra$Client.get(Cassandra.java:492)",
+      "at org.apache.cassandra.cli.CliClient.executeGet(CliClient.java:648)",
+      "at org.apache.cassandra.cli.CliClient.executeCLIStatement(CliClient.java:209)",
+      "at org.apache.cassandra.cli.CliMain.processStatementInteractive(CliMain.java:220)",
+      "at org.apache.cassandra.cli.CliMain.main(CliMain.java:348)",
+      "node2's log:",
+      "ERROR [Thrift:3] 2012-09-17 18:15:16,868 Cassandra.java (line 2999) Internal error processing get",
+      "java.lang.NullPointerException",
+      "at org.apache.cassandra.locator.NetworkTopologyStrategy.getReplicationFactor(NetworkTopologyStrategy.java:142)",
+      "at org.apache.cassandra.service.DatacenterReadCallback.determineBlockFor(DatacenterReadCallback.java:90)",
+      "at org.apache.cassandra.service.ReadCallback.<init>(ReadCallback.java:67)",
+      "at org.apache.cassandra.service.DatacenterReadCallback.<init>(DatacenterReadCallback.java:63)",
+      "at org.apache.cassandra.service.StorageProxy.getReadCallback(StorageProxy.java:775)",
+      "at org.apache.cassandra.service.StorageProxy.fetchRows(StorageProxy.java:609)",
+      "at org.apache.cassandra.service.StorageProxy.read(StorageProxy.java:564)",
+      "at org.apache.cassandra.thrift.CassandraServer.readColumnFamily(CassandraServer.java:128)",
+      "at org.apache.cassandra.thrift.CassandraServer.internal_get(CassandraServer.java:383)",
+      "at org.apache.cassandra.thrift.CassandraServer.get(CassandraServer.java:401)",
+      "at org.apache.cassandra.thrift.Cassandra$Processor$get.process(Cassandra.java:2989)",
+      "at org.apache.cassandra.thrift.Cassandra$Processor.process(Cassandra.java:2889)",
+      "at org.apache.cassandra.thrift.CustomTThreadPoolServer$WorkerProcess.run(CustomTThreadPoolServer.java:187)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)"
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "The stack trace indicates where the NPE is triggered. The variable datacenters in getReplicationFactor() is null referenced.",
+      "public intdetermineBlockFor(ConsistencyLevel consistency_level, String table)",
+      "{ NetworkTopologyStrategy stategy = (NetworkTopologyStrategy)",
+      "Table.open(table).getReplicationStrategy();",
+      "return(stategy.getReplicationFactor(localdc) /2) +1;",
+      "}",
+      "",
+      "public intgetReplicationFactor(String dc)",
+      "{returndatacenters.get(dc);",
+      "}"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When a node (DC) that does not have replica, invoking getReplicationFactor() will lead to NPE.",
+      "Although the client side reports error, it is the server side (node2) that causes this error."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fixing the error. The fixed method is on the stack trace.",
+      "Following \"explicit is better than implicit\" convention, it is better to raise an InvalidRequestException instead of NPE. But the request isn't invalid; it's a configuration problem. So the best thing to do is just default undefined DC to zero replicas.",
+      "·/src/java/org/apache/cassandra/locator/NetworkTopologyStrategy.java",
+      "@@ -140,7 +140,8 @@ public class NetworkTopologyStrategy extends AbstractReplicationStrategy",
+      "",
+      "public int getReplicationFactor(String dc)",
+      "{",
+      "-return datacenters.get(dc);",
+      "+Integer replicas = datacenters.get(dc);",
+      "+return replicas == null ? 0 : replicas;",
+      "}",
+      "",
+      "public Set<String> getDatacenters()",
+      "",
+      ""
+    ]
+  }
+}

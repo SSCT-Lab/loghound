@@ -1,0 +1,101 @@
+{
+  "p": [
+    "MAPREDUCE-3656",
+    "Sort job on 350 scale is consistently failing with latest MRV2 code"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "mapper and AM"
+      ]
+    },
+    "(1.2) Symptoms (based on TT’s logs)": {
+      "p": [
+        "“Sort Job on 350 node scale with 16800 maps and 680 reduces consistently failing for around last 6 runs. When around 50% of maps are completed, suddenly job jumps to failed state. On looking at NM log, found RM sent Stop Container Request to NM for AM container. But at INFO level from RM log not able to find why RM is killing AM when job is not killed manually.”",
+        "Exception found on failed AM logs is:",
+        "org.apache.hadoop.yarn.state.InvalidStateTransitonException",
+        "org.apache.hadoop.yarn.state.InvalidStateTransitonException: Invalid event: TA_UPDATE at ASSIGNED",
+        "Since there is exception in AM. So AM is killed.",
+        "NM logs:",
+        "2012-01-11 13:50:21,402 INFO org.apache.hadoop.yarn.server.nodemanager.NMAuditLogger: USER=<jobuser> IP=<ip_addres_of_RM> OPERATION=Stop Container RequestTARGET=ContainerManageImpl RESULT=SUCCESS APPID=application_1326289061888_0002 CONTAINERID=container_1326289061888_0002_01_000001(AM)",
+        "2012-01-11 13:50:21,406 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container: Processing container_1326289061888_0002_01_000001 of type KILL_CONTAINER",
+        "2012-01-11 13:50:21,407 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container: Container container_1326289061888_0002_01_000001 transitioned from RUNNING to KILLING",
+        "2012-01-11 13:50:21,407 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.launcher.ContainerLaunch: Cleaning up container container_1326289061888_0002_01_000001",
+        "2012-01-11 13:50:21,432 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container: Processing container_1326289061888_0002_01_000001 of type UPDATE_DIAGNOSTICS_MSG",
+        "2012-01-11 13:50:21,449 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container: Processing container_1326289061888_0002_01_000001 of type CONTAINER_KILLED_ON_REQUEST",
+        "RM logs:",
+        "2012-01-11 13:47:34,326 INFO org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl: Processing container_1326289061888_0002_01_000001of typeLAUNCHED",
+        "2012-01-11 13:47:34,326 INFO org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl: container_1326289061888_0002_01_000001 Container Transitioned fromACQUIRED to RUNNING",
+        "Through the timestamp, we notice that the above NM’s log and the AM’s log below get printed during between these two log entries.",
+        "2012-01-11 13:50:22,377 INFO org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl:Processingcontainer_1326289061888_0002_01_000001 oftype KILL",
+        "2012-01-11 13:50:22,377 INFO org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl: container_1326289061888_0002_01_000001 Container Transitioned fromRUNNINGtoKILLED",
+        "2012-01-11 13:50:22,377 INFO org.apache.hadoop.yarn.server.resourcemanager.scheduler.SchedulerApp: Completed container: container_1326289061888_0002_01_000001 in state: KILLED event:KILL",
+        "AM log:",
+        "2012-01-1113:48:45,526ERROR[AsyncDispatcher event handler] org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl: Can't handle this event at current state forattempt_1326289061888_0002_m_006598_0",
+        "org.apache.hadoop.yarn.state.InvalidStateTransitonException: Invalid event: TA_UPDATE at ASSIGNED",
+        "at org.apache.hadoop.yarn.state.StateMachineFactory.doTransition(StateMachineFactory.java:301)",
+        "at org.apache.hadoop.yarn.state.StateMachineFactory.access$300(StateMachineFactory.java:43)",
+        "at org.apache.hadoop.yarn.state.StateMachineFactory$InternalStateMachine.doTransition(StateMachineFactory.java:443)",
+        "at org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl.handle(TaskAttemptImpl.java:919)",
+        "at org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl.handle(TaskAttemptImpl.java:130)",
+        "at org.apache.hadoop.mapreduce.v2.app.MRAppMaster$TaskAttemptEventDispatcher.handle(MRAppMaster.java:871)",
+        "at org.apache.hadoop.mapreduce.v2.app.MRAppMaster$TaskAttemptEventDispatcher.handle(MRAppMaster.java:863)",
+        "at org.apache.hadoop.yarn.event.AsyncDispatcher.dispatch(AsyncDispatcher.java:125)",
+        "at org.apache.hadoop.yarn.event.AsyncDispatcher$1.run(AsyncDispatcher.java:82)"
+      ]
+    }
+  },
+  "(2) Root Cause": {
+    "p": [
+      "When the “startContainer” call from the NM was processed, the container was launched, but “startContainer” took some time to inform /return to the AM.",
+      "The launched container gets a task, and starts sending status updates, for a task which the AM considers to be not launched."
+    ]
+  },
+  "(3) How to figure out the root cause based on logs": {
+    "p": [
+      "TA can safely send TA_UPDATE when it is in RUNNING state. So “TA_UPDATE at ASSIGNED” is invalid. And AM cannot handle this case. It indicates that TA hasn’t registered to AM."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The patch is waiting for the AM CONTAINER_LAUNCHED event to be processed before assigning a task to the JVM.(fix the logic/real cause)"
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-app/src/main/java/org/apache/hadoop/mapred/TaskAttemptListenerImpl.java",
+      "// Try to look up the task. We remove it directly as we don't give",
+      "// multiple tasks to a JVM",
+      "- org.apache.hadoop.mapred.Task task = jvmIDToActiveAttemptMap",
+      "- .remove(wJvmID);",
+      "- if (task != null) {",
+      "- LOG.info(\"JVM with ID: \" + jvmId + \" given task: \" + task.getTaskID());",
+      "- jvmTask = new JvmTask(task, false);",
+      "-",
+      "- // remove the task as it is no more needed and free up the memory",
+      "- // Also we have already told the JVM to process a task, so it is no",
+      "- // longer pending, and further request should ask it to exit.",
+      "- } else {",
+      "+ if (!jvmIDToActiveAttemptMap.containsKey(wJvmID)) {",
+      "LOG.info(\"JVM with ID: \" + jvmId + \" is invalid and will be killed.\");",
+      "jvmTask = TASK_FOR_INVALID_JVM;",
+      "+ } else {",
+      "+ if (!launchedJVMs.contains(wJvmID)) {",
+      "+ jvmTask = null;",
+      "+ LOG.info(\"JVM with ID: \" + jvmId",
+      "+ + \"asking for task before AM launch registered. Given null task\");",
+      "+ } else {",
+      "+ // remove the task as it is no more needed and free up the memory.",
+      "+ // Also we have already told the JVM to process a task, so it is no",
+      "+ // longer pending, and further request should ask it to exit.",
+      "+ org.apache.hadoop.mapred.Task task =",
+      "+ jvmIDToActiveAttemptMap.remove(wJvmID);",
+      "+ launchedJVMs.remove(wJvmID);",
+      "+ LOG.info(\"JVM with ID: \" + jvmId + \" given task: \" + task.getTaskID());",
+      "+ jvmTask = new JvmTask(task, false);",
+      "+ }",
+      "}",
+      ""
+    ]
+  }
+}

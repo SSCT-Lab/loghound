@@ -1,0 +1,90 @@
+{
+  "p": [
+    "Cassandra-5254"
+  ],
+  "Nodes can be marked up after gossip sends the goodbye command": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "node3notifies its shutdown tonode1 and node2"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "For convenience, I label the log inchronological order, leaving out the clock skew.",
+        "==> logs/last/node1.log <==",
+        "(1)INFO [FlushWriter:1] 2013-02-14 10:01:10,311 Memtable.java (line 305) Completed flushing /tmp/dtest-iaYzzR/test/node1/data/system/schema_columns/system-schema_columns-hf-2-Data.db (558 bytes) for commitlog position ReplayPosition(segmentId=1360857665931, position=4770)",
+        "(2)INFO [MemoryMeter:1] 2013-02-14 10:01:10,974 Memtable.java (line 213) CFS(Keyspace='ks', ColumnFamily='cf') liveRatio is 20.488836662749705 (just-counted was 20.488836662749705). calculation took 96ms for 144 columns",
+        "(5)INFO [GossipStage:1] 2013-02-14 10:01:12,119 Gossiper.java (line 831) InetAddress /127.0.0.3 is now dead.",
+        "==> logs/last/node2.log <==",
+        "(5)INFO [GossipStage:1] 2013-02-14 10:01:12,119 Gossiper.java (line 831) InetAddress /127.0.0.3 is now dead.",
+        "(6)INFO [GossipStage:1] 2013-02-14 10:01:12,238 Gossiper.java (line 817) InetAddress /127.0.0.3 is now UP",
+        "(7)INFO [GossipTasks:1] 2013-02-14 10:01:26,386 Gossiper.java (line 831) InetAddress /127.0.0.3 is now dead.",
+        "==> logs/last/node3.log <==",
+        "(3)INFO [StorageServiceShutdownHook] 2013-02-14 10:01:11,115 Gossiper.java (line 1134) Announcing shutdown",
+        "(4)INFO [StorageServiceShutdownHook] 2013-02-14 10:01:12,118 MessagingService.java (line 549) Waiting for messaging service to quiesce",
+        "(5)INFO [ACCEPT-/127.0.0.3] 2013-02-14 10:01:12,119 MessagingService.java (line 705) MessagingService shutting down server thread.",
+        "From the log, we see that:",
+        "(3) node3 is announcing shutdown",
+        "(5) Both node1 and node2 receive the shutdown message from node3, and mark node3 dead.",
+        "(6) Some kind of signal still coming from node3 to node2, and node2 marks node3 up again."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) When node3 is announcing shutdown, it will send GossipShutdownMessage (Verb.GOSSIP_SHUTDOWN) to each live nodes.",
+      "",
+      "When node1/ ndoe2 receives this GossipShutdownMessage,GossipShutdownVerbHandler.doVerb()will be called.",
+      "",
+      "Then the FailureDetector on node1/node2 will mark noded3 dead.",
+      "",
+      "(2.2) The log from node2 shows that it marks node3 “up” right after “dead”.",
+      "==> logs/last/node2.log <==",
+      "(5)INFO [GossipStage:1] 2013-02-14 10:01:12,119 Gossiper.java (line 831) InetAddress /127.0.0.3 is now dead.",
+      "(6)INFO [GossipStage:1] 2013-02-14 10:01:12,238 Gossiper.java (line 817) InetAddress /127.0.0.3 is now UP",
+      "",
+      "So function markAlive() is called, and this function can only be called by two functions:",
+      "Gossiper.applyStateLocally(), Gossiper.handleMajorStateChange().",
+      "",
+      "The INFO messages tells us that handleMajorStateChange() is not called, since there is no “node restarted” message, which meansapplyStateLocally()is the only option.",
+      "SinceapplyStateLocally() is only called in GossipDigestAckVerbHandler and GossipDigestAck2VerbHandler,this tells us that we are in the middle of a gossip round when we send the shutdown message.",
+      "",
+      "About the gossip process:",
+      "The gossiper is responsible for making sure every node in the system eventually knows important information about every other node's state, including those that are unreachable or not yet in the cluster when any given state change occurs.",
+      "Briefly, three steps are contained during a gossip (a gossip round):",
+      "(1) node A sends GossipDigestSynMessage to node B;",
+      "(2) ndoe B receives GossipDigestSynMessage and replies with GossipDigestAckMessage: in GossipDigestAckVerbHandler.",
+      "(3) ndoe A updates itself based on GossipDigestAckMessage, and replies with GossipDigestAck2Message to node B: in GossipDigestAck2VerbHandler.",
+      "“This is a pernicious thing to debug, since the timing condition is so tight; enabling DEBUG or TRACE even on just the gossiper does not let it reproduce.” But from the INFO messages, we can get that we are in the middle of a gossip round when we send the shutdown message.",
+      "That is, when node3 sends shutdown message, node3 is sending AckMessage/Ack2Message to node2."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When node3 sends shutdown message to the other nodes, the last gossip process on node3 has not finished: node3 is sending AckMessage/Ack2Message to node2. node2 acknowledges the shutdown message before Ack/Ack2 message, and marks node3 up right after dead.",
+      "When cassandra node receives the messages, each message is processed by a new thread. Even if node2 receives shutdown message before Ack/Ack2 message, the symptom in this bug may still happen, because the execution order of the thread is uncertain.",
+      "IncomingTcpCommection.receiveMessage():",
+      ""
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "On each Cassandra node, GossipTask is scheduled after a certain interval.",
+      "",
+      "The patch is to sleep for more that on round when the node announces shutdown. Make sure that the last gossip round can finish.",
+      "•src/java/org/apache/cassandra/gms/Gossiper.java",
+      "",
+      "Ignores ack2 when gossip is disabled, which we were already doing in GossipDigestSynVerbHandler/GossipDigestAckVerbHandler.",
+      "•src/java/org/apache/cassandra/gms/GossipDigestAck2VerbHandler.java",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "All Cassandra nodes.",
+      "",
+      ""
+    ]
+  }
+}

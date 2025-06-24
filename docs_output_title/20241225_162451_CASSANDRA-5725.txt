@@ -1,0 +1,85 @@
+{
+  "p": [
+    "Cassandra-5725"
+  ],
+  "Silently failing messages in case of schema not fully propagated": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "Client sends create/mutation request to node 1",
+        "node 1forwards the request tothe other/ other replica nodes."
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Description:“When a new keyspace and/or column family is created on a multi nodes cluster (at least three), and then a mutation is executed on such new column family, the operations sometimes silently fails by timing out.”",
+        "The log is from the peer node to which node 1 sends the request.",
+        "INFO 13:11:39,441IOExceptionreading from socket; closing",
+        "org.apache.cassandra.db.UnknownColumnFamilyException: Couldn't find cfId=a31c7604-0e40-393b-82d7-ba3d910ad50a",
+        "at org.apache.cassandra.db.ColumnFamilySerializer.deserializeCfId(ColumnFamilySerializer.java:184)",
+        "at org.apache.cassandra.db.ColumnFamilySerializer.deserialize(ColumnFamilySerializer.java:94)",
+        "at org.apache.cassandra.db.RowMutation$RowMutationSerializer.deserialize(RowMutation.java:397)",
+        "at org.apache.cassandra.db.RowMutation$RowMutationSerializer.deserialize(RowMutation.java:407)",
+        "at org.apache.cassandra.db.RowMutation$RowMutationSerializer.deserialize(RowMutation.java:367)",
+        "at org.apache.cassandra.net.MessageIn.read(MessageIn.java:94)",
+        "at org.apache.cassandra.net.IncomingTcpConnection.receiveMessage(IncomingTcpConnection.java:207)",
+        "at org.apache.cassandra.net.IncomingTcpConnection.handleModernVersion(IncomingTcpConnection.java:139)",
+        "at org.apache.cassandra.net.IncomingTcpConnection.run(IncomingTcpConnection.java:82)"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "The description also contains the whole operation process for this bug.",
+      "Here's what happens:",
+      "1) Node 1 receives the create keyspace/column family request.",
+      "When node 1 receives the create request, it will create the Column Family (CF), and forward this request to the other nodes in the cluster. Then node 1 will inform the client that create operation finishes.",
+      "2) The same node receives a mutation request at CL.QUORUM and sends to other nodes too.",
+      "Then node 1 receives the mutation request at CL.QUORUM, which means inserting the data into the CF with consistency level “QUORUM”. Only when the write is written to the commit log and memtable on a quorum of replica nodes, node 1 will inform the client of the success.",
+      "Since node 1 has already created the CF, it can execute the mutation. Then it forwards the mutation request to the other replica nodes.",
+      "3) Upon receiving the mutation request, other nodes try to deserialize it and fail in doing so if the schema is not fully propagated, i.e. because they don't find the mutated column family.",
+      "Due to the network effect on message delivering, it is possible that the other replica node receives mutation request before the create request, or when the other replica node receives the mutation request, it has not finished the create request. (the schema is not fully propagated means the CF has not been created)",
+      "As a result, the other node cannot find the specific CF for the mutation operation and throwsUnknownColumnFamilyException.",
+      "",
+      "4) The connection between node 1 and the failed node is dropped, and the request on the former hangs until timing out.",
+      "On the peer node side (the replica node which receives the request from node 1), based on the callstack, the UnknownColumnFamilyException will finally be caught in IncomingTcpConnection.run(), and close() is called to close the socket. So the connection between node 1 and this peer node is broken.",
+      "",
+      "Function mutate() is called by node 1 to have the mutation applied across all replicas. When node 1 sends mutation to the other replica nodes withresponseHandlers.add(), it will wait for writes:responseHandler.get().",
+      "When the connection between node 1 and the replica node is broken, WriteTimeoutException happens, and this exception will finally be thrown to the client.",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "Due to the uncertainty of the network, the replica node receives mutation request before create request, or when the replica node receives the mutation request it has not finished creating the column family. So UnknownColumnFamilyException happens when the replica node tries to do mutation."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The fix is to handle UnknownColumnFamilyException separately and logged as WARN, instead of being swallowed by the default IOException handler (at DEBUG level).",
+      "The developer thinks it is the simplest fix and it is probably good enough in practice.",
+      "•src/java/org/apache/cassandra/net/IncomingTcpConnection.java",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "all Cassandra nodes"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "The process for the first request “create CF”:CassandraServer.system_add_column_family(), which is called when the client (thrift) creates the table.",
+      "",
+      "",
+      "",
+      "",
+      "The process for the second request “mutation”:CassandraServer.batch_mutate()",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

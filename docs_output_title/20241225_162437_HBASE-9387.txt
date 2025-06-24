@@ -1,0 +1,129 @@
+{
+  "p": [
+    "HBase-9387"
+  ],
+  "Region could get lost during assignment": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster sends RPC_OPEN to RegionServer",
+        "RegionServer sends eventHandler to ZooKeeper ZooKeeper notifies HMaster"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“Looks like region state for 1588230740 became inconsistent between master and the surviving region server:”",
+        "2013-08-29 22:15:34,180 INFO [AM.ZK.Worker-pool2-t4] master.RegionStates(299): Onlined1588230740on kiyo.gq1.ygridcore.net,57016,1377814510039The META region state in HMaster is opened in the specific RS “kiyo.gq1.ygridcore.net,57016,1377814510039”",
+        "...",
+        "2013-08-29 22:15:34,587 DEBUG [Thread-221] client.HConnectionManager$HConnectionImplementation(1269): locateRegionInMeta parentTable=hbase:meta, metaLocation={region=hbase:meta,,1.1588230740, hostname=kiyo.gq1.ygridcore.net,57016,1377814510039, seqNum=0}, attempt=2 of 35 failed; retrying after sleep of 302 because: org.apache.hadoop.hbase.exceptions.RegionOpeningException:Region is being opened:1588230740",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.getRegionByEncodedName(HRegionServer.java:2574)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.getRegion(HRegionServer.java:3949)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.get(HRegionServer.java:2733)",
+        "at org.apache.hadoop.hbase.protobuf.generated.ClientProtos$ClientService$2.callBlockingMethod(ClientProtos.java:26965)",
+        "at org.apache.hadoop.hbase.ipc.RpcServer.call(RpcServer.java:2063)",
+        "at org.apache.hadoop.hbase.ipc.RpcServer$CallRunner.run(RpcServer.java:1800)",
+        "at org.apache.hadoop.hbase.ipc.SimpleRpcScheduler.consumerLoop(SimpleRpcScheduler.java:165)",
+        "at org.apache.hadoop.hbase.ipc.SimpleRpcScheduler.access$000(SimpleRpcScheduler.java:41)",
+        "From the symptom, we can locate the related source code based on the messages.",
+        "RegionOpeningException occurs in the following function. The exception occurs because region 1588230740 is not in the current RS’s onlineRegions, but it is in regionsInTransitionInRS.",
+        "It seems that even in this RS, there is a conflict within the META region state.",
+        "",
+        "",
+        "When the Client wants to locate a certain region in META through RPC call, it fails due to the conflict in the RS which hosting META region.",
+        "",
+        "",
+        "However, the region state in HMaster is onlined, so the reporter says “Looks like region state for 1588230740 became inconsistent between master and the surviving region server”."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "When HMaster open/close a region through RS, it will create the RIT (region in transaction) for the open/close operation. In order to make sure the atomicity and consistency of these operations, HMaster combines RIT mechanism with Zookeeper node state.",
+      "HMaster opens the META region(1588230740) on the specific RS (kiyo.gq1.ygridcore.net,57016,1377814510039).",
+      "Below are related logs.",
+      "RegionServer:",
+      "2013-08-29 22:15:29,978 DEBUG [RS_OPEN_META-kiyo:57016-0] zookeeper.ZKAssign(786): regionserver:57016-0x140cc24e86a0003 Transitioning1588230740from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENEDRS has changed the event Handler types from OPENING to OPENED.",
+      "...",
+      "2013-08-29 22:15:32,746 WARN [RS_OPEN_META-kiyo:57016-0] zookeeper.RecoverableZooKeeper(258):Possibly transient ZooKeeper, quorum=localhost:61251, exception=org.apache.zookeeper.KeeperException$ConnectionLossException:KeeperErrorCode =ConnectionLoss for /hbase/region-in-transition/1588230740RS successfully opens META region but has issues to update the ZK data to OPENED",
+      "2013-08-29 22:15:32,746 INFO [RS_OPEN_META-kiyo:57016-0] util.RetryCounter(54): Sleeping 2000ms before retry #1...begin to retry setData() in ZK",
+      "...",
+      "HMaster:",
+      "2013-08-2922:15:34,148DEBUG [AM.ZK.Worker-pool2-t4] master.AssignmentManager(801): Handling transition=RS_ZK_REGION_OPENED, server=kiyo.gq1.ygridcore.net,57016,1377814510039, region=1588230740, current state from region state map ={1588230740state=OPENING, ts=1377814529578, server=kiyo.gq1.ygridcore.net,57016,1377814510039}HMaster handles RS_ZK_REGION_OPENED sent from ZK",
+      "...",
+      "2013-08-29 22:15:34,149 DEBUG [AM.ZK.Worker-pool2-t4] zookeeper.ZKAssign(405): master:44745-0x140cc24e86a0001-0x140cc24e86a0001 Deleting existing unassigned node1588230740in expected state RS_ZK_REGION_OPENEDSince the META region is opened successfully on the RS, HMaster deletes the RIT znode for this region.",
+      "2013-08-29 22:15:34,179 DEBUG [pool-1-thread-1-EventThread] zookeeper.ZooKeeperWatcher(312): master:44745-0x140cc24e86a0001-0x140cc24e86a0001 Received ZooKeeper Event, type=NodeDeleted, state=SyncConnected, path=/hbase/region-in-transition/1588230740",
+      "...",
+      "2013-08-29 22:15:34,180 INFO [AM.ZK.Worker-pool2-t4] master.RegionStates(299): Onlined 1588230740 on kiyo.gq1.ygridcore.net,57016,1377814510039At last, the META region state in HMaster is opened in the specific RS “kiyo.gq1.ygridcore.net,57016,1377814510039”",
+      "...",
+      "RegionServer:",
+      "2013-08-29 22:15:34,760WARN [RS_OPEN_META-kiyo:57016-0] zookeeper.ZKAssign(866): regionserver:57016-0x140cc24e86a0003-0x140cc24e86a0003 Attempt to transition the unassigned node for1588230740from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENED failed,the node existed and was in the expected state but then when setting data it no longer existedRS still fails to set ZK data OPENED (since RIT znode is deleted by HMaster). This message is printed when retry finishes and the exception is thrown and caught in ZKAassign.transitionNode().",
+      "2013-08-29 22:15:34,761 WARN [RS_OPEN_META-kiyo:57016-0] handler.OpenRegionHandler(370):Completed the OPEN of region hbase:meta,,1.1588230740but when transitioning from OPENING to OPENEDgot a version mismatch, someone else clashed so now unassigning -- closing region on server: kiyo.gq1.ygridcore.net,57016,1377814510039Since RS fails to set ZK data, it will close the META region.",
+      "Version mismatch logged in this message is inconsistent with the previous message from ZKAssign ZKAassign.transitionNode() which said that znode no longer existed.",
+      "2013-08-29 22:15:34,761 DEBUG [RS_OPEN_META-kiyo:57016-0] regionserver.HRegion(950): Closing hbase:meta,,1.1588230740: disabling compactions & flushesAfter this point, META region is closed on the RS",
+      "2013-08-29 22:15:34,761 DEBUG [RS_OPEN_META-kiyo:57016-0] regionserver.HRegion(972): Updates disabled for region hbase:meta,,1.1588230740",
+      "2013-08-29 22:15:34,762 INFO [StoreCloserThread-hbase:meta,,1.1588230740-1] regionserver.HStore(668): Closed info",
+      "2013-08-29 22:15:34,762 INFO [RS_OPEN_META-kiyo:57016-0] regionserver.HRegion(1030):Closed hbase:meta,,1.1588230740",
+      "2013-08-29 22:15:34,763 INFO [RS_OPEN_META-kiyo:57016-0] handler.OpenRegionHandler(396): Opening of region {ENCODED =>1588230740, NAME => 'hbase:meta,,1', STARTKEY => '', ENDKEY => ''} failed, transitioning from OPENING to FAILED_OPEN in ZK, expecting version 1",
+      "2013-08-29 22:15:34,763 DEBUG [RS_OPEN_META-kiyo:57016-0] zookeeper.ZKAssign(786): regionserver:57016-0x140cc24e86a0003-0x140cc24e86a0003Transitioning1588230740from RS_ZK_REGION_OPENING to RS_ZK_REGION_FAILED_OPENSince RS has closed META region, RS will inform ZK that the region has changed from OPENING to FAILED_OPEN",
+      "2013-08-29 22:15:34,765 DEBUG [RS_OPEN_META-kiyo:57016-0] zookeeper.ZKUtil(784): regionserver:57016-0x140cc24e86a0003-0x140cc24e86a0003 Unable to get data of znode /hbase/region-in-transition/1588230740 becausenode does not exist(not necessarily an error)RS still fails to make this update to ZK due to the same reason(RIT znode is deleted by HMaster)",
+      "2013-08-29 22:15:34,765WARN[RS_OPEN_META-kiyo:57016-0] handler.OpenRegionHandler(404): Unable to mark region {ENCODED =>1588230740, NAME => 'hbase:meta,,1', STARTKEY => '', ENDKEY => ''} as FAILED_OPEN. It's likely that the master already timed out this open attempt, and thus another RS already has the region.",
+      "On HMaster side, we can see that META region state is online, while on RS side, it has closed the META region, and it fails to notify ZK (nor HMaster). RS suffers the error silently, and the META region is lost.",
+      "The relationship among HMaster, RS and ZK:",
+      "",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When RS successfully opens META region, it fails to update RS_ZK_REGION_OPENED to ZK due to ConnectionLossException, then it retries. Once one of the retries goes through, ZK will inform HMaster that opening region is successful, and HMaster will delete the RIZ znode.",
+      "However, RS doesn’t know the successful retry, and it still fails to updata znode (because znode is deleted by HMaster) in the following retries. Then RS closes META region, and it still fails to notify HMaster because of the deleted RIT znode.",
+      "Finally, the HMaster thinks META region is assigned, whie the RS which was hosting the META has closed it. The inconsistent region state between HMaster and the RS makes the META region lost (no RS is hosting META).",
+      "Comments from the developers:",
+      "“Most likely the ZK/network was in a bad state at that moment. RS setData was retried while master already got it and deleted it, so RS setData retry failed. The RS ZKUtil.setData retry took so long, this must be some thread scheduling issue too. This issue should apply to all scenario setData retry is used. The root cause is that setData succeeds, the other party gets it and does something with the data, the setData retry fails since the data is updated by the other party, so the setData caller is fooled/screwed.”",
+      "“This seemsa classic retry issuebecause when a request fails, the request could be successfully processed at server side while the server has issue to send response back or the client(caller) has issue to receive the response. Then a client retries because it thinks the previous request didn't go through. Then we have the above scenario.”"
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "In this issue, znode is gone and our region assignment statement machine can't continue.",
+      "In RegionServer’s OpenRegionHandler, when it fails to transitionToOpened(), we check if the znode still exists:",
+      "· If it is still there, that means we failed to transition the znode, we need to close the region.",
+      "· If it is not there, RS can abort.",
+      "Make the error exposed. Upgrade the bug effect.",
+      "• hbase-server/src/main/java/org/apache/hadoop/hbase/regionserver/handler/OpenRegionHandler.java",
+      "",
+      "",
+      "• hbase-server/src/test/java/org/apache/hadoop/hbase/MockRegionServerServices.java",
+      "",
+      "MockRegionServer#abort() calls stop() - HRegionServer#abort() does the same."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HRegionServer(s)"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "------------RS",
+      "OpenRegionHandler.java",
+      "OpenRegionHandler.process()",
+      "",
+      "",
+      "",
+      "------------ZooKeeper",
+      "ZKAssign.java",
+      "",
+      "",
+      "",
+      "ZKUtil.java",
+      "",
+      "",
+      "RecoverableZooKeeper.java",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

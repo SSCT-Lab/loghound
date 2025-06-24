@@ -1,0 +1,107 @@
+{
+  "p": [
+    "HDFS-4201"
+  ],
+  "NPE in BPServiceActor#sendHeartBeat": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "DataNodes (client-side) NameNode (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The logs are from DataNode.",
+        "2012-09-25 04:33:20,782 INFO org.apache.hadoop.hdfs.server.datanode.DataNode: For namenode svsrs00127/11.164.162.226:8020 using DELETEREPORT_INTERVAL of 300000 msec",
+        "BLOCKREPORT_INTERVAL of 21600000msec Initial delay: 0msec; heartBeatInterval=3000",
+        "The different intervals for DataNode to communicate with NameNode.",
+        "2012-09-25 04:33:20,782 ERROR org.apache.hadoop.hdfs.server.datanode.DataNode: Exception in BPOfferServiceforBlock pool BP-1678908700-11.164.162.226-1342785481826 (storage id DS-1031100678-11.164.162.251-5010-1341933415989) service to svsrs00127/11.164.162.226:8020",
+        "java.lang.NullPointerException",
+        "at org.apache.hadoop.hdfs.server.datanode.BPServiceActor.sendHeartBeat(BPServiceActor.java:434)",
+        "at org.apache.hadoop.hdfs.server.datanode.BPServiceActor.offerService(BPServiceActor.java:520)",
+        "at org.apache.hadoop.hdfs.server.datanode.BPServiceActor.run(BPServiceActor.java:673)",
+        "at java.lang.Thread.run(Thread.java:722)",
+        "When sending HeartBeat, the NPE occurs."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) There may be several NameNode groups in a HDFS cluster, and each NameNode group contains a NameNode pair(NN & StandbyNN), maintaining a namespce. But NN groups share the storage on all the DataNodes. So, each DataNode is divided into different blockpools/namespace.",
+      "BlockPoolManager:Manages the BPOfferService objects for the data node.",
+      "BPOfferService: One instance per block-pool/namespace on the DN, which handles the heartbeats to the active and standby NNs for that namespace. This class manages an instance of BPServiceActor} for each NN, and delegates calls to both NNs.",
+      "BPServiceActor: the real thread to communicate with active or standby.",
+      "",
+      "",
+      "(2.2) Based on the call-stack and source code, we can get the following control flow.",
+      "",
+      "(2.3) In function offerService(), sendHeartBeat() is called within its while loop.",
+      "HeartbeatResponsesendHeartBeat()throwsIOException {StorageReport[] reports =dn.getFSDataset().getStorageReports(bpos.getBlockPoolId());",
+      "if(LOG.isDebugEnabled()) {LOG.debug(\"Sending heartbeat with \"+ reports.length+\" storage reports from service actor: \"+this);}returnbpNamenode.sendHeartbeat(bpRegistration,reports,dn.getFSDataset().getCacheCapacity(),dn.getFSDataset().getCacheUsed(),dn.getXmitsInProgress(),dn.getXceiverCount(),dn.getFSDataset().getNumFailedVolumes());",
+      "}",
+      "From the code, NPE is likely due to dn or dn.getFSDataset() being null.",
+      "(2.4) Before offerService(), connectToNNAndHandshake() calls verifyAndSetNamespaceInfo(), which willinitializethe block pool in the DN (invokingdn.initBlockPool()) if it is the first NN connection for this block pool(BP). So, the NPE could be due to BP failing to initialize.",
+      "synchronized voidverifyAndSetNamespaceInfo(NamespaceInfo nsInfo)throwsIOException {if(this.bpNSInfo==null){this.bpNSInfo= nsInfo;+booleansuccess =false;+// Now that we know the namespace ID, etc, we can pass this to the DN.// The DN can now initialize its local storage if we are the// first BP to handshake, etc.",
+      "-dn.initBlockPool(this);",
+      "-return;+try{+dn.initBlockPool(this);+success =true;+}finally{",
+      "+if(!success) {+// The datanode failed to initialize the BP. We need to reset+// the namespace info so that other BPService actors still have+// a chance to set it, and re-initialize the datanode.+this.bpNSInfo=null;+}+}}else{checkNSEquality(bpNSInfo.getBlockPoolID(), nsInfo.getBlockPoolID(),\"Blockpool ID\");",
+      "checkNSEquality(bpNSInfo.getNamespaceID(), nsInfo.getNamespaceID(),\"Namespace ID\");checkNSEquality(bpNSInfo.getClusterID(), nsInfo.getClusterID(),\"Cluster ID\");}}",
+      "(2.5) how does the fix take effect?",
+      "In BPOfferService.java, BPOfferService.start() will start every BPServiceActor belonging to the current block pool.",
+      "voidstart() {for(BPServiceActor actor :bpServices) {actor.start();}",
+      "}",
+      "Then, actor.start will execute the flow in (2.2) ,i.e., BPServiceActor.run().",
+      "In the fix, since we set “this.bpNSInfo” to be null, when the next BPServiceActor goes into verifyAndSetNamespaceInfo(), it will re-initialize the BP for the same namespace."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "In DataNode’s sendHeartBeat(), NPE is due to dn or dn.getFSDataset() being null, which may be caused by BlockPool failing to initialize."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The patch fixes DataNode initBlockPool error handling. With this fix, if BPOfferService fails to connect to one NN, it still can connect other NNs.",
+      "If the block pool fails to initialize, it will still lead to NPE. So the patch may eliminate the exception effect to a great extent. (not totally, because we cannot make sure the BP must be initialized successfully in the following run)",
+      "An interesting fix paradigm is suggested in the comments when they make the patch.",
+      "booleansuccess =false;",
+      "try{",
+      "...",
+      "success =true",
+      "}finally{",
+      "if(!success) {",
+      "cleanup",
+      "}",
+      "}",
+      "“we use this paradigm many places in hdfs to avoid having to enumerate all possible exceptions.”"
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch will be applied in all DataNodes.",
+      "Function verifyAndSetNamespaceInfo() is in BPOfferService.java, and it is not on the call stack."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "Check: function initBlockPool()",
+      "If the function can still return even when some exceptions occur and caught inside, then “success = true” in the patch will be useless.",
+      "After checking function initBlockPool() and its inner function call, if there is any error, this function cannot return normally. So “success = true” in the patch is effective.",
+      "voidinitBlockPool(BPOfferService bpos)throwsIOException {NamespaceInfo nsInfo = bpos.getNamespaceInfo();",
+      "if(nsInfo ==null) {throw newIOException(\"NamespaceInfo not found: Block pool \"+ bpos +\" should have retrieved namespace info before initBlockPool.\");}",
+      "// Register the new block pool with the BP manager.blockPoolManager.addBlockPool(bpos);",
+      "setClusterId(nsInfo.clusterID, nsInfo.getBlockPoolID());// In the case that this is the first block pool to connect, initialize// the dataset, block scanners, etc.initStorage(nsInfo);initPeriodicScanners(conf);",
+      "data.addBlockPool(nsInfo.getBlockPoolID(),conf);}",
+      "",
+      "private voidinitStorage(finalNamespaceInfo nsInfo)throwsIOException {finalFsDatasetSpi.Factory<?extendsFsDatasetSpi<?>> factory= FsDatasetSpi.Factory.getFactory(conf);",
+      "if(!factory.isSimulated()) {finalStartupOption startOpt =getStartupOption(conf);if(startOpt ==null) {throw newIOException(\"Startup option not set.\");}finalString bpid = nsInfo.getBlockPoolID();//read storage info, lock data dirs and transition fs state if necessary",
+      "storage.recoverTransitionRead(this, bpid, nsInfo,dataDirs, startOpt);",
+      "finalStorageInfo bpStorage =storage.getBPStorage(bpid);LOG.info(\"Setting up storage: nsid=\"+ bpStorage.getNamespaceID()+\";bpid=\"+ bpid +\";lv=\"+storage.getLayoutVersion()+\";nsInfo=\"+ nsInfo +\";dnuuid=\"+storage.getDatanodeUuid());}",
+      "// If this is a newly formatted DataNode then assign a new DatanodeUuid.checkDatanodeUuid();synchronized(this) {if(data==null) {data= factory.newInstance(this,storage,conf);}}}",
+      "synchronized voidaddBlockPool(BPOfferService bpos) {Preconditions.checkArgument(offerServices.contains(bpos),\"Unknown BPOS: %s\", bpos);if(bpos.getBlockPoolId() ==null) {throw newIllegalArgumentException(\"Null blockpool id\");}",
+      "bpByBlockPoolId.put(bpos.getBlockPoolId(), bpos);}",
+      "",
+      ""
+    ]
+  }
+}

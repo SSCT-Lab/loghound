@@ -1,0 +1,91 @@
+{
+  "p": [
+    "HBase-5927"
+  ],
+  "SSH and DisableTableHandler happening together does not clear the znode of the region and RIT map.": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster keeps unassigning the region for a dead RS",
+        "the table to which the region belongs is disabling by DisableTableHandler"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The following logs are from HMaster.",
+        "1) Kill one RegionServer, then ServerShutdownHandler in HMaster will deal with this dead RS:",
+        "2012-05-08 22:04:03,038 INFO [MASTER_SERVER_OPERATIONS-Jieshan.china.huawei.com,57110,1336485831968-0] handler.ServerShutdownHandler(174): Splitting logs for Jieshan.china.huawei.com,57163,1336485834464",
+        "2) The DisableTableHandler in HMaster is disabling the regions of this table. It will call unassign() to close its regions. In unassign(), after calling sendRegionClose() to the corresponding RS which is holding the region, we get the ConnectException. Because the RS is killed.",
+        "2012-05-08 22:05:23,909 INFO [Jieshan.china.huawei.com,57110,1336485831968-org.apache.hadoop.hbase.master.handler.DisableTableHandler$BulkDisabler-1] master.AssignmentManager(2066): Server jieshan.china.huawei.com,57138,1336485834409 returned java.net.ConnectException:Connection refused: no further information forfc6c3b7c6445127b63f617445aa5dfaf(region name/id)",
+        "3) After a while, we find that HMaster falls into an end-less loop: TimeoutMonitor periodically finds that the regionfc6c3b7c6445127b63f617445aa5dfafhas been PENDING_CLOSE state for too long, then it tries to unassign this region, but “it is not currently assigned anywhere”.",
+        "2012-05-08 22:07:58,122 INFO [Jieshan.china.huawei.com,57110,1336485831968.timeoutMonitor] master.AssignmentManager$TimeoutMonitor(2925): Region has beenPENDING_CLOSEfor too long, running forced unassign again on region=testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf.",
+        "2012-05-08 22:07:58,122 DEBUG [pool-8-thread-17] master.AssignmentManager(1936): Starting unassignment of region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. (offlining)",
+        "2012-05-08 22:07:58,122 DEBUG [pool-8-thread-17] master.AssignmentManager(1942): Attempted to unassign region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. but it is not currently assigned anywhere",
+        "",
+        "2012-05-08 22:08:08,121 INFO [Jieshan.china.huawei.com,57110,1336485831968.timeoutMonitor] master.AssignmentManager$TimeoutMonitor(2893): Regions in transition timed out: testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. state=PENDING_CLOSE, ts=1336485917495, server=null",
+        "2012-05-08 22:08:08,121 INFO [Jieshan.china.huawei.com,57110,1336485831968.timeoutMonitor] master.AssignmentManager$TimeoutMonitor(2925): Region has beenPENDING_CLOSEfor too long, running forced unassign again on region=testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf.",
+        "2012-05-08 22:08:08,121 DEBUG [pool-8-thread-13] master.AssignmentManager(1936): Starting unassignment of region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. (offlining)",
+        "2012-05-08 22:08:08,121 DEBUG [pool-8-thread-13] master.AssignmentManager(1942): Attempted to unassign region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. but it is not currently assigned anywhere",
+        "",
+        "2012-05-08 22:08:18,122 INFO [Jieshan.china.huawei.com,57110,1336485831968.timeoutMonitor] master.AssignmentManager$TimeoutMonitor(2893): Regions in transition timed out: testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. state=PENDING_CLOSE, ts=1336485917495, server=null",
+        "2012-05-08 22:08:18,122 INFO [Jieshan.china.huawei.com,57110,1336485831968.timeoutMonitor] master.AssignmentManager$TimeoutMonitor(2925): Region has beenPENDING_CLOSEfor too long, running forced unassign again on region=testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf.",
+        "2012-05-08 22:08:18,122 DEBUG [pool-8-thread-6] master.AssignmentManager(1936): Starting unassignment of region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. (offlining)",
+        "2012-05-08 22:08:18,125 DEBUG [pool-8-thread-6] master.AssignmentManager(1942): Attempted to unassign region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. but it is not currently assigned anywhere",
+        "...",
+        "The bug symptom is not error or exception, but the repeated logs printed by HMaster#TimeoutMonitor.",
+        "bug symptom is not error or exception, but the repeated logs printed by HMaster#TimeoutMonitor."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Every time when HMaster’s TimeoutMonitor#chore() finds that the region fc6c3b7c6445127b63f617445aa5dfafin HMaster RIT(Regions In Transition)has been PENDING_CLOSE state for too long, it will call actOnTimeOut() to deal with this region.",
+      "",
+      "",
+      "Then invokeUnassign() will call unassign() finally. Since this region is not in AssignmentManager (AM)’sregions, unassign() will return directly.",
+      "",
+      "",
+      "Then we can infer that when the region is removed form AM’s regions, the RIT state (PENDING_CLOSE) associated with this region is not removed from HMaster’s RIT map.",
+      "(2.2) From the description, we know that when the RS is killed, one of the regions which is hosted by this RS is disabling. Since the table to which the region belongs is disabling by DisableTableHandler. The region is in PENDING_CLOSE state.",
+      "The killed RS is processed by ServerShutdownHandler.process(), and the region could be removed from regions in it. In processServerShutdown(),the region is removed by executingthis.regions.remove(region);",
+      "",
+      "",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The RS is killed and HMaster#ServerShutdownHandler handles the regions for this dead RS. The regionfc6c3b7c6445127b63f617445aa5dfafis in RIT (PENDGIN_CLOSE) and should be reassigned. However, since the table to which the region belongs is disabled by HMaster#DisableTableHandler, reassign does not execute. As a result, HMaster#TimeoutMonitor periodically tries to unassign this region (because the region is in RIT) but fails (no error, just return, since the region is not in regions map)"
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Modify the logic in ServerShutdownHandler.process() when handling the region which is in REGION_CLOSING state and the table it belongs to is disabled. If the table was partially disabled and the RS went down, we should clear the RIT and remove the node for the region.",
+      "• src/main/java/org/apache/hadoop/hbase/master/handler/ServerShutdownHandler.java",
+      "The patch is on page 4.",
+      "",
+      "• src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      "-privatevoid deleteClosingOrClosedNode(HRegionInfo region) {",
+      "+/**",
+      "+*",
+      "+* @param region regioninfo of znode to be deleted.",
+      "+*/",
+      "+publicvoid deleteClosingOrClosedNode(HRegionInfo region) {",
+      "try {",
+      "if (!ZKAssign.deleteNode(master.getZooKeeper(), region.getEncodedName(),",
+      "EventHandler.EventType.M_ZK_REGION_CLOSING)) {"
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster(s)."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      "",
+      ""
+    ]
+  }
+}

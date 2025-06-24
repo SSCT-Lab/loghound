@@ -1,0 +1,108 @@
+{
+  "p": [
+    "Cassandra-3400",
+    "ConcurrentModificationException during nodetool repair"
+  ],
+  "(1) Log information": {
+    "p": [
+      "When running a nodetool repair, the following exception can be thrown:",
+      "ERROR [AntiEntropySessions:12] 2011-10-24 11:17:52,154 AbstractCassandraDaemon.java (line 139) Fatal exception in thread Thread[AntiEntropySessions:12,5,RMI Runtime]",
+      "java.lang.RuntimeException: java.util.ConcurrentModificationException",
+      "at org.apache.cassandra.utils.WrappedRunnable.run(WrappedRunnable.java:34)",
+      "at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:441)",
+      "at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:303)",
+      "at java.util.concurrent.FutureTask.run(FutureTask.java:138)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+      "at java.lang.Thread.run(Thread.java:619)",
+      "Caused by: java.util.ConcurrentModificationException",
+      "at java.util.HashMap$HashIterator.nextEntry(HashMap.java:793)",
+      "at java.util.HashMap$KeyIterator.next(HashMap.java:828)",
+      "at org.apache.cassandra.service.AntiEntropyService$RepairSession$RepairJob.sendTreeRequests(AntiEntropyService.java:784)",
+      "at org.apache.cassandra.service.AntiEntropyService$RepairSession.runMayThrow(AntiEntropyService.java:680)",
+      "at org.apache.cassandra.utils.WrappedRunnable.run(WrappedRunnable.java:30)",
+      "... 6 more"
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "The stack trace indicates that the exception occurs when invoking sendTreeRequests() and the target variable is remainingEndpoints which is defined as follows:",
+      "private finalSet<InetAddress>remainingEndpoints=newHashSet<InetAddress>();",
+      "public voidsendTreeRequests()",
+      "{",
+      "remainingEndpoints.addAll(endpoints);",
+      "remainingEndpoints.add(FBUtilities.getBroadcastAddress());",
+      "",
+      "// send requests to all nodes",
+      "for(InetAddress endpoint :remainingEndpoints)",
+      "AntiEntropyService.instance.request(getName(), endpoint,range,tablename,cfname);",
+      "",
+      "logger.info(String.format(\"[repair #%s] requests for merkle tree sent for %s (to %s)\", getName(),cfname,remainingEndpoints));",
+      "+requestsSent.signalAll();",
+      "}",
+      "The variable remainingEndpoints is modified only in addTree(), which is called when the current node receives merkle tree response from the other nodes.",
+      "public synchronized intaddTree(TreeRequest request, MerkleTree tree)",
+      "{",
+      "assertrequest.cf.right.equals(cfname);",
+      "trees.add(newTreeResponse(request.endpoint, tree));",
+      "remainingEndpoints.remove(request.endpoint);",
+      "returnremainingEndpoints.size();",
+      "}"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The merkle tree response comes before all the requess have been sent.",
+      "The nondeterministic timing of the response sent by the other nodes triggers this exception."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fixing the error. Add synchronization to avoid the nondeterministic timing of the response.",
+      "The fixed method is on the stack trace.",
+      "·/src/java/org/apache/cassandra/service/AntiEntropyService.java",
+      "private final Set<InetAddress> syncJobs = new HashSet<InetAddress>();",
+      "+private final Condition requestsSent = new SimpleCondition();",
+      "",
+      "public voidsendTreeRequests()",
+      "{",
+      "remainingEndpoints.addAll(endpoints);",
+      "remainingEndpoints.add(FBUtilities.getBroadcastAddress());",
+      "",
+      "// send requests to all nodes",
+      "for(InetAddress endpoint :remainingEndpoints)",
+      "AntiEntropyService.instance.request(getName(), endpoint,range,tablename,cfname);",
+      "",
+      "logger.info(String.format(\"[repair #%s] requests for merkle tree sent for %s (to %s)\", getName(),cfname,remainingEndpoints));",
+      "+requestsSent.signalAll();",
+      "}",
+      "",
+      "",
+      "public synchronized intaddTree(TreeRequest request, MerkleTree tree)",
+      "{",
+      "+// Wait for all request to have been performed (see #3400)",
+      "+try",
+      "+{",
+      "+requestsSent.await();",
+      "+}",
+      "+catch(InterruptedException e)",
+      "+{",
+      "+// This should not happen, but it don't break much if it ever does, so let's just log a msg",
+      "+// to investigate if that happens but not fail the repair",
+      "+logger.error(\"Interrupted while waiting for requests to be sent\", e);",
+      "+}",
+      "+",
+      "assertrequest.cf.right.equals(cfname);",
+      "trees.add(newTreeResponse(request.endpoint, tree));",
+      "remainingEndpoints.remove(request.endpoint);",
+      "returnremainingEndpoints.size();",
+      "}",
+      "",
+      "Add more information to the log message.",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

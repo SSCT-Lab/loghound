@@ -1,0 +1,75 @@
+{
+  "p": [
+    "HBase-9821"
+  ],
+  "Scanner id could collide": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HBase Client (client-side) HRegionServer (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The client uses scanner to access the data on HRegionServer (RS) through the RPC communication. RS will assign a unique scanner id for the client. To make sure the data got from RS is complete, both client and RS will maintain a field “nextCallSeq”. The client and RS will use “nextCallSeq” to verify the data sequence number.",
+        "“When a region serverrestarts quickly, we could run into some scanner id collision issue. In one of my run:”(the log comes from RS)",
+        "2013-10-21 22:43:09,071 INFO [RpcServer.handler=2,port=36020] regionserver.HRegionServer: Client tried to access missing scanner 4305495321392639779",
+        "2013-10-21 22:43:09,056 INFO [RpcServer.handler=0,port=36020] regionserver.HRegionServer: Client tried to access missing scanner 4871518173034616791",
+        "2013-10-21 22:43:09,054 INFO [RpcServer.handler=29,port=36020] regionserver.HRegionServer: Client tried to access missing scanner 2494346173615963501",
+        "2013-10-21 22:43:09,046 INFO [RpcServer.handler=28,port=36020] regionserver.HRegionServer: Client tried to access missing scanner 8522578499834310167",
+        "2013-10-21 22:43:09,037 INFO [RpcServer.handler=27,port=36020] regionserver.HRegionServer: Client tried to access missing scanner 6621035169671703961",
+        "2013-10-21 22:43:09,011ERROR[RpcServer.handler=20,port=36020] regionserver.HRegionServer:",
+        "org.apache.hadoop.hbase.exceptions.OutOfOrderScannerNextException:Expected nextCallSeq: 18But thenextCallSeqgot fromclient:4470; request=scanner_id: 848804760654927372number_of_rows: 100 close_scanner: false next_call_seq: 4470",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.scan(HRegionServer.java:3030)",
+        "at org.apache.hadoop.hbase.protobuf.generated.ClientProtos$ClientService$2.callBlockingMethod(ClientProtos.java:27022)",
+        "at org.apache.hadoop.hbase.ipc.RpcServer.call(RpcServer.java:1979)",
+        "at org.apache.hadoop.hbase.ipc.CallRunner.run(CallRunner.java:90)",
+        "at org.apache.hadoop.hbase.ipc.SimpleRpcScheduler.consumerLoop(SimpleRpcScheduler.java:160)",
+        "at org.apache.hadoop.hbase.ipc.SimpleRpcScheduler.access$000(SimpleRpcScheduler.java:38)",
+        "at org.apache.hadoop.hbase.ipc.SimpleRpcScheduler$1.run(SimpleRpcScheduler.java:110)",
+        "at java.lang.Thread.run(Thread.java:724)",
+        "2013-10-21 22:43:09,000 INFO [RpcServer.handler=25,port=36020] regionserver.HRegionServer: Client tried to access missing scanner 4162107982028594792",
+        "In the log provided above, we can see 7 clients, and each of them is corresponding to a RpcServer.handler when communicating with RS."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) From the callstack in the ERROR message,OutOfOrderScannerNextExceptionoccurs in HRegionServer.scan() function. The ERROR shows that the expected nextCallSeq on RS side is 18, but the nextCallSeq on client side is 4470. The client sends the request with scanner id: 848804760654927372.It seems that the client has sent the wrong nextCallSeq, and the problem may be in the client. how to do diagnosis check scanner id assigned code",
+      "(2.2) Based on the bug description “When a region serverrestarts quickly, we could run into somescanner id collisionissue”, the issue occursonly when the same RS restarts. Scanner id is assigned in RS:",
+      "scannerId = rand.nextLong();",
+      "Scanner id is a random number. It can only guarantee that the scanner id is unique in one region server. If region server restarts, it will be a new region server. When the existing clients try to communicate with RS with their existing scanner id, RS will report “Client tried to access missing scanner” like this:",
+      "2013-10-21 22:43:09,071 INFO [RpcServer.handler=2,port=36020] regionserver.HRegionServer: Client tried to access missing scanner 4305495321392639779",
+      "It is possible that the scanner id assigned to a new Client by RS is same as the previous scanner id."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "Normally, the nextCallSeq cannot be so different between the expected (18) and the one sent over from client (4470). So the reason is: when a RS restarts quickly, it happens to use the same scanner id for the client. The collision of scanner id leads to the wrong nextCallSeq.",
+      "The data part (nextCallSeq) of the log is important."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Put the RS startcode inside the scanner id. Startcode is used to differentiate the RS instances started on the same (host + port) at different time point.",
+      "• hbase-server/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java",
+      "",
+      "• hbase-client/src/main/java/org/apache/hadoop/hbase/client/ScannerCallable.java",
+      "",
+      "",
+      "When the server side throws OutOfOrderScannerNextException, the client will reopen the scanner with startrow as the last successfully retrieved row."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "region server",
+      "The patch is in function addScanner(), which is in HRegionServer.java",
+      "This function is not on the callstack of the exception, but it is called in function HRegionServer.scan(), which is on the callstack.",
+      "2013-10-21 22:43:09,011ERROR[RpcServer.handler=20,port=36020] regionserver.HRegionServer:",
+      "org.apache.hadoop.hbase.exceptions.OutOfOrderScannerNextException:Expected nextCallSeq: 18But thenextCallSeqgot fromclient:4470; request=scanner_id: 848804760654927372 number_of_rows: 100 close_scanner: false next_call_seq: 4470",
+      "at org.apache.hadoop.hbase.regionserver.HRegionServer.scan(HRegionServer.java:3030)",
+      "at …",
+      ""
+    ]
+  }
+}

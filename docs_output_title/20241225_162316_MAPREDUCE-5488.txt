@@ -1,0 +1,149 @@
+{
+  "p": [
+    "MAPREDUCE-5488",
+    "Job recovery fails after killing all the running containers for the app"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "JobClient ResourceManager(RM): master ApplicationMaster(AM): slave"
+      ]
+    },
+    "(1.2) Symptoms(based on the client’s log)": {
+      "p": [
+        "Description for this bug in the comment: “Approx 15s after job submission we find the running container for the app and kill the process. For this test the client reported the failure but the job actually restarted on a different host and finished successfully.”",
+        "✦client connected RM and submitted an application successfully.",
+        "13/08/30 08:45:42 INFO impl.YarnClientImpl: Submitted application application_1377851032086_0003 to ResourceManager at hostname/68.142.247.148:8032",
+        "✦the application began to run",
+        "13/08/30 08:45:42 INFO mapreduce.Job: Running job: job_1377851032086_0003",
+        "13/08/30 08:45:48 INFO mapreduce.Job: Job job_1377851032086_0003 running in uber mode : false",
+        "13/08/30 08:45:48 INFO mapreduce.Job: map 0% reduce 0%",
+        "✦for testing, “stop applicationmaster”",
+        "stop applicationmaster",
+        "beaver.component.hadoop|INFO|Kill container container_1377851032086_0003_01_000001 on host hostname",
+        "✦find and kill the process, to make sure the AM is killed",
+        "RUNNING: ssh -o StrictHostKeyChecking=no hostname\"sudo su - -c \\\"ps aux | grep container_1377851032086_0003_01_000001 | awk '{print \\\\\\$2}' | xargs kill -9\\\" root\"",
+        "Warning: Permanently added 'hostname,68.142.247.155' (RSA) to the list of known hosts.",
+        "kill 8978: No such process(68.142.247.155is the old AM addr )",
+        "✦“The client can monitor the application's status by querying the ResourceManager or by directly querying the ApplicationMaster if it supports such a service.” “The client will periodically poll the Application Master for status updates and display them in the console.”",
+        "✦If the AM fails, the client will experience a timeout when it issues a status update, at which point the client will go back to RM to ask for the new application master’s address.",
+        "waitingfor down time 10 seconds for service applicationmaster",
+        "✦Then the client tried to connect the address provided by RM. Since the value of “client-am.ipc.max-retries” is “1”, the client retried to connect the AM, but failed.",
+        "13/08/30 08:45:55 INFO ipc.Client: Retrying connect to server: hostname/68.142.247.155:52713. Already tried 0 time(s); retry policy is RetryUpToMaximumCountWithFixedSleep(maxRetries=1, sleepTime=1 SECONDS)(still try to connect the old AM addr)",
+        "13/08/30 08:45:56 INFO ipc.Client: Retrying connect to server: hostname/68.142.247.155:52713.Already tried 0 time(s);retry policy is RetryUpToMaximumCountWithFixedSleep(maxRetries=1, sleepTime=1 SECONDS)",
+        "13/08/30 08:45:56ERRORsecurity.UserGroupInformation: PriviledgedActionException as:user@REALM (auth:KERBEROS) cause:java.io.IOException: java.net.ConnectException: Call From hostname.ConnectException: Connection refused; For more details see: http://wiki.apache.org/hadoop/ConnectionRefused",
+        "java.io.IOException: java.net.ConnectException: Call From hostname.ConnectException: Connection refused; For more details see: http://wiki.apache.org/hadoop/ConnectionRefused",
+        "at org.apache.hadoop.mapred.ClientServiceDelegate.invoke(ClientServiceDelegate.java:319)",
+        "at org.apache.hadoop.mapred.ClientServiceDelegate.getTaskCompletionEvents(ClientServiceDelegate.java:354)",
+        "at org.apache.hadoop.mapred.YARNRunner.getTaskCompletionEvents(YARNRunner.java:529)",
+        "at org.apache.hadoop.mapreduce.Job$5.run(Job.java:668)",
+        "at org.apache.hadoop.mapreduce.Job$5.run(Job.java:665)",
+        "at java.security.AccessController.doPrivileged(Native Method)",
+        "at javax.security.auth.Subject.doAs(Subject.java:396)",
+        "at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1477)",
+        "at org.apache.hadoop.mapreduce.Job.getTaskCompletionEvents(Job.java:665)",
+        "at org.apache.hadoop.mapreduce.Job.monitorAndPrintJob(Job.java:1349)",
+        "at org.apache.hadoop.mapreduce.Job.waitForCompletion(Job.java:1289)",
+        "at org.apache.hadoop.examples.WordCount.main(WordCount.java:84)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)",
+        "at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)",
+        "at java.lang.reflect.Method.invoke(Method.java:597)",
+        "at org.apache.hadoop.util.ProgramDriver$ProgramDescription.invoke(ProgramDriver.java:72)",
+        "at org.apache.hadoop.util.ProgramDriver.run(ProgramDriver.java:144)",
+        "at org.apache.hadoop.examples.ExampleDriver.main(ExampleDriver.java:74)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)",
+        "at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)",
+        "at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)",
+        "at java.lang.reflect.Method.invoke(Method.java:597)",
+        "at org.apache.hadoop.util.RunJar.main(RunJar.java:212)",
+        "Caused by: java.net.ConnectException: Call From hostname.ConnectException: Connection refused; For more details see: http://wiki.apache.org/hadoop/ConnectionRefused",
+        "…(stack trace)",
+        "at org.apache.hadoop.net.NetUtils.wrapWithMessage(NetUtils.java:783)",
+        "at org.apache.hadoop.net.NetUtils.wrapException(NetUtils.java:730)",
+        "at org.apache.hadoop.ipc.Client.call(Client.java:1351)",
+        "at org.apache.hadoop.ipc.Client.call(Client.java:1300)",
+        "at org.apache.hadoop.ipc.ProtobufRpcEngine$Invoker.invoke(ProtobufRpcEngine.java:206)",
+        "at $Proxy14.getTaskAttemptCompletionEvents(Unknown Source)",
+        "at org.apache.hadoop.mapreduce.v2.api.impl.pb.client.MRClientProtocolPBClientImpl.getTaskAttemptCompletionEvents(MRClientProtocolPBClientImpl.java:177)",
+        "…(stack trace)",
+        "at java.lang.reflect.Method.invoke(Method.java:597)",
+        "at org.apache.hadoop.mapred.ClientServiceDelegate.invoke(ClientServiceDelegate.java:310)",
+        "... 23 more",
+        "Caused by: java.net.ConnectException: Connection refused",
+        "…(stack trace)",
+        "at org.apache.hadoop.ipc.Client$Connection.setupConnection(Client.java:547)",
+        "at org.apache.hadoop.ipc.Client$Connection.setupIOstreams(Client.java:642)",
+        "at org.apache.hadoop.ipc.Client$Connection.access$2600(Client.java:314)",
+        "at org.apache.hadoop.ipc.Client.getConnection(Client.java:1399)",
+        "at org.apache.hadoop.ipc.Client.call(Client.java:1318)",
+        "... 32 more"
+      ]
+    }
+  },
+  "(2) Root Cause": {
+    "p": [
+      "The new AM will register itself to RM when it is started. After the 1st AM is killed and before the 2nd AM is registered, JobClient queried RM for the AM host/port and RM responds with 1st AM's host/port. If job client invokes any method that communicates with the 1st AM beyond MR_CLIENT_MAX_RETRIES, the exception occurs.",
+      "",
+      "Background knowledge for AM’s failure: An AM sends periodic heartbeats to the RM. When the AM fails, the RM will detect the failure and start a new instance of the AM with a new container. MapReduce application-master has the ability to recover the state but it is not enabled by default. Other than resource-manager, associated client also reacts with the failure. The client contacts the resource-manager to locate the new application-master’s address.",
+      "The client polls the application master for progress reports, so if itisAM fails the client needs to locate the new instance. During job initialization the client asks the RM for the AM’s address, and then caches it. If the AM fails, the client will experience a timeout when it issues a status update, at which point the client will go back to the RM to ask for the new AM’s address.",
+      "A log example:",
+      "INFO resourcemanager.ApplicationMasterService: AM registration appattempt_1423769157162_282897_000001",
+      ""
+    ]
+  },
+  "(3) How to figure out the root cause based on logs": {
+    "p": [
+      "ClientServiceDelegate .getTaskCompletionEvents() {",
+      "while(maxRetries > 0) {",
+      "try { return methodOb.invoke(getProxy(), args);",
+      "} catch (InvocationTargetException e) {",
+      "realProxy = null;",
+      "// HS/AMS shut down",
+      "maxRetries--;",
+      "lastException = new IOException(e.getTargetException());",
+      "} catch (Exception e) { LOG.debug(\"Failed to contact AM/History for job \" + jobId + \" Will retry..\", e);",
+      "realProxy = null;",
+      "// RM shutdown",
+      "maxRetries--;",
+      "lastException = new IOException(e.getMessage());",
+      "}",
+      "}",
+      "}",
+      "The mechanism for processing AM’sfailure is required."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "In Client’s “mapred-default.xml”, change “yarn.app.mapreduce.client-am.ipc.max-retries 1→3”.",
+      "In “ClientServiceDelegate.java”, modify the retry policy. If it's AM connection failure, retry count will not be decreased as we wait for AM to be restarted. In the case that job really failed and AM will not be restarted, JobClient will query RM for the final status."
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "•hadoop-mapreduce-project/dev-support/findbugs-exclude.xml;",
+      "Fix the warnings, to suppress the findbug warning that complains Thread.sleep inside invoke method which is fine.",
+      "•hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-core/src/main/java/org/apache/hadoop/mapreduce/MRJobConfig.java;",
+      "Modify the annotation “The number of client retries to the RM/HS/AM before throwing exception”: delete “AM”.",
+      "•hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-core/src/main/resources/mapred-default.xml;",
+      "Change the default value of “yarn.app.mapreduce.client-am.ipc.max-retries” from “1” to “3”",
+      "Change the description of “yarn.app.mapreduce.client.max-retries”, deleting “AM”",
+      "•hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/src/main/java/org/apache/hadoop/mapred/ClientServiceDelegate.java",
+      "// if it's AM shut down, do not decrement maxClientRetry as we wait for",
+      "+ // AM to be restarted.",
+      "+ if (!usingAMProxy.get()) {",
+      "+ maxClientRetry--;",
+      "+ }",
+      "+ usingAMProxy.set(false);",
+      "",
+      "+ try {",
+      "+ Thread.sleep(100);",
+      "+ } catch (InterruptedException ie) {",
+      "+ LOG.warn(\"ClientServiceDelegate invoke call interrupted\", ie);",
+      "+ throw new YarnRuntimeException(ie);",
+      "+ }",
+      "“Between each failure, there should be a sleep, otherwise client will just keep on pinging RM in a tight loop.”",
+      ""
+    ]
+  }
+}

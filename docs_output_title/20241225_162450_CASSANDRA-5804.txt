@@ -1,0 +1,115 @@
+{
+  "p": [
+    "Cassandra-5804"
+  ],
+  "AntiEntropySession fails when OutboundTcpConnection receives IOException": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "Cassandra node 192.168.193 sends TreeRequest to the other peer nodes (192.168.2.92, 192.168.2.91, 192.168.1.91, 192.168.1.93).",
+        "Node 192.168.1.93 fails to send TreeRequest to node 192.168.2.92 and node 192.168.2.91"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The logs are from node 192.168.1.93, which is conducting AntiEntropy repair:",
+        "INFO [AntiEntropySessions:5] 2013-07-24 20:16:39,232 AntiEntropyService.java (line 651) [repair #79afee40-f4bf-11e2-bfb6-bd4071a4c32e] new session: will sync /192.168.1.93, /192.168.2.92, /192.168.2.91, /192.168.1.91 on range (6575400599453278172,6596229519918600663) for ks1.[cf1, cf2]",
+        "When doing AntiEntropy repair on node 192.168.1.93, a new RepairSession is started. Node 192.168.1.93 will send TreeRequest to some certain peer nodes.",
+        "INFO [AntiEntropySessions:5] 2013-07-24 20:16:39,233 AntiEntropyService.java (line 857) [repair #79afee40-f4bf-11e2-bfb6-bd4071a4c32e] requesting merkle trees for cf1 (to [/192.168.2.92, /192.168.2.91, /192.168.1.91, /192.168.1.93])",
+        "Node 192.168.1.93 will send TreeRequest (merkle tree) for column family cf1 to the above nodes.",
+        "TRACE [AntiEntropySessions:5] 2013-07-24 20:16:39,233 MessagingService.java (line 602) /192.168.1.93 sending TREE_REQUEST to 320929@/192.168.2.91",
+        "TRACE [AntiEntropySessions:5] 2013-07-24 20:16:39,233 MessagingService.java (line 602) /192.168.1.93 sending TREE_REQUEST to 320930@/192.168.1.93",
+        "TRACE [AntiEntropySessions:5] 2013-07-24 20:16:39,234 MessagingService.java (line 605) Message-to-self TYPE:ANTI_ENTROPY VERB:TREE_REQUEST going over MessagingService",
+        "TRACE [AntiEntropySessions:5] 2013-07-24 20:16:39,235 MessagingService.java (line 602) /192.168.1.93 sending TREE_REQUEST to 320931@/192.168.2.92",
+        "TRACE [AntiEntropySessions:5] 2013-07-24 20:16:39,235 MessagingService.java (line 602) /192.168.1.93 sending TREE_REQUEST to 320932@/192.168.1.91",
+        "DEBUG [AntiEntropyStage:1] 2013-07-24 20:16:39,236 AntiEntropyService.java (line 467) Queueing validation compaction for #<TreeRequest 79afee40-f4bf-11e2-bfb6-bd4071a4c32e, /192.168.1.93, (ks1,cf1), (6575400599453278172,6596229519918600663)>",
+        "DEBUG [WRITE-/192.168.2.92] 2013-07-24 20:16:39,237 OutboundTcpConnection.java (line 209) error writing to /192.168.2.92",
+        "java.io.IOException: Connection reset by peer",
+        "at sun.nio.ch.FileDispatcher.write0(Native Method)",
+        "at sun.nio.ch.SocketDispatcher.write(Unknown Source)",
+        "at sun.nio.ch.IOUtil.writeFromNativeBuffer(Unknown Source)",
+        "at sun.nio.ch.IOUtil.write(Unknown Source)",
+        "at sun.nio.ch.SocketChannelImpl.write(Unknown Source)",
+        "at java.nio.channels.Channels.writeFullyImpl(Unknown Source)",
+        "at java.nio.channels.Channels.writeFully(Unknown Source)",
+        "at java.nio.channels.Channels.access$000(Unknown Source)",
+        "at java.nio.channels.Channels$1.write(Unknown Source)",
+        "at java.io.BufferedOutputStream.flushBuffer(Unknown Source)",
+        "at java.io.BufferedOutputStream.flush(Unknown Source)",
+        "at org.xerial.snappy.SnappyOutputStream.flush(SnappyOutputStream.java:272)",
+        "at java.io.DataOutputStream.flush(Unknown Source)",
+        "at org.apache.cassandra.net.OutboundTcpConnection.writeConnected(OutboundTcpConnection.java:200)",
+        "at org.apache.cassandra.net.OutboundTcpConnection.run(OutboundTcpConnection.java:144)",
+        "DEBUG [ValidationExecutor:3] 2013-07-24 20:16:39,239 StorageService.java (line 2331) Forcing flush on keyspace ks1, CF cf1",
+        "DEBUG [WRITE-/192.168.2.91] 2013-07-24 20:16:39,237 OutboundTcpConnection.java (line 209) error writing to /192.168.2.91",
+        "java.io.IOException: Connection reset by peer",
+        "at sun.nio.ch.FileDispatcher.write0(Native Method)",
+        "at sun.nio.ch.SocketDispatcher.write(Unknown Source)",
+        "at sun.nio.ch.IOUtil.writeFromNativeBuffer(Unknown Source)",
+        "at sun.nio.ch.IOUtil.write(Unknown Source)",
+        "at sun.nio.ch.SocketChannelImpl.write(Unknown Source)",
+        "at java.nio.channels.Channels.writeFullyImpl(Unknown Source)",
+        "at java.nio.channels.Channels.writeFully(Unknown Source)",
+        "at java.nio.channels.Channels.access$000(Unknown Source)",
+        "at java.nio.channels.Channels$1.write(Unknown Source)",
+        "at java.io.BufferedOutputStream.flushBuffer(Unknown Source)",
+        "at java.io.BufferedOutputStream.flush(Unknown Source)",
+        "at org.xerial.snappy.SnappyOutputStream.flush(SnappyOutputStream.java:272)",
+        "at java.io.DataOutputStream.flush(Unknown Source)",
+        "at org.apache.cassandra.net.OutboundTcpConnection.writeConnected(OutboundTcpConnection.java:200)",
+        "at org.apache.cassandra.net.OutboundTcpConnection.run(OutboundTcpConnection.java:144)",
+        "The IOException happens when 192.168.1.93 is sending TreeRequest to 192.168.2.92 and 192.168.2.91."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Based on the log, we know that node 192.168.1.93 is sending merkle tree request to the other peer node. The error happens when sending the request to node 192.168.2.92 & 192.168.2.91. Take 192.168.2.92 as an example.",
+      "DEBUG [WRITE-/192.168.2.92] 2013-07-24 20:16:39,237 OutboundTcpConnection.java (line 209)error writing to /192.168.2.92",
+      "java.io.IOException: Connection reset by peer",
+      "(2.2) After analyzing the source code, we can get the following control flow about sending TreeRequst during AntiEntropy repair. In RepairSession.runMayThrow(), after calling sendTreeRequests(), completed.await() is called to wait the repair to be finished.",
+      "",
+      "Function sendTreeRequests() will call treeRequests.start() to send merkle tree request to every involved neighbor. After getting a connection from the connection pool to a specific endpoint, the request will put into the backlog queue.",
+      "In OutboundTcpConnection.run(), the request message will be taken from the backlog queue and sent through writeConnectioned(qm). Since the connection is reset by the peer node, out.flush() throws IOException, so we fail to send the merkle tree request to this peer node.",
+      "",
+      "(2.3) Although the IOException is caught in writeConnected(), the TREE_REQUEST is not retried, and the repair does not fail.",
+      "Instead, the repair stalls waiting for the merkle tree response which will never arrive:",
+      "Once the current node receives the tree response from the other node, TreeResponseVerbHandler.doVerb() will call rendezvous() to process the response. Then addTree() will add a new received tree and return the number of remiaining treea to be received for the job to be complete.",
+      "Only when addTree() returns 0 which means all expected merkle trees are received, function submitDifferencers() will called to start the comparison. After comparing, completed() is called, which will wake upcompleted.await()withcompleted.signalAll().",
+      "",
+      "In this bug, when the IOException happens, the TREE_REQUEST is not retried, addTree() will never return 0, since the tree response will never arrive. Then the following comparison will not be submitted, neither will completed.signalAll() be called. Therefore, the repair session hangs."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When node 192.168.1.93 sends merke tree request to node 192.168.2.92 (& 192.168.2.91), the connection it gets from the connection pool is reset, which makes it fail to send the request. Since the TREE_REQUEST is not retried, the repair will stall, waiting for the merkle tree response which never arrives."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The patch is to making retry for any IOException, not just SocketException.",
+      "So that when the merkle tree request fails to be sent, the message will be put back into the backlog queue, and sent again.",
+      "•src/java/org/apache/cassandra/net/OutboundTcpConnection.java",
+      "",
+      "Function writeConnected() is on the callstack of the IOException.",
+      "class QueuedMessage",
+      "booleanshouldRetry() {return!MessagingService.DROPPABLE_VERBS.contains(message.verb); }",
+      "",
+      "public static finalEnumSet<Verb>DROPPABLE_VERBS= EnumSet.of(Verb.BINARY, Verb._TRACE,Verb.MUTATION, Verb.READ_REPAIR, Verb.READ, Verb.RANGE_SLICE, Verb.REQUEST_RESPONSE);",
+      "The verb for merkle tree request is Verb.TREE_REQUEST, and it is not in DROPPABLE_VERBS."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "Cassandra node(s)"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

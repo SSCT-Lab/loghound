@@ -1,0 +1,109 @@
+{
+  "p": [
+    "HDFS-4544"
+  ],
+  "Error in deleting blocks should not do check disk, for all types of errors": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "DFSClient(client-side) ) NameNode (server-side)",
+        "DataNode (slave, client-side) NameNode (master, server-side)",
+        "The RPC protocol between DN and NN is: DatanodeProtocol"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The log is from DataNode(DN):",
+        "“We have seen errors like:",
+        "2013-03-02 00:08:28,849 WARN org.apache.hadoop.hdfs.server.datanode.DataNode: Unexpected error trying to delete block blk_-2973118207682441648_225738165. BlockInfo not found in volumeMap.",
+        "And all such errors trigger check disk, making the clients timeout.”"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) The error message printed in the log is in function FSDataset.invalidate(). It is called by function DataNode.processCommand() when the command DN need to execute is invalidating a block. (The commands DN need to execute are from NN when DN heartbeats with NN.)",
+      "private booleanprocessCommand(DatanodeCommand cmd)throwsIOException { …switch(cmd.getAction()) {caseDatanodeProtocol.DNA_TRANSFER: …break;caseDatanodeProtocol.DNA_INVALIDATE:",
+      "// Some local block(s) are obsolete and can be safely garbage-collected.Block toDelete[] = bcmd.getBlocks();try{",
+      "if(blockScanner!=null) {blockScanner.deleteBlocks(toDelete); }data.invalidate(toDelete);}catch(IOException e) {",
+      "-checkDiskError();",
+      "+// Exceptions caught here are not expected to be disk-related.throwe;",
+      "}myMetrics.incrBlocksRemoved(toDelete.length);break;",
+      "caseDatanodeProtocol.DNA_SHUTDOWN: …default:LOG.warn(\"Unknown DatanodeCommand action: \"+ cmd.getAction());}return true;}",
+      "The IOException thrown by invalidate() is caught, and execute checkDiskError(), which lead to DFSClienttimeout.",
+      "(2.2) After checking the source code of invalidate(), we can see that the all the operations in synchronized block is memory operation: remove the block metadata from DN’s memory.",
+      "At last, function asyncDiskService.deleteAsync() will delete the block file and meta file from the disk asynchronously.",
+      "public voidinvalidate(Block invalidBlks[])throwsIOException {",
+      "booleanerror =false;",
+      "for(inti =0; i < invalidBlks.length; i++) {",
+      "File f =null;",
+      "FSVolume v;",
+      "synchronized(this) {",
+      "f = getFile(invalidBlks[i]);",
+      "DatanodeBlockInfo dinfo =volumeMap.get(invalidBlks[i]);",
+      "if(dinfo ==null) {DataNode.LOG.warn(\"Unexpected error trying to delete block \"",
+      "+ invalidBlks[i] +\". BlockInfo not found in volumeMap.\");",
+      "error =true;",
+      "continue;",
+      "}",
+      "v = dinfo.getVolume();",
+      "if(f ==null) { DataNode.LOG.warn(\"Unexpected error trying to delete block \"",
+      "+ invalidBlks[i] +\". Block not found in blockMap.\"+ ((v ==null) ?\" \":\" Block found in volumeMap.\"));",
+      "error =true;",
+      "continue;",
+      "}",
+      "if(v ==null) { DataNode.LOG.warn(\"Unexpected error trying to delete block \"",
+      "+ invalidBlks[i] +\". No volume for this block.\"+\" Block found in blockMap. \"+ f +\".\");",
+      "error =true;",
+      "continue;",
+      "}",
+      "File parent = f.getParentFile();",
+      "if(parent ==null) { DataNode.LOG.warn(\"Unexpected error trying to delete block \"+ invalidBlks[i] +\". Parent not found for file \"+ f +\".\");",
+      "error =true;",
+      "continue;",
+      "}",
+      "v.clearPath(parent);",
+      "volumeMap.remove(invalidBlks[i]);",
+      "}",
+      "File metaFile =getMetaFile( f, invalidBlks[i] );",
+      "longdfsBytes = f.length() + metaFile.length();",
+      "",
+      "// Delete the block asynchronously to make sure we can do it fast enough",
+      "asyncDiskService.deleteAsync(v, f, metaFile, dfsBytes, invalidBlks[i].toString());",
+      "}",
+      "if(error) {throw newIOException(\"Error in deleting blocks.\"); }",
+      "}",
+      "So all the errors may happen in invalidate() are not related to the disk.",
+      "Therefore, the IOException throws here should not cause disk checking, which is quite time-consuming (minute level, I/O intensive)."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When the IOException is thrown by invalidate(), the unnecessary disk checking is executed, which cause the DFSClient timeout."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Remove the unnecessary disk checking operation in function processCommand().",
+      "• src/hdfs/org/apache/hadoop/hdfs/server/datanode/DataNode.java",
+      "",
+      "@@ -1227,7 +1227,7 @@ public class DataNode extends Configured",
+      "}",
+      "data.invalidate(toDelete);",
+      "} catch(IOException e) {",
+      "-checkDiskError();",
+      "+// Exceptions caught here are not expected to be disk-related.",
+      "throw e;",
+      "}",
+      "myMetrics.incrBlocksRemoved(toDelete.length);",
+      "This patch will eliminate the effect brought by the IOException. Soclientwill not timeout."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch will be applied in all DataNodes. No call stack in the log.",
+      "The log can only help make sure where the error message is printed.",
+      ""
+    ]
+  }
+}

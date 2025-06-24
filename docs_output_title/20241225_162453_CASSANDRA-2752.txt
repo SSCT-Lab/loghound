@@ -1,0 +1,163 @@
+{
+  "p": [
+    "Cassandra-2752"
+  ],
+  "Repair fails with java.io.EOFException": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "cassandra node 1.10.42. 81is exchanging data withnode 1.10.42.82"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Issuing repair on node 1 (1.10.42.81) in a cluster quickly fails with the EOFException.",
+        "Node repair with AntiEntropy strategy is to ensure that all data on a replica is made consistent.",
+        "When doing the repair, 1.10.42.81 will first request merkle trees from the other peer nodes which also carry the same replica data. When all the requested trees are received, it goes to make comparison.",
+        "On 1.10.42.81:",
+        "INFO [AntiEntropyStage:1] 2011-06-09 19:02:47,999 AntiEntropyService.java (line 234) Queueing comparison #<Differencer #<TreeRequest manual-repair-0c17c5f9-583f-4a31-a6d4-a9e7306fb46e, /1",
+        ".10.42.82, (JP,XXX), (Token(bytes[6e]),Token(bytes[313039]))>>",
+        "INFO [AntiEntropyStage:1] 2011-06-09 19:02:48,026 AntiEntropyService.java (line 468) Endpoints somewhere/1.10.42.81 and /1.10.42.82 have2 range(s)out of sync for (JP,XXX) on (Token(bytes[6e]),Token(bytes[313039]))",
+        "When compared with the merkle tree from 1.10.42.82, it finds that 2 ranges are inconsistent. Then the repair will be performed between these two nodes by streaming the current data covered by the mismatching hashes.",
+        "INFO [AntiEntropyStage:1] 2011-06-09 19:02:48,026 AntiEntropyService.java (line 485)Performing streaming repair of 2 rangesfor #<TreeRequest manual-repair-0c17c5f9-583f-4a31-a6d4-a9e7306",
+        "fb46e, /z, (JP,XXX), (Token(bytes[6e]),Token(bytes[313039])]>",
+        "INFO [AntiEntropyStage:1] 2011-06-09 19:02:48,030 StreamOut.java (line 173) Stream context metadata[/data/cassandra/node0/data/JP/XXX-g-3-Data.db sections=1 progress=0/36592 - 0%], 1 sstables.",
+        "INFO [AntiEntropyStage:1] 2011-06-09 19:02:48,031 StreamOutSession.java (line 174)Streaming to /1.10.42.82",
+        "ERROR[CompactionExecutor:9] 2011-06-0919:02:48,970AbstractCassandraDaemon.java (line 113)Fatal exceptionin thread Thread[CompactionExecutor:9,1,main]",
+        "java.io.EOFException",
+        "at java.io.RandomAccessFile.readInt(RandomAccessFile.java:725)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.doIndexing(SSTableWriter.java:457)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.index(SSTableWriter.java:364)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$Builder.build(SSTableWriter.java:315)",
+        "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1099)",
+        "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1090)",
+        "at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:303)",
+        "at java.util.concurrent.FutureTask.run(FutureTask.java:138)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "On 1.10.42.82:",
+        "ERROR[CompactionExecutor:12] 2011-06-0919:02:48,051AbstractCassandraDaemon.java (line 113) Fatal exception in thread Thread[CompactionExecutor:12,1,main]",
+        "java.io.EOFException",
+        "at java.io.RandomAccessFile.readInt(RandomAccessFile.java:725)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.doIndexing(SSTableWriter.java:457)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.index(SSTableWriter.java:364)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$Builder.build(SSTableWriter.java:315)",
+        "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1099)",
+        "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1090)",
+        "at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:303)",
+        "at java.util.concurrent.FutureTask.run(FutureTask.java:138)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "ERROR[Thread-132] 2011-06-09 19:02:48,051 AbstractCassandraDaemon.java (line 113) Fatal exception in thread Thread[Thread-132,5,main]",
+        "java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.io.EOFException",
+        "at org.apache.cassandra.streaming.StreamInSession.closeIfFinished(StreamInSession.java:152)",
+        "at org.apache.cassandra.streaming.IncomingStreamReader.read(IncomingStreamReader.java:63)",
+        "at org.apache.cassandra.net.IncomingTcpConnection.stream(IncomingTcpConnection.java:155)",
+        "at org.apache.cassandra.net.IncomingTcpConnection.run(IncomingTcpConnection.java:93)",
+        "Caused by: java.util.concurrent.ExecutionException: java.io.EOFException",
+        "at java.util.concurrent.FutureTask$Sync.innerGet(FutureTask.java:222)",
+        "at java.util.concurrent.FutureTask.get(FutureTask.java:83)",
+        "at org.apache.cassandra.streaming.StreamInSession.closeIfFinished(StreamInSession.java:136)",
+        "... 3 more",
+        "Caused by:java.io.EOFException",
+        "at java.io.RandomAccessFile.readInt(RandomAccessFile.java:725)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.doIndexing(SSTableWriter.java:457)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.index(SSTableWriter.java:364)",
+        "at org.apache.cassandra.io.sstable.SSTableWriter$Builder.build(SSTableWriter.java:315)",
+        "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1099)",
+        "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1090)",
+        "at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:303)",
+        "at java.util.concurrent.FutureTask.run(FutureTask.java:138)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:662)"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) The first time when we look at the log, we notice that the error happens in both sides, and the same EOFException and callstack (marked in green) are contained in three ERRORs. Before the error happens, node 81 is performing repair with node 82, since 2 ranges are not consistent in these two nodes. The repair in conducted in function performStreamingRepair(): node 81 sends ranges to node 82 (stream out), and it also requests ranges from node 82 (stream in).",
+      "(2.2) Combining the source code and the callstack of EOFException, we can get the following control flow and see where the exception occurs:",
+      "java.io.EOFException",
+      "at java.io.RandomAccessFile.readInt(RandomAccessFile.java:725)",
+      "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.doIndexing(SSTableWriter.java:457)",
+      "at org.apache.cassandra.io.sstable.SSTableWriter$RowIndexer.index(SSTableWriter.java:364)",
+      "at org.apache.cassandra.io.sstable.SSTableWriter$Builder.build(SSTableWriter.java:315)",
+      "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1099)",
+      "at org.apache.cassandra.db.CompactionManager$9.call(CompactionManager.java:1090)",
+      "at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:303)",
+      "at java.util.concurrent.FutureTask.run(FutureTask.java:138)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+      "at java.lang.Thread.run(Thread.java:662)",
+      "",
+      "",
+      "",
+      "Since “privateCompactionExecutorexecutor=newCompactionExecutor();”",
+      "And “CompactionExecutorextends fromThreadPoolExecutor”,ThreadPoolExecutor.execute() will invoke the call() defined above.",
+      "",
+      "",
+      "Node 81 is reading the files created by node 82, and it is possible that the files created by node 82 during repair process are broken. EOFException occurs while RowIndexer is reading the broken files. But according to the result of scrub command, data files on sender nodes are not broken.",
+      "Then we need to check the variabledfile. After checking the code ofupdateCache(), the developer finds that the problem is in this function:",
+      "When the row is updated in cache, we will read (deserialize) the row. However, after all the columns is read, the offset in the file is not reset back to the location where the column count is stored and things go bad.",
+      "",
+      "(2.3) When the EOFException happens in thread CompactionExecutor, it will be caught by the UncaughtExceptionHandler which is defined in AbstractCassandraDaemon.setup():",
+      "",
+      "node 1.10.42.81:",
+      "ERROR[CompactionExecutor:9] 2011-06-09 19:02:48,970 AbstractCassandraDaemon.java (line 113)Fatal exceptionin thread Thread[CompactionExecutor:9,1,main]",
+      "java.io.EOFException",
+      "...",
+      "node 1.10.42.82:",
+      "ERROR[CompactionExecutor:12] 2011-06-09 19:02:48,051 AbstractCassandraDaemon.java (line 113)Fatal exceptionin thread Thread[CompactionExecutor:12,1,main]",
+      "java.io.EOFException",
+      "...",
+      "For the EOFExceptions happens on node 81 and the first one on node 82, although the callstacks are totally the same, I think they are not related. The exception happens when node 81 and node 82 are reading the files from the peer node respectively, with their respective CompactionExecutor.",
+      "(2.4) For the second EOFException on node 82,",
+      "ERROR[Thread-132] 2011-06-09 19:02:48,051 AbstractCassandraDaemon.java (line 113) Fatal exception in thread Thread[Thread-132,5,main]",
+      "java.lang.RuntimeException: java.util.concurrent.ExecutionException: java.io.EOFException",
+      "at org.apache.cassandra.streaming.StreamInSession.closeIfFinished(StreamInSession.java:152)",
+      "at org.apache.cassandra.streaming.IncomingStreamReader.read(IncomingStreamReader.java:63)",
+      "at org.apache.cassandra.net.IncomingTcpConnection.stream(IncomingTcpConnection.java:155)",
+      "at org.apache.cassandra.net.IncomingTcpConnection.run(IncomingTcpConnection.java:93)",
+      "Caused by: java.util.concurrent.ExecutionException: java.io.EOFException",
+      "at java.util.concurrent.FutureTask$Sync.innerGet(FutureTask.java:222)",
+      "at java.util.concurrent.FutureTask.get(FutureTask.java:83)",
+      "at org.apache.cassandra.streaming.StreamInSession.closeIfFinished(StreamInSession.java:136)",
+      "... 3 more",
+      "Caused by:java.io.EOFException",
+      "...",
+      "The control flow is:",
+      "",
+      "",
+      "class StreamInSession",
+      "",
+      "",
+      "IncomingStreamReader",
+      "",
+      "When calling readFile(), the function which leads to the EOFException is executed in a FutureTask (according to EOFException callstack),.",
+      "When calling closeIfFinished(), it calls FutureTask.get(). Since the exception != null, a new ExecutionException is thrown, and caught by closeIfFinished(). Then it is thrown as a new RuntimeException, which will be caught by AbstractCassandraDaemon’s UncaughtExceptionHandler.",
+      "So, for the two ERRORs on node 82, the second one is related to the first one."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "During the repair process of different ranges between node 81 and 82, the data is exchanged between these two node. When reading the sstable created by the peer node, after updating the row in cache, the offset of in the file is not reset back to the location where the column count is stored. Then callingdfile.readInt(), EOFException happens. From the log, it seems that the error is related to the peer node, but the problem is in each node itself."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "After deserializing a row and updating the row cache, put back the file pointer.",
+      "• src/java/org/apache/cassandra/io/sstable/SSTableWriter.java",
+      "",
+      "Fixing the root cause."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "Cassandra nodes",
+      ""
+    ]
+  }
+}

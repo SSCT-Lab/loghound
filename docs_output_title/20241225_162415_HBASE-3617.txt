@@ -1,0 +1,113 @@
+{
+  "p": [
+    "HBase-3617"
+  ],
+  "NoRouteToHostException during balancing will cause Master abort": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMastersends CLOSE RPC toRegionServer"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "HMaster log:",
+        "2011-03-10 07:48:39,192FATALorg.apache.hadoop.hbase.master.HMaster:Remote unexpected exception",
+        "java.net.NoRouteToHostException: No route to host",
+        "at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)",
+        "at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:567)",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:206)",
+        "at org.apache.hadoop.net.NetUtils.connect(NetUtils.java:408)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupIOstreams(HBaseClient.java:328)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.getConnection(HBaseClient.java:883)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:750)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC$Invoker.invoke(HBaseRPC.java:257)",
+        "at $Proxy6.closeRegion(Unknown Source)",
+        "at org.apache.hadoop.hbase.master.ServerManager.sendRegionClose(ServerManager.java:589)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.unassign(AssignmentManager.java:1093)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.unassign(AssignmentManager.java:1040)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.balance(AssignmentManager.java:1831)",
+        "at org.apache.hadoop.hbase.master.HMaster.balance(HMaster.java:692)",
+        "at org.apache.hadoop.hbase.master.HMaster$1.chore(HMaster.java:583)",
+        "at org.apache.hadoop.hbase.Chore.run(Chore.java:66)",
+        "2011-03-10 07:48:39,192 INFO org.apache.hadoop.hbase.master.HMaster:Aborting",
+        "2011-03-10 07:48:39,192 INFOorg.apache.hadoop.hbase.master.HMaster:balancehri=SpecialObject_Speed_Test,,1299710751983.f0e5544339870a510c338b3029979d3e.,src=ap13.secur2,60020,1299710609447,dest=ap12.secur2,60020,1299710609148",
+        "2011-03-10 07:48:39,192 DEBUGorg.apache.hadoop.hbase.master.AssignmentManager: Starting unassignment of region SpecialObject_Speed_Test,, 1299710751983.f0e5544339870a510c338b3029979d3e. (offlining)",
+        "2011-03-10 07:48:39,852 DEBUG org.apache.hadoop.hbase.master.HMaster: Stopping service threads",
+        "2011-03-10 07:48:39,852 INFO org.apache.hadoop.ipc.HBaseServer: Stopping server on 60000",
+        "2011-03-10 07:48:39,852FATALorg.apache.hadoop.hbase.master.HMaster:Remote unexpected exception",
+        "java.io.InterruptedIOException: Interruped while waiting for IO on channel java.nio.channels.SocketChannel[connection-pending remote=/",
+        "10.X.X.18:60020]. 19340 millis timeout left.",
+        "at org.apache.hadoop.net.SocketIOWithTimeout$SelectorPool.select(SocketIOWithTimeout.java:349)",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:203)",
+        "at org.apache.hadoop.net.NetUtils.connect(NetUtils.java:408)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.setupIOstreams(HBaseClient.java:328)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.getConnection(HBaseClient.java:883)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:750)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC$Invoker.invoke(HBaseRPC.java:257)",
+        "at $Proxy6.closeRegion(Unknown Source)",
+        "at org.apache.hadoop.hbase.master.ServerManager.sendRegionClose(ServerManager.java:589)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.unassign(AssignmentManager.java:1093)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.unassign(AssignmentManager.java:1040)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.balance(AssignmentManager.java:1831)",
+        "at org.apache.hadoop.hbase.master.HMaster.balance(HMaster.java:692)",
+        "at org.apache.hadoop.hbase.master.HMaster$1.chore(HMaster.java:583)",
+        "at org.apache.hadoop.hbase.Chore.run(Chore.java:66)",
+        "2011-03-10 07:48:39,852 INFOorg.apache.hadoop.hbase.master.HMaster:Aborting"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "HMaster’s balancing is realized by thread balancer chore, which will call balance() periodically.",
+      "From NoRouteToHostException’s callstack, we can get where the exception happens: when HMaster calls sendRegionClose(), it sends CLOSE RPC to the specific RS.",
+      "The following balance() will callthis.assignmentManager.balance(plan)to execute each plan.",
+      "In the log, the statements marked green belong to executing another plan.",
+      "public booleanbalance() {…synchronized(this.balancer) {// Only allow one balance run at at time.…",
+      "Map<HServerInfo, List<HRegionInfo>> assignments =this.assignmentManager.getAssignments();// Returned Map from AM does not include mention of servers w/o assignments.…List<RegionPlan> plans =this.balancer.balanceCluster(assignments);if(plans !=null&& !plans.isEmpty()) {for(RegionPlan plan: plans) {LOG.info(\"balance \"+ plan);this.assignmentManager.balance(plan);}}}return true;}",
+      "",
+      "voidbalance(finalRegionPlan plan) {synchronized(this.regionPlans) {this.regionPlans.put(plan.getRegionName(), plan);}unassign(plan.getRegionInfo());}",
+      "",
+      "public voidunassign(HRegionInfo region) {unassign(region,false);}",
+      "When executing the specific plan, HMaster will first call unassgin() to make the region offline.",
+      "public voidunassign(HRegionInfo region,booleanforce) {LOG.debug(\"Starting unassignment of region \"+",
+      "region.getRegionNameAsString() +\" (offlining)\");synchronized(this.regions) {// Check if this region is currently assigned…",
+      "}String encodedName = region.getEncodedName();…synchronized(regionsInTransition) {…}// Send CLOSE RPCHServerInfo server =null;synchronized(this.regions) {server =regions.get(region);}try{//TODO: We should consider making this look more like it does for the",
+      "// region open where we catch all throwables and never abortif(serverManager.sendRegionClose(server, state.getRegion())) {",
+      "LOG.debug(\"Sent CLOSE to \"+ server +\" for region \"+region.getRegionNameAsString());return;}// This never happens. Currently regionserver close always return true.LOG.debug(\"Server \"+ server +\" region CLOSE RPC returned false for \"+region.getEncodedName());}catch(NotServingRegionException nsre) {LOG.info(\"Server \"+ server +\" returned \"+ nsre +\" for \"+region.getEncodedName());// Presume that master has stale data. Presume remote side just split.// Presume that the split message when it comes in will fix up the master's// in memory cluster state.return;-}catch(ConnectException e) {-LOG.info(\"Failed connect to \"+ server +\", message=\"+ e.getMessage() +-\", region=\"+ region.getEncodedName());-// Presume that regionserver just failed and we haven't got expired-// server from zk yet. Let expired server deal with clean up.-}catch(java.net.SocketTimeoutException e) {-LOG.info(\"Server \"+ server +\" returned \"+ e.getMessage() +\" for \"+-region.getEncodedName());-// Presume retry or server will expire.-}catch(EOFException e) {-LOG.info(\"Server \"+ server +\" returned \"+ e.getMessage() +\" for \"+",
+      "+}catch(Throwable t) {",
+      "+if(tinstanceofRemoteException) {",
+      "+t = ((RemoteException)t).unwrapRemoteException();",
+      "+}",
+      "+LOG.info(\"Server \"+ server +\" returned \"+ t +\" for \"+region.getEncodedName());// Presume retry or server will expire.-}catch(RemoteException re) {-IOException ioe = re.unwrapRemoteException();-if(ioeinstanceofNotServingRegionException) {-// Failed to close, so pass through and reassign-LOG.debug(\"Server \"+ server +\" returned \"+ ioe +\" for \"+-region.getEncodedName());-}else if(ioeinstanceofEOFException) {-// Failed to close, so pass through and reassign-LOG.debug(\"Server \"+ server +\" returned \"+ ioe +\" for \"+-region.getEncodedName());-}else{-this.master.abort(\"Remote unexpected exception\", ioe);-}-}catch(Throwable t) {-// For now call abort if unexpected exception -- radical, but will get",
+      "-// fellas attention. St.Ack 20101012-this.master.abort(\"Remote unexpected exception\", t);}}",
+      "From the log, with executing the plans, when NoRouteToHostException and InterruptedIOException occur, the exceptions will be caught and make HMaster abort."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When unassign the specific region, HMaster sends CLOSE RPC to the specific RS. If NoRouteToHostException and InterruptedIOException happen, they will be caught and make HMaster abort.",
+      "The problem is about the exception handling, in this case, the exceptions are not that serious to make HMaster abort. So when unassign() is called, it cannot make sure the specific region is offline. We may need some checking for the region state before the other operations."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "“We should catch all IOExceptions”.",
+      "It seems that the developers make this fix because “Presume retry or server will expire”.",
+      "Catch all the IOExceptions and print the exception with LOG.info.",
+      "•src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      "",
+      "Refer to (2)."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "p": [
+    "HBase-6088"
+  ],
+  "Region splitting not happened for long time due to ZK exception while creating RS_ZK_SPLITTING node": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HRegionServercreates ZNode onZooKeeper"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“Region splitting not happened for long time due to ZK exception while creating RS_ZK_SPLITTING node.”",
+        "The following ZK exception ConnectionLossException occurs when trying to create the ZNode for the region, then it will retry to create this ZNode.",
+        "2012-05-24 01:45:41,363 INFO org.apache.zookeeper.ClientCnxn: Client session timed out, have not heard from server in 26668ms for sessionid 0x1377a75f41d0012, closing socket connection and attempting reconnect",
+        "2012-05-24 01:45:41,464 WARN org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Possibly transient ZooKeeper exception: org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode =ConnectionLossfor /hbase/unassigned/bd1079bf948c672e493432020dc0e144",
+        "Since we have the following logs(operations), we know that finally the ZNode for this region split is created successfully.",
+        "It fails to execute SplitRequest due to the IOExcetpion (caused by BadVersionException), then it runs rollback/cleanup of the failed split transaction.",
+        "2012-05-24 01:45:43,300 DEBUG org.apache.hadoop.hbase.regionserver.wal.HLog: cleanupCurrentWriter waiting for transactions to get synced total 189377 synced till here 189365",
+        "2012-05-24 01:45:48,474 INFO org.apache.hadoop.hbase.regionserver.SplitRequest:Running rollback/cleanup of failed split of ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.; Failed setting SPLITTING znode on ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.",
+        "java.io.IOException:Failed setting SPLITTING znode onufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.createDaughters(SplitTransaction.java:242)",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.execute(SplitTransaction.java:450)",
+        "at org.apache.hadoop.hbase.regionserver.SplitRequest.run(SplitRequest.java:67)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "Caused by: org.apache.zookeeper.KeeperException$BadVersionException: KeeperErrorCode = BadVersion for /hbase/unassigned/bd1079bf948c672e493432020dc0e144",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:115)",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:51)",
+        "at org.apache.zookeeper.ZooKeeper.setData(ZooKeeper.java:1246)",
+        "at org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper.setData(RecoverableZooKeeper.java:321)",
+        "at org.apache.hadoop.hbase.zookeeper.ZKUtil.setData(ZKUtil.java:659)",
+        "at org.apache.hadoop.hbase.zookeeper.ZKAssign.transitionNode(ZKAssign.java:811)",
+        "at org.apache.hadoop.hbase.zookeeper.ZKAssign.transitionNode(ZKAssign.java:747)",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.transitionNodeSplitting(SplitTransaction.java:919)",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.createNodeSplitting(SplitTransaction.java:869)",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.createDaughters(SplitTransaction.java:239)",
+        "... 5 more",
+        "2012-05-24 01:45:48,476 INFO org.apache.hadoop.hbase.regionserver.SplitRequest:Successful rollback of failed split of ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.",
+        "",
+        "The following part of log prints when executing splitRequest for this region again.",
+        "2012-05-24 01:47:28,141ERRORorg.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper:Node/hbase/unassigned/bd1079bf948c672e493432020dc0e144already exists and this is not a retry",
+        "2012-05-24 01:47:28,142 INFO org.apache.hadoop.hbase.regionserver.SplitRequest: Running rollback/cleanup of failed split of ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.;Failed create of ephemeral/hbase/unassigned/bd1079bf948c672e493432020dc0e144",
+        "java.io.IOException:Failed create of ephemeral/hbase/unassigned/bd1079bf948c672e493432020dc0e144",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.createNodeSplitting(SplitTransaction.java:865)",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.createDaughters(SplitTransaction.java:239)",
+        "at org.apache.hadoop.hbase.regionserver.SplitTransaction.execute(SplitTransaction.java:450)",
+        "at org.apache.hadoop.hbase.regionserver.SplitRequest.run(SplitRequest.java:67)",
+        "“Due to the above exception, region splitting was failing contineously more than 5hrs.”"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Based on the callstack and the source code, we can get the following control flow:",
+      "",
+      "In createNodeSplitting(), transitionNodeSplitting() throws KeeperException.BadVersionException.",
+      "As a result, we only create the ZNode for this region split (by executingcreateEphemeralNodeAndWatch()), but not set it successfully (since transitionNodeSplitting() fails).",
+      "Then the KeeperException is thrown by creatNodeSplitting(), and caught in createDaughters():",
+      "",
+      "When createNodeSplitting() executes successfully, we will make an journal entry by executingthis.journal.add(JournalEntry.SET_SPLITTING_IN_ZK);",
+      "Here,createDaughters() will throw the new IOException(\"Failed setting SPLITTING znode on \"+...),soJournalEntry.SET_SPLITTING_IN_ZKwill not be added.",
+      "The IOException will be finally caught in SplitRequest.run(), and then running rollback().",
+      "",
+      "(2.2) If we add theJournalEntry.SET_SPLITTING_IN_ZK, the ZNode for the region split will be deleted.",
+      "Here, although the log prints “Successful rollback of failed split of...”, the rollback did nothing actually.",
+      "",
+      "(2.3) When executing the next SplitRequest(refer to the 3rdpart of the log), since the ZNode for this region split still exists,createEphemeralNodeAndWatch()will return FALSE due to KeeperException.NodeExistsException.",
+      "2012-05-24 01:47:28,141ERRORorg.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper:Node/hbase/unassigned/bd1079bf948c672e493432020dc0e144already exists and this is not a retry",
+      "2012-05-24 01:47:28,142 INFO org.apache.hadoop.hbase.regionserver.SplitRequest:Running rollback/cleanup of failed split of ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.;Failed create of ephemeral/hbase/unassigned/bd1079bf948c672e493432020dc0e144",
+      "java.io.IOException:Failed create of ephemeral/hbase/unassigned/bd1079bf948c672e493432020dc0e144",
+      "at org.apache.hadoop.hbase.regionserver.SplitTransaction.createNodeSplitting(SplitTransaction.java:865)",
+      "at org.apache.hadoop.hbase.regionserver.SplitTransaction.createDaughters(SplitTransaction.java:239)",
+      "at org.apache.hadoop.hbase.regionserver.SplitTransaction.execute(SplitTransaction.java:450)",
+      "at org.apache.hadoop.hbase.regionserver.SplitRequest.run(SplitRequest.java:67)",
+      "",
+      "",
+      "Although rollback() is also called for this failed splitRequest, it will still not delete the ZNode, since",
+      "JournalEntry.SET_SPLITTING_IN_ZKis not added.",
+      "Therefore, the following splitting will never succeed as described in the description “Due to the above exception, region splitting was failing continuously more than 5hrs.”",
+      "So we can infer that the 3rdpart of the log will print repeatedly as long as executing the SplitRequest for this region."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "At the beginning region splitting, the ephemeral node (ZNode) will be created and set as “RS_ZK_SPLITTING”. Due to the ZK exception KeeperException.BadVersionException, we fail to set ZNode to “RS_ZK_SPLITTING”, then we will not executethis.journal.add(JournalEntry.SET_SPLITTING_IN_ZK)to make a journal entry. And the following rollback for this failed spilt will do nothing (ZNode for this region split will not be deleted).",
+      "Then, the following retries for this region splitting will always fail due to KeeperException.NodeExistsException. (Even if we call rollback() for each failed retry, the ZNode will still not be deleted.)",
+      "I think KeeperException.ConnectionLossException in the first part of the log does not contribute to this bug. Since after that we still create the ZNode successfully."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Add a new type “STARTED_SPLITTING” into JournalEntry to process the case “before creating node in splitting state”.",
+      "• src/main/java/org/apache/hadoop/hbase/regionserver/SplitTransaction.java",
+      "",
+      "This function is on the callstack of the first IOException “Failed setting SPLITTING znode on...”",
+      "",
+      "",
+      "",
+      "Modify the original cleanZK(), add a new parameter “boolean abort”.",
+      "For case “STARTED_SPLITTING”: since we haven’t tried to create the ZNode, if NoNodeException happens, we will not make the current RS abort.",
+      "For case “SET_SPLITTING_IN_ZK”: since we have already executed creating the ZNode, the ZNode should exist. If NoNodeException happens, we will abort the current RS.",
+      "",
+      "With the fix, in this bug, we will adda journal entry “STARTED_SPLITTING” before create the splitting ZNode, then the ZNode can be cleaned during the first time when rolling back for the failed split. Then the following region split retry may succeed.",
+      "The developer also changes the following functions from static to an instance method for testing the split transaction.",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "RegionServer(s)."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      ""
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "p": [
+    "MAPREDUCE-4448",
+    "Nodemanager crashes upon application cleanup if aggregation failed to start"
+  ],
+  "(1) Log information": {
+    "p": [
+      "(NM’s logs) Description: When log aggregation is enabled, the NodeManager can crash if log aggregation for an application failed to start. Log from one of the crashes is shown below.",
+      "✦ application: NEW→INITING",
+      "[main]2012-07-13 20:35:21,019 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl: Start request for container_1342210962593_0007_01_000001 by user x",
+      "[IPC Server handler 0 on 8041]2012-07-13 20:35:21,043 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl: Creating a new application reference for app application_1342210962593_0007",
+      "[IPC Server handler 0 on 8041]2012-07-13 20:35:21,050 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Application application_1342210962593_0007 transitioned from NEW to INITING",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,051 INFO",
+      "✦Assign an AM (i.e. an application attempt)",
+      "org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Adding container_1342210962593_0007_01_000001 to application application_1342210962593_0007",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,062ERRORorg.apache.hadoop.security.UserGroupInformation: PriviledgedActionException as:x (auth:SIMPLE) cause:javax.security.sasl.SaslException:GSS initiate failed[Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,063 WARN org.apache.hadoop.ipc.Client: Exception encountered while connecting to the server : javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,063ERRORorg.apache.hadoop.security.UserGroupInformation: PriviledgedActionException as:x (auth:SIMPLE) cause:java.io.IOException: javax.security.sasl.SaslException:GSS initiate failed[Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,063ERRORorg.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService: Failed to create user dir",
+      "[hdfs://xx:8020/mapred/logs/x] while processing app application_1342210962593_0007",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,064ERRORorg.apache.hadoop.security.UserGroupInformation: PriviledgedActionException as:x (auth:SIMPLE) cause:java.io.IOException: Failed on local exception: java.io.IOException: javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]; Host Details : local host is: \"xx/xx.xx.xx.xx\"; destination host is: \"\"x\":8020;",
+      "✦application: INITING→ FINISHING_CONTAINERS_WAIT",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,065 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Application application_1342210962593_0007 transitioned from INITING to FINISHING_CONTAINERS_WAIT",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,067 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container: Container container_1342210962593_0007_01_000001 transitioned from NEW to DONE",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,067 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Removing container_1342210962593_0007_01_000001 from application application_1342210962593_0007",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,069 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Application application_1342210962593_0007 transitioned from FINISHING_CONTAINERS_WAIT toAPPLICATION_RESOURCES_CLEANINGUP",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,070FATALorg.apache.hadoop.yarn.event.AsyncDispatcher:Error in dispatcher thread",
+      "[AsyncDispatcher event handler]org.apache.hadoop.yarn.YarnException:",
+      "Application is not initialized yet for container_1342210962593_0007_01_000001",
+      "at org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService.stopContainer(LogAggregationService.java:347)",
+      "at org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService.handle(LogAggregationService.java:381)",
+      "at org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService.handle(LogAggregationService.java:65)",
+      "at org.apache.hadoop.yarn.event.AsyncDispatcher.dispatch(AsyncDispatcher.java:126)",
+      "at org.apache.hadoop.yarn.event.AsyncDispatcher$1.run(AsyncDispatcher.java:75)",
+      "at java.lang.Thread.run(Thread.java:619)",
+      "2012-07-13 20:35:21,071 INFO org.apache.hadoop.yarn.event.AsyncDispatcher: Exiting, bbye..",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,072 WARN org.apache.hadoop.yarn.event.AsyncDispatcher: AsyncDispatcher thread interrupted",
+      "[AsyncDispatcher event handler]java.lang.InterruptedException",
+      "at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.reportInterruptAfterWait(AbstractQueuedSynchronizer.java:1961)",
+      "at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1996)",
+      "at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:399)",
+      "at org.apache.hadoop.yarn.event.AsyncDispatcher$1.run(AsyncDispatcher.java:69)",
+      "at java.lang.Thread.run(Thread.java:619)",
+      "2012-07-13 20:35:21,072 INFO org.apache.hadoop.yarn.service.AbstractService: Service:Dispatcher is stopped.",
+      "[Thread-1]2012-07-13 20:35:21,073 INFO org.mortbay.log: Stopped SelectChannelConnector@0.0.0.0:8042",
+      "[Thread-1]2012-07-13 20:35:21,075 INFO org.apache.hadoop.yarn.service.AbstractService: Service:org.apache.hadoop.yarn.server.nodemanager.webapp.WebServer is stopped.",
+      "[Thread-1]2012-07-13 20:35:21,075 INFO org.apache.hadoop.ipc.Server: Stopping server on 8041",
+      "[Thread-1]2012-07-13 20:35:21,076 INFO org.apache.hadoop.ipc.Server: Stopping IPC Server listener on 8041",
+      "[IPC Server listener on 8041]2012-07-13 20:35:21,077 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService: org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService waiting for pending aggregation during exit",
+      "[Thread-1]2012-07-13 20:35:21,077 INFO org.apache.hadoop.ipc.Server: Stopping IPC Server Responder",
+      "[IPC Server Responder]2012-07-13 20:35:21,077 INFO org.apache.hadoop.yarn.service.AbstractService: Service:org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService is stopped.",
+      "Log from one of the crashes is shown, but it does happen among several nodemanagers."
+    ]
+  },
+  "(2) Root Cause": {
+    "p": [
+      "The application is going to be finished and will turn into state “APPLICATION_RESOURCES_CLEANINGUP”. Meanwhile LogAggregationService failed to create user dir, and it will stop every container run for the application, and make every nodemanager crash."
+    ]
+  },
+  "(3) How to figure out the root cause based on logs": {
+    "p": [
+      "After the several “ERROR” messages, the application is still running. When the application is going to be finished, the “FATAL” error occurs, and it is related to “LogAggregationService”. In the former errors, there is also an error related to “LogAggregationService”, and it is caused by “Failed to create user dir”."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Change exceptions into “LOG.warn”",
+      "Since the failure of log aggregation should not affect the running of application, so change the YarnExpetions into log messages, and it will not take down the NM when there are log aggregation problems with an application."
+    ]
+  },
+  "(5) How many nodes are involved in the patch? (multiple/single node(s))": {
+    "p": [
+      "• org/apache/hadoop/yarn/server/nodemanager/containermanager/logaggregation/LogAggregationService.java",
+      "+ AppLogAggregator aggregator = this.appLogAggregators.get(",
+      "+ containerId.getApplicationAttemptId().getApplicationId());",
+      "+ if (aggregator == null) {",
+      "+ LOG.warn(\"Log aggregation is not initialized for \" + containerId",
+      "+ + \", did it fail to start?\");",
+      "+ return;",
+      "}",
+      ""
+    ]
+  }
+}

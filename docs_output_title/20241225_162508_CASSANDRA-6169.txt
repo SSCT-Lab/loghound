@@ -1,0 +1,92 @@
+{
+  "p": [
+    "Cassandra-6169",
+    "Too many splits cause \"OutOfMemoryError: unable to create new native thread\" in AbstractColumnFamilyInputFormat"
+  ],
+  "(1) Log information": {
+    "p": [
+      "Get the following exception on client side: (server side: vnodes)",
+      "Exception in thread \"main\" java.lang.OutOfMemoryError: unable to create new native thread",
+      "at java.lang.Thread.start0(Native Method)",
+      "at java.lang.Thread.start(Thread.java:691)",
+      "at java.util.concurrent.ThreadPoolExecutor.addWorker(ThreadPoolExecutor.java:943)",
+      "at java.util.concurrent.ThreadPoolExecutor.execute(ThreadPoolExecutor.java:1336)",
+      "at java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:132)",
+      "at org.apache.cassandra.hadoop.AbstractColumnFamilyInputFormat.getSplits(AbstractColumnFamilyInputFormat.java:187)",
+      "at org.apache.hadoop.mapred.JobClient.writeNewSplits(JobClient.java:1054)",
+      "at org.apache.hadoop.mapred.JobClient.writeSplits(JobClient.java:1071)",
+      "at org.apache.hadoop.mapred.JobClient.access$700(JobClient.java:179)",
+      "at org.apache.hadoop.mapred.JobClient$2.run(JobClient.java:983)",
+      "at org.apache.hadoop.mapred.JobClient$2.run(JobClient.java:936)",
+      "at java.security.AccessController.doPrivileged(Native Method)",
+      "at javax.security.auth.Subject.doAs(Subject.java:415)",
+      "at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1190)",
+      "at org.apache.hadoop.mapred.JobClient.submitJobInternal(JobClient.java:936)",
+      "at org.apache.hadoop.mapreduce.Job.submit(Job.java:550)",
+      "at org.apache.hadoop.mapreduce.Job.waitForCompletion(Job.java:580)",
+      "at com.relateiq.hadoop.cassandra.etl.CassandraETLJob.run(CassandraETLJob.java:58)",
+      "at org.apache.hadoop.util.ToolRunner.run(ToolRunner.java:65)",
+      "at com.relateiq.hadoop.cassandra.etl.CassandraETLJob.main(CassandraETLJob.java:149)"
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Based on the stack trace in the log and the corresponding source code, we see that in AbstractColumnFamilyInputFormat.getSplits(), there is no upper bound to create executor (actually the upper limit is Integer.MAX_INT).",
+      "In this bug, the reporter mentioned that in the current setting, there are 2300+ tokens due to vnodes. Then executor.submit() will be called for each token and a new thread will be created for each token, which finally leads to the OOM.",
+      "publicList<InputSplit>getSplits(JobContext context)throwsIOException",
+      "{ ...",
+      "// cannonical ranges, split into pieces, fetching the splits in parallel",
+      "-ExecutorServiceexecutor= Executors.newCachedThreadPool();",
+      "+ExecutorService executor =newThreadPoolExecutor(0,128,60L, TimeUnit.SECONDS,newLinkedBlockingQueue<Runnable>());",
+      "List<InputSplit> splits =newArrayList<InputSplit>();",
+      "",
+      "try",
+      "{ ...",
+      "for(TokenRange range : masterRangeNodes)",
+      "{",
+      "if(jobRange ==null)",
+      "{// for each range, pick a live owner and ask it to compute bite-sized splits",
+      "splitfutures.add(executor.submit(newSplitCallable(range, conf)));",
+      "}",
+      "else",
+      "{ Range<Token> dhtRange =newRange<Token>(...);",
+      "if(dhtRange.intersects(jobRange))",
+      "{",
+      "for(Range<Token> intersection: dhtRange.intersectionWith(jobRange))",
+      "{...",
+      "// for each range, pick a live owner and ask it to compute bite-sized splits",
+      "splitfutures.add(executor.submit(newSplitCallable(range, conf)));",
+      "}",
+      "}",
+      "}",
+      "}",
+      "...",
+      "}",
+      "finally",
+      "{",
+      "executor.shutdownNow();",
+      "}",
+      "...",
+      "}"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "There is no upper bound for the number of threads in thread pool. When the tokens come with large number for vnodes, OOM occurs."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fixing the error. Add an upper bound for the maximum number of threads to allow in the thread pool.",
+      "Fetch no more than 128 splits in parallel.",
+      "•/src/java/org/apache/cassandra/hadoop/AbstractColumnFamilyInputFormat.java",
+      "publicList<InputSplit>getSplits(JobContext context)throwsIOException",
+      "{ ...",
+      "// cannonical ranges, split into pieces, fetching the splits in parallel",
+      "-ExecutorServiceexecutor= Executors.newCachedThreadPool();",
+      "+ExecutorService executor =newThreadPoolExecutor(0,128,60L, TimeUnit.SECONDS,newLinkedBlockingQueue<Runnable>());",
+      "",
+      ""
+    ]
+  }
+}

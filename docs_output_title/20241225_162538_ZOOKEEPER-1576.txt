@@ -1,0 +1,62 @@
+{
+  "p": [
+    "ZooKeeper-1576"
+  ],
+  "Zookeeper cluster - failed to connect to cluster if one of the provided IPs causes java.net.UnknownHostException": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "ZKClientconnects to theZK cluster (zookeeper servers)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“Using a cluster ofthree3.4.3 zookeeper servers.",
+        "All the servers are up, but on the client machine, the firewall is blocking one of the servers.",
+        "The following exception is happening, and the client is not connected to any of the other cluster members.”",
+        "Nov 02, 2012 9:54:32 PM com.netflix.curator.framework.imps.CuratorFrameworkImpl logError",
+        "SEVERE: Background exception was not retry-able or retry gave up",
+        "java.net.UnknownHostException: scnrmq003.myworkday.com",
+        "at java.net.Inet4AddressImpl.lookupAllHostAddr(Native Method)",
+        "at java.net.InetAddress$1.lookupAllHostAddr(Unknown Source)",
+        "at java.net.InetAddress.getAddressesFromNameService(Unknown Source)",
+        "at java.net.InetAddress.getAllByName0(Unknown Source)",
+        "at java.net.InetAddress.getAllByName(Unknown Source)",
+        "at java.net.InetAddress.getAllByName(Unknown Source)",
+        "at org.apache.zookeeper.client.StaticHostProvider.<init>(StaticHostProvider.java:60)",
+        "at org.apache.zookeeper.ZooKeeper.<init>(ZooKeeper.java:440)",
+        "at org.apache.zookeeper.ZooKeeper.<init>(ZooKeeper.java:375)"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "From the description, we know that there are three zookeeper servers in the cluster.",
+      "Based on the callstack of UnknownHostException, we can locate the code where the exception occurs.",
+      "When creating a zookeeper client instance, functionStaticHostProvider()is called to construct a host set (zookeeper servers). When executing InetAddress.getAllByName(), and the client’s firewall is blocking the current host, UnknownHostException will occur.",
+      "InetAddress.getAllByName():Given the name of a host, returns an array of its IP addresses.",
+      "",
+      "Once an UnknownHostException occurs at the InetAddress.getAllByName(), the outer for-loop will not try to resolve the rest of the servers on the list, and it fails the client connection creation."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When client tries to set up the connection with the zookeeper cluster, once an UnknownHostException occurs with one zookeeper server (which is blocked by client’s firewall), the client will not try to process the rest of the servers."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Even if UnknownHostException occurs, we should also continue to try and connect to the other servers on the list.",
+      "Adding try-catch to catch the UnknownHostException.",
+      "The fixed function is on callstack.",
+      "•src/java/main/org/apache/zookeeper/client/StaticHostProvider.java (v3.4.6)",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "Zookeeper client.",
+      ""
+    ]
+  }
+}

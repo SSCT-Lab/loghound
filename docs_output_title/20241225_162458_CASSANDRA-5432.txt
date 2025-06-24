@@ -1,0 +1,97 @@
+{
+  "p": [
+    "Cassandra-5432",
+    "Repair Freeze/Gossip Invisibility Issues 1.2.4"
+  ],
+  "(1) Log information": {
+    "(1.1) Background": {
+      "p": [
+        "After upgrading to Cassandra version 1.2.4 from 1.2.3, nodetool repair command is unable to run on any node in an EC2 sandboxed (TCP connection from external network is blocked). “I am reaching our gc_grace seconds this weekend\". (The grace period for a tombstone is set by the property gc_grace_seconds. Its default value is 864000 seconds (ten days))."
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Run nodetool repair on node /x.x.x.190. The repair command just gets stuck and the machine is idling. Only the following logs are printed for repair job:",
+        "INFO [Thread-42214] 2013-04-05 23:30:27,785 StorageService.java (line 2379) Starting repair command #4, repairing 1 ranges for keyspace cardspring_production",
+        "INFO [AntiEntropySessions:7] 2013-04-05 23:30:27,789 AntiEntropyService.java (line 652)repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242new session: will sync /X.X.X.190, /X.X.X.43, /X.X.X.56 on range (1808575600,42535295865117307932921825930779602032] for keyspace_production.[comma separated list of CFs]",
+        "INFO [AntiEntropySessions:7] 2013-04-05 23:30:27,790 AntiEntropyService.java (line 858)repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242requesting merkle trees for BusinessConnectionIndicesEntries (to [/X.X.X.43, /X.X.X.56, /X.X.X.190])",
+        "INFO [AntiEntropyStage:1] 2013-04-05 23:30:28,086 AntiEntropyService.java (line 214)repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242Received merkle tree for ColumnFamilyName from /X.X.X.43",
+        "INFO [AntiEntropyStage:1] 2013-04-05 23:30:28,147 AntiEntropyService.java (line 214)repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242Received merkle tree for ColumnFamilyName from /X.X.X.56",
+        "The reporter also “looked at all other nodes logs, and nothing interesting.”"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Node repair with AntiEntropy strategy is to ensure that all data on a replica is made consistent.",
+      "By reading the source code for nodetool repair, we see that when doing the repair, the node issues repair will first request merkle trees from the other peer nodes which also carry the same replica data. When all the requested trees are received, it goes to make comparison.",
+      "(2.2) However, based on the above log, we see that after node-190 sends merkle tree request to node-43, node-56 and node-190 (itself). Node-190 only receives the responses from node-43 and node-56, without receiving the response the merkle tree from itself, thus hanging.",
+      "Further, the reporter changes the environment setting, and narrowed this down to non-ssl storage port, which must be opened on the public IPs.",
+      "(2.3) Later, the reporter saw the following logs for a repair session triggered on a node in a single region in AWS:",
+      "INFO [AntiEntropySessions:1] 2013-04-19 04:28:16,587 AntiEntropyService.java (line 651)repair #8e59b7c0-a8a9-11e2-ba85-d39d57f66b97new session: will sync /54.242.X.YYY, /54.224.XX.YYY, /50.17.XXX.YYY on range (99249023685273718510150927169407637270,127605887595351923798765477788721654890] for cardspring_production.[App]",
+      "INFO [AntiEntropySessions:1] 2013-04-19 04:28:16,591 AntiEntropyService.java (line 857)repair #8e59b7c0-a8a9-11e2-ba85-d39d57f66b97requesting merkle trees for App (to [/54.224.XX.YYY, /50.17.XXX.YYY, /54.242.X.YYY])",
+      "DEBUG [WRITE-/50.17.159.210] 2013-04-19 04:28:16,592 OutboundTcpConnection.java (line 260) attempting to connect to /10.170.XX.YYY",
+      "DEBUG [WRITE-/54.224.36.214] 2013-04-19 04:28:16,593 OutboundTcpConnection.java (line 260) attempting to connect to /10.121.XX.YYY",
+      "DEBUG [WRITE-/54.242.1.111] 2013-04-19 04:28:16,593 OutboundTcpConnection.java (line 260) attempting to connect to /54.242.X.YYY",
+      "“Notice the last line. This is the public IP of the node running repair. Why is this picking up the public ip address for itself to send the tree request? This is the source of problem. In AWS you cannot communicated through public ip address with security group rules that are defined based on group names in the same region, which is a common use case. Hence the tree request gets stuck at sending point to itself.”",
+      "After several rounds of discussion with the other developers, the problem becomes clear:",
+      "If allowing TCP port 7100 to be accessible from external network, nodetool repair command works correctly.",
+      "The assignee with much domain knowledge points that this may relate to the optimization brought by CASSANDRA-5171.",
+      "And this conclusion is proved by the reporter when rolling back CASSANDRA-5171.",
+      "With the optimization in CASSANDRA-5171, OutboundTcpConnection is trying to connect to public IP of self (XXX.YY.98.11), which is not allowed in current sandbox cluster.",
+      "A lot of domain knowledge is required to figure out the root cause. And the information provided by the log is not sufficient."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The optimization introduced in CASSANDRA-5171 needs external TCP access on port 7001 (using private_ip to communicate within DC/region is not available until the gossiping with nodes), which is not valid in current sandbox cluster setting."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The optimization in CASSANDRA-5171 “a big gain in performance anyways”. Just roll back CASSANDRA-5171.",
+      "“Removing that optimization forces us to assume it is in other DC and hence using public IP and SSL port, eventually when we receive the private IP we reset the status to use the right (private_ip) connection.”",
+      "•/src/java/org/apache/cassandra/locator/Ec2Snitch.java",
+      "@@ -96,13 +93,7 @@ public class Ec2Snitch extends AbstractNetworkTopologySnitch",
+      "return ec2zone;",
+      "EndpointState state = Gossiper.instance.getEndpointStateForEndpoint(endpoint);",
+      "if (state == null || state.getApplicationState(ApplicationState.RACK) == null)",
+      "- {",
+      "- if (savedEndpoints == null)",
+      "- savedEndpoints = SystemTable.loadDcRackInfo();",
+      "- if (savedEndpoints.containsKey(endpoint))",
+      "- return savedEndpoints.get(endpoint).get(\"rack\");",
+      "return DEFAULT_RACK;",
+      "- }",
+      "return state.getApplicationState(ApplicationState.RACK).value;",
+      "}",
+      "",
+      "@@ -112,13 +103,7 @@ public class Ec2Snitch extends AbstractNetworkTopologySnitch",
+      "return ec2region;",
+      "EndpointState state = Gossiper.instance.getEndpointStateForEndpoint(endpoint);",
+      "if (state == null || state.getApplicationState(ApplicationState.DC) == null)",
+      "- {",
+      "- if (savedEndpoints == null)",
+      "- savedEndpoints = SystemTable.loadDcRackInfo();",
+      "- if (savedEndpoints.containsKey(endpoint))",
+      "- return savedEndpoints.get(endpoint).get(\"data_center\");",
+      "return DEFAULT_DC;",
+      "- }",
+      "return state.getApplicationState(ApplicationState.DC).value;",
+      "}",
+      "}",
+      "",
+      "•/src/java/org/apache/cassandra/net/OutboundTcpConnectionPool.java",
+      "@@ -132,6 +132,8 @@ public class OutboundTcpConnectionPool",
+      "",
+      "InetAddress endPoint()",
+      "{",
+      "+ if (id.equals(FBUtilities.getBroadcastAddress()))",
+      "+ return FBUtilities.getLocalAddress();",
+      "return resetedEndpoint == null ? id : resetedEndpoint;",
+      "}",
+      "",
+      ""
+    ]
+  }
+}

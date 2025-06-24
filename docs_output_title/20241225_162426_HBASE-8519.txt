@@ -1,0 +1,84 @@
+{
+  "p": [
+    "HBase-8519"
+  ],
+  "Backup master will never come up if primary master dies during initialization": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "Backup HMastertakes overprimary HMaster"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“The problem happens if primary master dies after becoming master but before it completes initialization and calls clusterStatusTracker.setClusterUp(). The backup master will try to become the master, but will shutdown itself promptly because it sees 'the cluster is not up'.”",
+        "Backup master log:",
+        "2013-05-09 15:08:05,568 INFO org.apache.hadoop.hbase.master.metrics.MasterMetrics: Initialized",
+        "2013-05-09 15:08:05,573 DEBUG org.apache.hadoop.hbase.master.HMaster: HMaster started in backup mode. Stalling until master znode is written.",
+        "2013-05-09 15:08:05,589 INFO org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper: Node /hbase/master already exists and this is not a retry",
+        "2013-05-09 15:08:05,590 INFO org.apache.hadoop.hbase.master.ActiveMasterManager: Adding ZNode for /hbase/backup-masters/xxx.com,60000,1368137285373 in backup master directory",
+        "2013-05-09 15:08:05,595 INFO org.apache.hadoop.hbase.master.ActiveMasterManager: Another master is the active master, xxx.com,60000,1368137283107; waiting to become the next active masterCurrently, the cluster does have an active master, so the backup master is waiting.",
+        "2013-05-09 15:09:45,006 DEBUG org.apache.hadoop.hbase.master.ActiveMasterManager: No master available. Notifying waiting threadsCluster does not have an active master now, then it will notify any thread waiting to become the active master.",
+        "2013-05-09 15:09:45,006 INFO org.apache.hadoop.hbase.master.HMaster: Cluster went down before this master became activeAfter this, the backup master will shut down.",
+        "2013-05-09 15:09:45,006 DEBUG org.apache.hadoop.hbase.master.HMaster: Stopping service threads",
+        "2013-05-09 15:09:45,006 INFO org.apache.hadoop.ipc.HBaseServer: Stopping server on 60000"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Combining the log and the source code related to HMaster’s startup, we can get the following control flow on the active HMaster and the backup HMaster.",
+      "On the left side of the figure below, after the HMaster becomes the active one, it will executes finishIntialization(). During initialization, it will set cluster status “up” if “wasUp==false”.",
+      "On the right side, when the backup HMaster is waken up to become “active”, it will check the cluster status, when the status is not up, it will shut down itself, and fails to take over the whole cluster.",
+      "",
+      "",
+      "(2.2) The cluster status is recorded by a persistent znode “clusterStateZNode”in ZK.",
+      "clusterStateZNode determines if the cluster is running. Its default location is \"/hbase/shutdown\". Its value is the current time. If present with the value, cluster is up and running. If deleted, the cluster is shutting down.",
+      "During HMaster’s initialization, if clusterStateZNode does not exist, it will be created. It will only be deleted when HMaster shuts down normally (by calling HMaster.shutdown()).",
+      "",
+      "Since the primary master dies after becoming master but before it completes initialization and calls clusterStatusTracker.setClusterUp(), clusterStateZNode is not created. When the backup HMaster is becoming active, it finds that the clusterStateZNode does not exist, and it stops.",
+      "",
+      "(2.3)Why the active HMaster can pass the checking which makes the backup abort?",
+      "Because the logic to be executed for active and backup masters inblockUntilBecomingActiveMaster()is different, i.e., the active HMaster will not execute clusterStatusTracker.isClusterUp().",
+      "For the active HMaster,setMasterAddress()will return true, which indicates that it successfully creates the master znode and sets its address into the master znode. ThenblockUntilBecomingActiveMaster()will return true, and the active HMaster will not execute the following logic in this function, that is, it will not check cluster status.",
+      "When the backup HMaster executessetMasterAddress(), since the master znode already exists,setMasterAddress()will return false. And the backup HMaster will go through the remaining code inblockUntilBecomingActiveMaster(), including checking the cluster status.",
+      "",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The backup HMaster only checks the clusterStateZNode once at the end when it wakes up and tries to be the active master. But before that it is not notified if the clusterStateZNode has ever been up or not.",
+      "The real “stop” case is: clusterStateZNode up à clusterStateZNode down",
+      "The backup master needs to watch for clusterStateZNode. If it is not aware clusterStateZNode has ever been up or was up in its whole life, it should not treat it as a real “stop” case.",
+      "In this bug, the backup HMaster should not shut down."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Add a new variable clusterShutDown to keep track of the cluster’s status. Fixing the root cause.",
+      "• /hbase-server/src/main/java/org/apache/hadoop/hbase/master/ActiveMasterManager.java",
+      "",
+      "In this bug, when the primary master dies before it completes initialization and calls clusterStatusTracker.setClusterUp(), neither will clusterStateZNode be created nor deleted.",
+      "So in the above fix, the if condition is false, and the clusterShutDown is still false.",
+      "",
+      "• /hbase-server/src/main/java/org/apache/hadoop/hbase/master/HMaster.java",
+      "",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster(active/backup)"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

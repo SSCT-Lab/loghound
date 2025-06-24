@@ -1,0 +1,125 @@
+{
+  "p": [
+    "HDFS-2905",
+    "HA: Standby NN NPE when shared edits dir is deleted"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "StanbyNN (client-side)reads edits fromJournalNodes (server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“Start 2 NameNodes with a shared edits dir. Make one active. Let some edits roll. Now delete the shared edits directory (simulating a shared edits failure).”",
+        "Standby NN’s log:",
+        "12/02/06 14:41:27 WARN namenode.FSNamesystem: NameNode low on available disk space. Already in safe mode.",
+        "12/02/06 14:48:00 INFO hdfs.StateChange: STATE* Safe mode is ON. Resources are low on NN. Safe mode must be turned off manually.",
+        "12/02/06 14:48:05 WARN namenode.NameNodeResourceChecker: Space available on volume '/dev/disk0s2' is 0, which is below the configured reserved amount 104857600",
+        "12/02/06 14:48:05 WARN namenode.FSNamesystem: NameNode low on available disk space. Already in safe mode.",
+        "12/02/06 14:48:05 INFO hdfs.StateChange: STATE* Safe mode is ON. Resources are low on NN. Safe mode must be turned off manually.",
+        "12/02/06 14:48:09ERRORha.EditLogTailer:Unknown error encountered while tailing edits. Shutting down standby NN.",
+        "java.lang.NullPointerException",
+        "at org.apache.hadoop.hdfs.server.namenode.FileJournalManager.matchEditLogs(FileJournalManager.java:160)",
+        "at org.apache.hadoop.hdfs.server.namenode.FileJournalManager.getLogFiles(FileJournalManager.java:321)",
+        "at org.apache.hadoop.hdfs.server.namenode.FileJournalManager.getNumberOfTransactions(FileJournalManager.java:228)",
+        "at org.apache.hadoop.hdfs.server.namenode.JournalSet.getInputStream(JournalSet.java:216)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSEditLog.selectInputStreams(FSEditLog.java:1074)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.EditLogTailer.doTailEdits(EditLogTailer.java:204)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.EditLogTailer.access$600(EditLogTailer.java:57)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.EditLogTailer$EditLogTailerThread.run(EditLogTailer.java:298)",
+        "12/02/06 14:48:09 INFO namenode.NameNode: SHUTDOWN_MSG:",
+        "/************************************************************",
+        "The log shows that Standby NN will shut down when the shared edits are failing."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "In StandbyNN, the EditLogTailerThread periodically reads from edits journals and applies the transactions to a given FSNamesystem.",
+      "Based on the callstack, we can locate the place where the NPE happens. In function getLogFiles(), when the shared edits directory is deleted, currentDir.listFiles()) will be a null file list.",
+      "",
+      "List<EditLogFile>getLogFiles(longfromTxId)throwsIOException {FilecurrentDir=sd.getCurrentDir();List<EditLogFile> allLogFiles =matchEditLogs(currentDir.listFiles());List<EditLogFile> logFiles = Lists.newArrayList();",
+      "for(EditLogFile elf : allLogFiles) {",
+      "if(fromTxId <= elf.getFirstTxId() ||elf.containsTxId(fromTxId)) {logFiles.add(elf);}",
+      "}Collections.sort(logFiles, EditLogFile.COMPARE_BY_START_TXID);returnlogFiles;}staticList<EditLogFile>matchEditLogs(File[]filesInStorage) {when the shared edits directory is deleted, filesInStorage will be null.List<EditLogFile> ret = Lists.newArrayList();for(File f :filesInStorage) {",
+      "String name = f.getName();// Check for edits…",
+      "// Check for in-progress edits…}returnret;}"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "On StandbyNN, function matchEditLogs() is being passed in a null file list when the shared edits dir is deleted."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Add the overloading function matchEditLogs(), and it will check the validity of logDir.",
+      "· If logDir is valid, it will list the files in the logDir and callmatchEditLogs(File[]).",
+      "· If logDir is invalid, it will throw IOException instead of NPE.",
+      "This patch will “change” original NPE to IOException, which makes the error more “friendly”.",
+      "•hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/namenode/FileJournalManager.java",
+      "+/**+* returns matching edit logs via the log directory. Simple helper function+* that lists the files in the logDir and calls matchEditLogs(File[])+*+*@paramlogDir+* directory to match edit logs in+*@returnmatched edit logs+*@throwsIOException+*IOException thrown for invalid logDir+*/",
+      "+staticList<EditLogFile>matchEditLogs(File logDir)throwsIOException {+returnmatchEditLogs(FileUtil.listFiles(logDir));Check the directory validity through FileUtil.listFiles()+}+staticList<EditLogFile>matchEditLogs(File[] filesInStorage) {List<EditLogFile> ret = Lists.newArrayList();for(File f : filesInStorage) {String name = f.getName();// Check for edits…",
+      "// Check for in-progress edits…",
+      "}returnret;}",
+      "=========================================================================",
+      "FileUtil.java",
+      "public staticFile[]listFiles(File dir)throwsIOException {File[] files = dir.listFiles();if(files ==null) {throw newIOException(\"Invalid directory or I/O error occurred for dir: \"+ dir.toString());}returnfiles;}",
+      "=========================================================================",
+      "Modify the other functions which call matchEditLogs()",
+      "List<EditLogFile>getLogFiles(longfromTxId)throwsIOException {File currentDir =sd.getCurrentDir();",
+      "-List<EditLogFile> allLogFiles =matchEditLogs(currentDir.listFiles());+List<EditLogFile> allLogFiles =matchEditLogs(currentDir);",
+      "List<EditLogFile> logFiles = Lists.newArrayList();…returnlogFiles;}List<RemoteEditLog>getRemoteEditLogs(longfirstTxId)throwsIOException {File currentDir =sd.getCurrentDir();",
+      "-List<EditLogFile> allLogFiles =matchEditLogs(",
+      "-FileUtil.listFiles(currentDir));+List<EditLogFile> allLogFiles =matchEditLogs(currentDir);",
+      "List<RemoteEditLog> ret = Lists.newArrayListWithCapacity(allLogFiles.size());…returnret;}",
+      "",
+      "synchronized public voidrecoverUnfinalizedSegments()throwsIOException {File currentDir =sd.getCurrentDir();LOG.info(\"Recovering unfinalized segments in \"+ currentDir);",
+      "-List<EditLogFile> allLogFiles =matchEditLogs(currentDir.listFiles());+List<EditLogFile> allLogFiles =matchEditLogs(currentDir);",
+      "for(EditLogFile elf : allLogFiles) {…}}"
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch is in NameNode. It will affect both activeNN and StandbyNN."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "How does NPE lead to shutdown in StandbyNN?",
+      "private voiddoWork() {",
+      "while(shouldRun) {",
+      "try{",
+      "// There's no point in triggering a log roll if the Standby hasn't",
+      "// read any more transactions since the last time a roll was",
+      "// triggered.",
+      "if(tooLongSinceLastLoad() &&",
+      "lastRollTriggerTxId<lastLoadedTxnId) { triggerActiveLogRoll(); }",
+      "/**",
+      "* Check again in case someone calls {@linkEditLogTailer#stop} while",
+      "* we're triggering an edit log roll, since ipc.Client catches and",
+      "* ignores {@linkInterruptedException} in a few places. This fixes",
+      "* the bug described in HDFS-2823.",
+      "*/",
+      "if(!shouldRun) {break; }",
+      "doTailEdits();",
+      "}catch(EditLogInputException elie) {",
+      "LOG.warn(\"Error while reading edits from disk. Will try again.\", elie);",
+      "}catch(InterruptedException ie) {",
+      "// interrupter should have already set shouldRun to false",
+      "continue;",
+      "}catch(Throwable t) {",
+      "LOG.error(\"Unknown error encountered while tailing edits. \"+",
+      "\"Shutting down standby NN.\", t);",
+      "runtime.exit(1);",
+      "}",
+      "",
+      "try{ Thread.sleep(sleepTimeMs);",
+      "}catch(InterruptedException e) {LOG.warn(\"Edit log tailer interrupted\", e); }",
+      "}",
+      "}",
+      ""
+    ]
+  }
+}

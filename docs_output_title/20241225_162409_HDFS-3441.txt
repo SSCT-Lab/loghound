@@ -1,0 +1,124 @@
+{
+  "p": [
+    "HDFS-3441"
+  ],
+  "Race condition between rolling logs at active NN and purging at standby": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "ActiveNN (client-side) BookKeeperJournalManager (server-side)",
+        "StandbyNN (client-side) BookKeeperJournalManager (server-side) Zookeeper is also involved"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The log from StanbyNameNode is provided:",
+        "2012-05-17 22:15:03,867 INFO org.apache.hadoop.hdfs.server.namenode.FSImage: Image file of size 201 saved in 0 seconds.",
+        "2012-05-17 22:15:03,874 INFO org.apache.hadoop.hdfs.server.namenode.ha.EditLogTailer:Triggering log roll on remote NameNode /xx.xx.xx.102:8020StandbyNN asks NN to roll logs",
+        "2012-05-17 22:15:03,923 INFO org.apache.hadoop.hdfs.server.namenode.NNStorageRetentionManager: Going to retain 2 images with txid >= 111",
+        "2012-05-17 22:15:03,923 INFO org.apache.hadoop.hdfs.server.namenode.NNStorageRetentionManager: Purging old image FSImageFile(file=/home/May8/hadoop-3.0.0-SNAPSHOT/hadoop-root/dfs/name/current/fsimage_0000000000000000109, cpktTxId=0000000000000000109)",
+        "2012-05-17 22:15:03,961FATALorg.apache.hadoop.hdfs.server.namenode.FSEditLog: Error: purgeLogsOlderThan 0 failed for required journal (JournalAndStream(mgr=org.apache.hadoop.contrib.bkjournal.BookKeeperJournalManager@142e6767, stream=null))",
+        "java.io.IOException: Exception reading ledger list from zk",
+        "at org.apache.hadoop.contrib.bkjournal.BookKeeperJournalManager.getLedgerList(BookKeeperJournalManager.java:531)",
+        "at org.apache.hadoop.contrib.bkjournal.BookKeeperJournalManager.purgeLogsOlderThan(BookKeeperJournalManager.java:444)",
+        "at org.apache.hadoop.hdfs.server.namenode.JournalSet$5.apply(JournalSet.java:541)",
+        "at org.apache.hadoop.hdfs.server.namenode.JournalSet.mapJournalsAndReportErrors(JournalSet.java:322)",
+        "at org.apache.hadoop.hdfs.server.namenode.JournalSet.purgeLogsOlderThan(JournalSet.java:538)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSEditLog.purgeLogsOlderThan(FSEditLog.java:1011)",
+        "at org.apache.hadoop.hdfs.server.namenode.NNStorageRetentionManager.purgeOldStorage(NNStorageRetentionManager.java:98)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSImage.purgeOldStorage(FSImage.java:900)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSImage.saveFSImageInAllDirs(FSImage.java:885)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSImage.saveNamespace(FSImage.java:822)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.StandbyCheckpointer.doCheckpoint(StandbyCheckpointer.java:157)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.StandbyCheckpointer.access$900(StandbyCheckpointer.java:52)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.StandbyCheckpointer$CheckpointerThread.doWork(StandbyCheckpointer.java:279)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.StandbyCheckpointer$CheckpointerThread.access$300(StandbyCheckpointer.java:200)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.StandbyCheckpointer$CheckpointerThread$1.run(StandbyCheckpointer.java:220)",
+        "at org.apache.hadoop.security.SecurityUtil.doAsLoginUserOrFatal(SecurityUtil.java:512)",
+        "at org.apache.hadoop.hdfs.server.namenode.ha.StandbyCheckpointer$CheckpointerThread.run(StandbyCheckpointer.java:216)",
+        "Caused by:org.apache.zookeeper.KeeperException$NoNodeException: KeeperErrorCode =NoNode for /nnedits/ledgers/inprogress_72",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:111)",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:51)",
+        "at org.apache.zookeeper.ZooKeeper.getData(ZooKeeper.java:1113)",
+        "at org.apache.zookeeper.ZooKeeper.getData(ZooKeeper.java:1142)",
+        "at org.apache.hadoop.contrib.bkjournal.EditLogLedgerMetadata.read(EditLogLedgerMetadata.java:113)",
+        "at org.apache.hadoop.contrib.bkjournal.BookKeeperJournalManager.getLedgerList(BookKeeperJournalManager.java:528)",
+        "... 16 more",
+        "2012-05-17 22:15:03,963 INFO org.apache.hadoop.hdfs.server.namenode.NameNode: SHUTDOWN_MSG:",
+        "StanbyNN shuts down."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "From the following log information, we know thatStandbyNN asks NN to roll logs.",
+      "2012-05-17 22:15:03,874 INFO org.apache.hadoop.hdfs.server.namenode.ha.EditLogTailer:Triggering log roll on remote NameNode /xx.xx.xx.102:8020",
+      "Then based on the callstack in the log, we can get the control flow and know that the exception happens when StandbyNN is doing checkpoint.",
+      "(2.1) When StandbyNN executes doCheckpoint(), it will first execute FSImage.saveNamespace(), then upload the saved new checkpoint to the activeNN.",
+      "(2.2) When executing FSImage.saveNamespace(), after saving the new checkpoint, we can clean up some old edit logs and checkpoint(i.e. old fs_image). So function FSImage.purgeOldStorage() is called.",
+      "(2.3) Before purge, StanbyNN has read all the list of ledger logs, including inprogress_72.",
+      "(2.4) Meantime Active NN is finalizing the logSegment inprogress_72, so inprogress_72 will be deleted in BookKeeperJournalManager’s ledger list. (EditLogLedgerMetadata is stored in ZooKeeper)",
+      "(2.5) When StanbyNN comes to purge, it read the data of inprogress_72 to decide whether it is inprogress or not. Since inprogress_72 is already removed, so it throws NoNodeException.",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "Before purge, StanbyNN has read all the list of ledger logs, including inprogress_72. Meantime Active NN is finalizing the logSegment inprogress_72, so inprogress_72 will be deleted in BookKeeperJournalManager’s ledger list. When StanbyNN comes to purge, it will read the data of inprogress_72 from BKJM. Then NoNodeException happens."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Modify function getLedgerList(): adding the “inProgressOk” flag.",
+      "If inProgressOk is false && ledgerName contains “_inProgress”, the inProgress transaction will not be contained. Even if NoNodeException happens, it will be caught and ignored by LOG.warn.",
+      "When this function is called by purgeLogsOlderThan(), “inProgressOk” is set false by default so that the inProgress transaction will not be included.",
+      "The patch fixes the root cause: for the case of this bug, NoNodeException will not happen; for the other cases, even if NoNodeException happens, it will not make the node crash.",
+      "•hadoop-hdfs-project/hadoop-hdfs/src/contrib/bkjournal/src/main/java/org/apache/hadoop/contrib/bkjournal/BookKeeperJournalManager.java",
+      "",
+      "+private static finalStringBKJM_EDIT_INPROGRESS=\"inprogress_\";",
+      "",
+      "Add the parameter “inProgressOk” in function getLedgerList()",
+      "/*** Get a list of all segments in the journal.",
+      "*/",
+      "-private List<EditLogLedgerMetadata>getLedgerList() throws IOException {+List<EditLogLedgerMetadata> getLedgerList(booleaninProgressOk)+throwsIOException {List<EditLogLedgerMetadata> ledgers=newArrayList<EditLogLedgerMetadata>();try{List<String> ledgerNames =zkc.getChildren(ledgerPath,false);",
+      "-for(String n : ledgerNames) {",
+      "-ledgers.add(EditLogLedgerMetadata.read(zkc, ledgerPath + \"/\" + n));+for(String ledgerName : ledgerNames) {+if(!inProgressOk && ledgerName.contains(BKJM_EDIT_INPROGRESS)){+continue;if inProgressOk is false && ledgerName contains “_inProgress”, the inProgress transaction will be skipped.+}",
+      "+String legderMetadataPath =ledgerPath+\"/\"+ ledgerName;+try{+EditLogLedgerMetadata editLogLedgerMetadata = EditLogLedgerMetadata+.read(zkc, legderMetadataPath);+ledgers.add(editLogLedgerMetadata);+}catch(KeeperException.NoNodeException e) {Even if NoNodeException happens, it will be caught and ignored by LOG.warn.+LOG.warn(\"ZNode: \"+ legderMetadataPath++\" might have finalized and deleted.\"++\" So ignoring NoNodeException.\");+}}}catch(KeeperException e) {throw newIOException(\"Exception reading ledger list from zk\", e);}catch(InterruptedException ie) {throw newIOException(\"Interrupted getting list of ledgers from zk\", ie);}Collections.sort(ledgers, EditLogLedgerMetadata.COMPARATOR);returnledgers;}",
+      "",
+      "public voidpurgeLogsOlderThan(longminTxIdToKeep)throwsIOException {",
+      "-for (EditLogLedgerMetadata l : getLedgerList()) {-if (!l.isInProgress()",
+      "-&& l.getLastTxId() < minTxIdToKeep) {+for(EditLogLedgerMetadata l :getLedgerList(false)){when doing purge, inProgress is set false by default, so StandbyNN will not check inProgress transaction.+if(l.getLastTxId() < minTxIdToKeep) {try{Stat stat =zkc.exists(l.getZkPath(),false);zkc.delete(l.getZkPath(), stat.getVersion());bkc.deleteLedger(l.getLedgerId());}catch(InterruptedException ie) {LOG.error(\"Interrupted while purging \"+ l, ie);}catch(BKException bke) {LOG.error(\"Couldn't delete ledger from bookkeeper\", bke);}catch(KeeperException ke) {LOG.error(\"Error deleting ledger entry in zookeeper\", ke);}}}}",
+      "",
+      "Modify the function call of getLedgerList() in the other functions.",
+      "EditLogInputStreamgetInputStream(longfromTxId,booleaninProgressOk)throwsIOException {",
+      "-for(EditLogLedgerMetadata l : getLedgerList()) {+for(EditLogLedgerMetadata l :getLedgerList(inProgressOk)) {longlastTxId = l.getLastTxId();if(l.isInProgress()) {",
+      "-if (!inProgressOk) {",
+      "-continue;",
+      "-}",
+      "-lastTxId = recoverLastTxId(l,false);}…}return null;}",
+      "",
+      "longgetNumberOfTransactions(longfromTxId,booleaninProgressOk)throwsIOException {longcount =0;longexpectedStart =0;-for(EditLogLedgerMetadata l : getLedgerList()) {+for(EditLogLedgerMetadata l :getLedgerList(inProgressOk)) {longlastTxId = l.getLastTxId();if(l.isInProgress()) {",
+      "-if (!inProgressOk) {",
+      "-continue;",
+      "-}",
+      "-lastTxId = recoverLastTxId(l,false);if(lastTxId == HdfsConstants.INVALID_TXID) {break;}}…}returncount;}",
+      "",
+      "Replace “inprogress_” with new defined string constantBKJM_EDIT_INPROGRESS.",
+      "public voidrecoverUnfinalizedSegments()throwsIOException {synchronized(this) {try{List<String> children =zkc.getChildren(ledgerPath,false);for(String child : children) {",
+      "-if(!child.startsWith(\"inprogress_\")) {+if(!child.startsWith(BKJM_EDIT_INPROGRESS)) {continue;}…}}catch(KeeperException.NoNodeException nne) {// nothing to recover, ignore}catch(KeeperException ke) {throw newIOException(\"Couldn't get list of inprogress segments\", ke);}catch(InterruptedException ie) {throw newIOException(\"Interrupted getting list of inprogress segments\", ie);",
+      "}}}",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch is on BookKeeperJournalManager."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "Before fixing, the originalgetLedgerList()",
+      "/*** Get a list of all segments in the journal.*/privateList<EditLogLedgerMetadata>getLedgerList()throwsIOException {List<EditLogLedgerMetadata> ledgers=newArrayList<EditLogLedgerMetadata>();try{List<String> ledgerNames =zkc.getChildren(ledgerPath,false);for(String n : ledgerNames) {ledgers.add(EditLogLedgerMetadata.read(zkc,ledgerPath+\"/\"+ n));}}catch(Exception e) {throw newIOException(\"Exception reading ledger list from zk\", e);}Collections.sort(ledgers, EditLogLedgerMetadata.COMPARATOR);returnledgers;}"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "p": [
+    "HBase-10214"
+  ],
+  "Regionserver shutdown improperly and leaves the dir in .old not deleted": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HRegionServer (client-side) HMaster(server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "RegionServer log:",
+        "2013-12-18 15:17:45,771 DEBUG org.apache.hadoop.hbase.regionserver.HRegionServer: Waiting on 51b27391410efdca841db264df46085f",
+        "2013-12-18 15:17:45,776 INFO org.apache.hadoop.hbase.regionserver.HRegionServer: Connected to master at null",
+        "2013-12-18 15:17:48,776 INFO org.apache.hadoop.hbase.regionserver.HRegionServer: STOPPED: Exiting; cluster shutdown set and not carrying any regions",
+        "2013-12-18 15:17:48,776 FATAL org.apache.hadoop.hbase.regionserver.HRegionServer:ABORTING region servernode,60020,1384410974572:Unhandled exception: null",
+        "java.lang.NullPointerException",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.tryRegionServerReport(HRegionServer.java:880)",
+        "at org.apache.hadoop.hbase.regionserver.HRegionServer.run(HRegionServer.java:753)",
+        "at java.lang.Thread.run(Thread.java:662)"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Based on the log message and the callstack of NPE, we can locate the main logic in function HRegionServer.run().",
+      "(2.2) SinceWaiting on 51b27391410efdca841db264df46085fis printed, the current RS is in stopping state(i.e. this.stopping=true). This is the state before we go into stopped state, at this stage we're closing user space regions. The region51b27391410efdca841db264df46085fis still online. tryRegionServerReport() executes. When tryRegionServerReport() calls getMaster(),Connectedtomasteratnullprints, and hbaseMaster is set null (master = null &this.hbaseMaster= master;).",
+      "(2.3) In the next while loop, isOnlineRegionsEmpty() equals true, so",
+      "STOPPED: Exiting; cluster shutdown set and not carrying any regions",
+      "When tryRegionServerReport() executes, NPE occurs as hbaseMaster is equal to null. NPE is caught and make the RS abort.",
+      "",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When RegionServer is going to stop, it fails to connect to current hbaseMaster, and the variable hbaseMaster is set null. In the next round of the while loop, NPE occurs due to calling the instance method of a null object (hbaseMaster).",
+      "Since RS aborts, i.e. “Regionserver shutdown improperly”, it leads to “leaves the dir in .old not deleted”. I am not clear what exact “the dir in .old” is, but we know that some directory should have been deleted without this bug."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Add the check to object hbaseMaster before calling its method. Fixing the root cause.",
+      "• src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HRegionServer(s) Function tryRegionServerReport() which is fixed is on the callstack of NPE."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

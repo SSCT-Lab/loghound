@@ -1,0 +1,111 @@
+{
+  "p": [
+    "ZooKeeper-1294"
+  ],
+  "One of the zookeeper server is not accepting any requests": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "Server.2’s wrong state leads toServer.1’s exception Server.4 observer"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "The zookeeper cluster is configured as: (3 participants and 3 observers)",
+        "server.1 = XX.XX.XX.XX:65175:65173 server.4 = XX.XX.XX.XX:65205:65203:observer",
+        "server.2 = XX.XX.XX.XX:65185:65183 server.5 = XX.XX.XX.XX:65215:65213:observer",
+        "server.3 = XX.XX.XX.XX:65195:65193 server.6 = XX.XX.XX.XX:65225:65223:observer",
+        "Steps to reproduce the defect:",
+        "1. Start all the 3 participant zookeeper",
+        "2. Stop all the participant zookeeper",
+        "3. Start zookeeper 1(Participant)",
+        "4. Start zookeeper 2 (Participant)",
+        "5. Start zookeeper 4 (Observer)",
+        "6. Create a persistent node with external client and close it",
+        "7. Stop the zookeeper 1(Participant neo quorum is unstable)",
+        "8. Create a new client and try to find the node created using exists api (will fail since quorum is not satisfied)",
+        "9. Start the Zookeeper 1 (Participant stabilizes the quorum)",
+        "(Participant may become leader or follower. Observer is similar to participant, but it will not take part in the vote, and it cannot become leader.)",
+        "Now check the observer (Server.4) using 4 letter word",
+        "linux-216:/home/amith/CI/source/install/zookeeper/zookeeper2/bin # echostat| netcat localhost 65200",
+        "Zookeeper version: 3.3.2-1031432, built on 11/05/2010 05:32 GMT",
+        "Clients:",
+        "/127.0.0.1:46370[0](queued=0,recved=1,sent=0)",
+        "",
+        "Latency min/avg/max: 0/0/0",
+        "Received: 1",
+        "Sent: 0",
+        "Outstanding: 0",
+        "Zxid: 0x100000003",
+        "Mode: observer",
+        "Node count: 5",
+        "",
+        "Check the participant 2 (Server.2) with 4 letter word",
+        "Latency min/avg/max: 22/48/83",
+        "Received: 39",
+        "Sent: 3",
+        "Outstanding: 35",
+        "Zxid: 0x100000003",
+        "Mode: leader",
+        "Node count: 5",
+        "",
+        "Check the participant 1 with 4 letter word",
+        "linux-216:/home/amith/CI/source/install/zookeeper/zookeeper2/bin # echostat| netcat localhost 65170",
+        "This ZooKeeper instance is not currently serving requests",
+        "",
+        "We can see the participant 1(Server.1) logfilled with",
+        "2011-11-08 15:49:51,360 -WARN[NIOServerCxn.Factory:0.0.0.0/0.0.0.0:65170:NIOServerCnxn@642] - Exception causing close of session 0x0 due to java.io.IOException: ZooKeeperServer not running",
+        ""
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) When Server.1 restarts, from the IOException contained in Server.1 log, we know that the ZooKeeperServer instance is not running on Server.1. The output for “stat” command on Server.1 also shows that the participant1 (Server.1) is not serving requests.",
+      "(2.2) When Servers 1 & 2 & 4 start, after leader election, leader: Server.2; follower: Server.1; observer: Server.4. Then Server.1 stops. When Server.1 starts again, the zookeeper instance is not running, so we can infer that at this time, Server.1 has not joined the zk server cluster. That is, Server.1 is neither leader nor follower.",
+      "Since Server.4 is observer, participant 2 and observer 4 cannot constitute the zk cluster successfully. (since quorum is not satisfied, it cannot generate leader)",
+      "But from the “stat” output from Server.2 and Server.4, we see that server.2 is leader, and server.4 is observer. The leader role for Server.2 is not expected.",
+      "(2.3) On Server.1, based on the source code, we can get the following control when it restarts.",
+      "",
+      "",
+      "QuorumPeerMain.main() indirectly calls QuorumPeer.start(). In QuorumPeer.start(),",
+      "· A NIO thread is started by calling cnxnFactory.start(), and this thread is used for communicate with client. (Right part in the above figure)",
+      "· A QuorumPeer thread is also started by calling super.start() (QuorumPeer.run()), which is used to manage the quorum protocol for this server. (Left part in the above figure)",
+      "In NIO thread, doIO() is called to process the request, either readLength() or readPayload() will be executed, and whether zk==null will be checked. The variablezkis a zookeeper instance, and it could leader/follower/observer zooKeeperServer, which depends on the election result. That is, when the current quorumPeer finishes the election,zkwill be instantiated.",
+      "In QuorumPeer thread, when Server.1 restarts, it is in LOOKING state, and it will call FastLeaderElection.lookForLeader()to issue an election. In the while loop, Server.1 will process all the notifications it receives: Server.1 (LOOKING), Server.2(LEADING, will be handled by “default”), Server.4 (OBSERVING). FunctiontermPredicate()will be called to determines if it is sufficient to declare the end of the election round. Because the quorum is not satisfied,termPredicate()will always return FALSE.As a result, Server.1 will always in LOOKING state, and get stuck in this while loop.",
+      "",
+      "",
+      "Since Server.1 cannot exitlookForLeader(), which means Server.1 has not been assigned to any role (leader/follower), it is still in LOOKING state, and it cannot execute the other cases in the while loop of QuorumPeer.run(): neither makeFollower() nor makeLeader() will be executed, andzkwill not be instantiated. So Server.1 will not run any zookeeperServer.",
+      "(2.4) So the problem is in Server.2, when Server.1 stops, it should not still be Leader. Because quorum should not hold when there are only one participant (Server.2) and one observer (Server.4). Before Server.1 stops, Server.2 is elected as Leader. And in QuorumPeer.run(), leader.lead() is called.",
+      "",
+      "In the while loop of lead(), Server.2 will periodically check if quorum is satisfied by callingcontainsQuorum(syncedSet).",
+      "Before checking, if the learner is alive and connected to the current leader, it will be added into syncedSet. But all the followers and observers belong to learners. Here, when we check the quorum condition, we should only consider participant without observer.",
+      "",
+      "",
+      "As a result, since Server.1 stops, Server.2 will always be the leader, and Server.4 will always be the observer. When Server.1 restarts and issue a new round election, it will not get any election result, and Server.1 gets stuck in LOOKING state, and cannot serve any request."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When Server.2 becomes leader, each time when it checks the quorum condition, it will consider the participant as well as observer. Then when Server.1 stops, Server.2 is still leader. When Server.1 restarts and issue a new round election, they will not get any election result. Server.1 gets stuck in LOOKING state, and no zookeeperServer instance will be assigned to Server.1, and it cannot serve any request.",
+      "The logic error in Server.2 (Server.2’s wrong state) leads to the IOException in Server.1.",
+      "This is not a timming issue, because Server.1 will always be in LOOKING, and zk will not be instantiated, regardless of the execution order of the two threads: NIO thread and QuorumPeer thread."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Modify the logic when Server.2 checks the quorum: just consider the participant without observer.Fixing the root cause.",
+      "• src/java/main/org/apache/zookeeper/server/quorum/Leader.java",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "ZK server(s).",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "p": [
+    "Cassandra-2946",
+    "HintedHandoff fails with could not reach schema agreement"
+  ],
+  "(1) Log information": {
+    "p": [
+      "Two nodes A and B.",
+      "1. On node A, create a keyspace with replication factor 1 and add a column family",
+      "2. Ensure node B has created the keyspace and column family",
+      "3. Take down node B",
+      "4. Insert some keys to A at CL.ANY, ensuring some keys should be written to B",
+      "5. Bring up node B",
+      "When hints are delivered, get the following error:",
+      "ERROR [HintedHandoff:1] 2011-07-25 17:19:14,729 AbstractCassandraDaemon.java (line 139) Fatal exception in thread Thread[HintedHandoff:1,1,main]",
+      "java.lang.RuntimeException: java.lang.RuntimeException:Could not reach schema agreement with /10.2.129.9in 60000ms",
+      "at org.apache.cassandra.utils.WrappedRunnable.run(WrappedRunnable.java:34)",
+      "at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)",
+      "at java.lang.Thread.run(Thread.java:636)",
+      "Caused by: java.lang.RuntimeException: Could not reach schema agreement with /10.2.129.9 in 60000ms",
+      "at org.apache.cassandra.db.HintedHandOffManager.waitForSchemaAgreement(HintedHandOffManager.java:290)",
+      "at org.apache.cassandra.db.HintedHandOffManager.deliverHintsToEndpoint(HintedHandOffManager.java:301)",
+      "at org.apache.cassandra.db.HintedHandOffManager.access$100(HintedHandOffManager.java:89)",
+      "at org.apache.cassandra.db.HintedHandOffManager$2.runMayThrow(HintedHandOffManager.java:394)",
+      "at org.apache.cassandra.utils.WrappedRunnable.run(WrappedRunnable.java:30)",
+      "... 3 more",
+      "However, from the client side, “describe cluster always shows agreement”. Selected log messages:",
+      "DEBUG [HintedHandoff:1] 2011-07-26 11:22:35,526 HintedHandOffManager.java (line 300) Checking remote schema before delivering hints",
+      "...",
+      "DEBUG [pool-2-thread-1] 2011-07-26 11:22:44,965 CassandraServer.java (line 1123) checking schema agreement",
+      "...",
+      "DEBUG [pool-2-thread-1] 2011-07-26 11:22:44,969 StorageProxy.java (line 823)Schemas are in agreement.",
+      "...",
+      "ERROR [HintedHandoff:1] 2011-07-26 11:23:36,788 AbstractCassandraDaemon.java (line 138) Fatal exception in thread Thread[HintedHandoff:1,1,main]",
+      "java.lang.RuntimeException: java.lang.RuntimeException:Could not reach schema agreementwith /10.2.129.9 in 60000ms",
+      "So StorageProxy thinks the schema agrees but HintedHandoffManager doesn't."
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Before node A delivers hints to B, it checks remote schema on B.",
+      "private intwaitForSchemaAgreement(InetAddress endpoint)throwsInterruptedException",
+      "{",
+      "Gossiper gossiper = Gossiper.instance;",
+      "intwaited =0;",
+      "// first, wait for schema to be gossiped.",
+      "while(gossiper.getEndpointStateForEndpoint(endpoint).getApplicationState(ApplicationState.SCHEMA) ==null) {",
+      "Thread.sleep(1000);",
+      "waited +=1000;",
+      "if(waited >2* StorageService.RING_DELAY)",
+      "throw newRuntimeException(\"Didin't receive gossiped schema from \"+ endpoint +\" in \"+2* StorageService.RING_DELAY+\"ms\");",
+      "}",
+      "waited =0;",
+      "// then wait for the correct schema version.",
+      "while(!gossiper.getEndpointStateForEndpoint(endpoint).getApplicationState(ApplicationState.SCHEMA).value.equals(gossiper.getEndpointStateForEndpoint(FBUtilities.getLocalAddress()).getApplicationState(ApplicationState.SCHEMA).value))",
+      "{",
+      "Thread.sleep(1000);",
+      "waited +=1000;",
+      "if(waited >2* StorageService.RING_DELAY)",
+      "throw newRuntimeException(\"Could not reach schema agreement with \"+ endpoint +\" in \"+2* StorageService.RING_DELAY+\"ms\");",
+      "}",
+      "logger_.debug(\"schema for {} matches local schema\", endpoint);",
+      "returnwaited;",
+      "}",
+      "The triggered exception indicates that the state obtained from B through gossip is not consistent with the state on A."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "The schema changes on A after B is down. When B restarts, if A does not update its gossip state, B still keeps the old state, and this inconsistency will trigger the error."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fixing the error. When the schema changes, synchronize through gossip.",
+      "·/src/java/org/apache/cassandra/db/migration/Migration.java",
+      "@@ -159,6 +159,7 @@ public abstract class Migration",
+      "assert !StorageService.instance.isClientMode();",
+      "assert column != null;",
+      "MigrationManager.announce(column);",
+      "+passiveAnnounce(); // keeps gossip in sync w/ what we just told everyone",
+      "}",
+      "",
+      "public final void passiveAnnounce()",
+      "",
+      ""
+    ]
+  }
+}

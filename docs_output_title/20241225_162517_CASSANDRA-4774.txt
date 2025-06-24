@@ -1,0 +1,112 @@
+{
+  "p": [
+    "Cassandra-4774",
+    "IndexOutOfBoundsException in org.apache.cassandra.gms.Gossiper.sendGossip"
+  ],
+  "(1) Log information": {
+    "p": [
+      "Environment: Saw this when looking through some logs in version 1.0.0 system was under a lot of load.",
+      "ERROR [GossipTasks:1] 2012-10-06 10:47:48,390 Gossiper.java (line 169) Gossip error",
+      "java.lang.IndexOutOfBoundsException: Index: 13, Size: 5",
+      "at java.util.ArrayList.RangeCheck(ArrayList.java:547)",
+      "at java.util.ArrayList.get(ArrayList.java:322)",
+      "at org.apache.cassandra.gms.Gossiper.sendGossip(Gossiper.java:541)",
+      "at org.apache.cassandra.gms.Gossiper.doGossipToUnreachableMember(Gossiper.java:575)",
+      "at org.apache.cassandra.gms.Gossiper.access$300(Gossiper.java:59)",
+      "at org.apache.cassandra.gms.Gossiper$GossipTask.run(Gossiper.java:141)",
+      "at org.apache.cassandra.concurrent.DebuggableScheduledThreadPoolExecutor$UncomplainingRunnable.run(DebuggableScheduledThreadPoolExecutor.java:79)",
+      "at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:441)",
+      "at java.util.concurrent.FutureTask$Sync.innerRunAndReset(FutureTask.java:317)",
+      "at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:150)",
+      "at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$101(ScheduledThreadPoolExecutor.java:98)",
+      "at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.runPeriodic(ScheduledThreadPoolExecutor.java:180)",
+      "at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:204)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+      "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+      "at java.lang.Thread.run(Thread.java:662)"
+    ]
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "The stack trace shows that the ERROR occurs when sending gossip message to unreachable member.",
+      "/* Sends a Gossip message to an unreachable member */",
+      "private voiddoGossipToUnreachableMember(MessageProducer prod)",
+      "{",
+      "doubleliveEndpointCount =liveEndpoints.size();",
+      "doubleunreachableEndpointCount =unreachableEndpoints.size();",
+      "if( unreachableEndpointCount >0)",
+      "{",
+      "/* based on some probability */",
+      "doubleprob = unreachableEndpointCount / (liveEndpointCount +1);",
+      "doublerandDbl =random.nextDouble();",
+      "if( randDbl < prob )",
+      "sendGossip(prod,unreachableEndpoints.keySet());",
+      "}",
+      "}",
+      "",
+      "private booleansendGossip(MessageProducer prod, Set<InetAddress> epSet)",
+      "{",
+      "intsize = epSet.size();",
+      "if(size <1)",
+      "return false;",
+      "/* Generate a random number from 0 -> size */",
+      "List<InetAddress> liveEndpoints =newArrayList<InetAddress>(epSet);",
+      "intindex = (size ==1) ?0:random.nextInt(size);",
+      "InetAddress to = liveEndpoints.get(index);",
+      "if(logger.isTraceEnabled())",
+      "logger.trace(\"Sending a GossipDigestSynMessage to {} ...\", to);",
+      "try",
+      "{",
+      "MessagingService.instance().sendOneWay(prod.getMessage(getVersion(to)), to);",
+      "}",
+      "catch(IOException ex)",
+      "{",
+      "throw newIOError(ex);",
+      "}",
+      "returnseeds.contains(to);",
+      "}",
+      "",
+      "From above code, we see that theunreachableEndpoints.keySet() returned is backed by the set so changes are reflected in the set.",
+      "Since sendGossip gets the size, and picks the random number, then executes a get on a list created it, this may generate a race condition where the list is smaller than the keyset, when the system was under a lot of load."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When the system is under a lot of load, the list may be smaller than the keyset based on which the list is created. Then the randomly generated index may not in the list, leading to the index out of bound."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Fix the error. Eliminate the potential race condition.",
+      "•/src/java/org/apache/cassandra/gms/Gossiper.java",
+      "",
+      "private booleansendGossip(MessageProducer prod, Set<InetAddress> epSet)",
+      "{",
+      "-intsize = epSet.size();",
+      "+List<InetAddress> liveEndpoints = ImmutableList.copyOf(epSet);",
+      "+",
+      "+int size = liveEndpoints.size();",
+      "if(size <1)",
+      "return false;",
+      "/* Generate a random number from 0 -> size */",
+      "-List<InetAddress> liveEndpoints =newArrayList<InetAddress>(epSet);",
+      "intindex = (size ==1) ?0:random.nextInt(size);",
+      "InetAddress to = liveEndpoints.get(index);",
+      "if(logger.isTraceEnabled())",
+      "logger.trace(\"Sending a GossipDigestSynMessage to {} ...\", to);",
+      "try",
+      "{",
+      "MessagingService.instance().sendOneWay(prod.getMessage(getVersion(to)), to);",
+      "}",
+      "catch(IOException ex)",
+      "{",
+      "throw newIOError(ex);",
+      "}",
+      "returnseeds.contains(to);",
+      "}",
+      "",
+      "",
+      ""
+    ]
+  }
+}

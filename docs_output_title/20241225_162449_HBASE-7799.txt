@@ -1,0 +1,107 @@
+{
+  "p": [
+    "HBase-7799"
+  ],
+  "reassigning region stuck in open still may not work correctly due to leftover ZK node": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMasterkeeps sendRegionOpen toRS",
+        "RS fails to open the region due to the wrong znode state in ZooKeeper"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "When the region 871d1c3bdf98a2c93b527cb6cc61327d is being opened on RegionServer10.11.2.92,64485,1360362800564, the RS dies, and the current state for the region is “RS_ZK_REGION_OPENING”.",
+        "HMaster#ServerShutdownHandler (SSH) is responsible for dealing with this dead RS.",
+        "①HMaster tries to force this region offline and reassign it:",
+        "2013-02-08 14:35:06,500 INFO [MASTER_SERVER_OPERATIONS-10.11.2.92,64483,1360362800340-1] master.RegionStates(347): Found opening region {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OPENING, ts=1360362901596, server=10.11.2.92,64485,1360362800564} tobe reassigned by SSHfor10.11.2.92,64485,1360362800564",
+        "2013-02-08 14:35:06,500 INFO [MASTER_SERVER_OPERATIONS-10.11.2.92,64483,1360362800340-1] master.RegionStates(242): Region {NAME => 'IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d.', STARTKEY => '7333332c', ENDKEY => '7ffffff8', ENCODED => 871d1c3bdf98a2c93b527cb6cc61327d,} transitioned from {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OPENING, ts=1360362901596, server=10.11.2.92,64485,1360362800564} to {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=CLOSED, ts=1360362906500, server=null}",
+        "2013-02-08 14:35:06,505 DEBUG [10.11.2.92,64483,1360362800340-GeneralBulkAssigner-1] master.AssignmentManager(1530):Forcing OFFLINE; was={IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=CLOSED, ts=1360362906500, server=null}",
+        "...",
+        "②When reassigning this region, HMaster fails to asynchronously create the znode with OFFLINE state, because the node already exists, which indicates that the original znode is not deleted.",
+        "2013-02-08 14:35:06,506 DEBUG [10.11.2.92,64483,1360362800340-GeneralBulkAssigner-1] zookeeper.ZKAssign(176): master:64483-0x13cbbf1025d0000Async create of unassigned nodefor 871d1c3bdf98a2c93b527cb6cc61327d withOFFLINEstate",
+        "2013-02-08 14:35:06,509 WARN [main-EventThread] master.OfflineCallback(59):Node for/hbase/region-in-transition/871d1c3bdf98a2c93b527cb6cc61327dalready exists",
+        "2013-02-08 14:35:06,509 DEBUG [main-EventThread] master.OfflineCallback(69): rs={IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OFFLINE, ts=1360362906506, server=null}, server=10.11.2.92,64488,1360362800651",
+        "2013-02-08 14:35:06,512 DEBUG [main-EventThread] master.OfflineCallback$ExistCallback(106): rs={IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OFFLINE, ts=1360362906506, server=null}, server=10.11.2.92,64488,1360362800651",
+        "...",
+        "③When RS receives the open region request, it fails to transit the znode from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING since the znode state is RS_ZK_REGION_OPENING which is set by the previous RS. Then transition from M_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPEN also fails due to the same reason.",
+        "So it goes into infinite cycle of failing to assign:",
+        "2013-02-08 14:35:06,517 INFO [PRI IPC Server handler 7 on 64488] regionserver.HRegionServer(3435):Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,64488,1360362800651",
+        "...",
+        "2013-02-08 14:35:06,521 WARN [RS_OPEN_REGION-10.11.2.92,64488,1360362800651-0] zookeeper.ZKAssign(762): regionserver:64488-0x13cbbf1025d0004 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENINGfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server10.11.2.92,64488,1360362800651[wrong server name, see HBASE-7798: should be the original RS, rather than new RS]",
+        "...",
+        "2013-02-08 14:35:06,528 WARN [RS_OPEN_REGION-10.11.2.92,64488,1360362800651-0] zookeeper.ZKAssign(762): regionserver:64488-0x13cbbf1025d0004 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPENfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server 10.11.2.92,64488,1360362800651",
+        "...",
+        "...",
+        "2013-02-08 14:36:09,644 INFO [PRI IPC Server handler 3 on 65343] regionserver.HRegionServer(3435):Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,65343,1360362907858",
+        "...",
+        "2013-02-08 14:36:09,658 WARN [RS_OPEN_REGION-10.11.2.92,65343,1360362907858-0] zookeeper.ZKAssign(762): regionserver:65343-0x13cbbf1025d000f Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENINGfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server 10.11.2.92,65343,1360362907858",
+        "...",
+        "2013-02-08 14:36:09,662 WARN [RS_OPEN_REGION-10.11.2.92,65343,1360362907858-0] zookeeper.ZKAssign(762): regionserver:65343-0x13cbbf1025d000f Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPENfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server 10.11.2.92,65343,1360362907858",
+        "...",
+        "...",
+        "2013-02-08 14:38:17,696 INFO [PRI IPC Server handler 6 on 49317] regionserver.HRegionServer(3435):Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,49317,1360362971256",
+        "...",
+        "2013-02-08 14:38:17,713 WARN [RS_OPEN_REGION-10.11.2.92,49317,1360362971256-2] zookeeper.ZKAssign(762): regionserver:49317-0x13cbbf1025d0011 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENINGfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server 10.11.2.92,49317,1360362971256",
+        "...",
+        "2013-02-08 14:38:17,720 WARN [RS_OPEN_REGION-10.11.2.92,49317,1360362971256-2] zookeeper.ZKAssign(762): regionserver:49317-0x13cbbf1025d0011 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPENfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server 10.11.2.92,49317,1360362971256",
+        "...",
+        "...",
+        "2013-02-08 14:39:22,118 INFO [PRI IPC Server handler 6 on 49780] regionserver.HRegionServer(3435):Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,49780,1360363101797",
+        "...",
+        "2013-02-08 14:39:22,121 WARN [RS_OPEN_REGION-10.11.2.92,49780,1360363101797-1] zookeeper.ZKAssign(762): regionserver:49780-0x13cbbf1025d0015 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENINGfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server 10.11.2.92,49780,1360363101797",
+        "...",
+        "2013-02-08 14:39:22,135 WARN [RS_OPEN_REGION-10.11.2.92,49780,1360363101797-1] zookeeper.ZKAssign(762): regionserver:49780-0x13cbbf1025d0015 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d fromM_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPENfailed, the node existed but was in the stateRS_ZK_REGION_OPENINGset by the server 10.11.2.92,49780,1360363101797",
+        "...",
+        "The bug symptom is not error or exception, but the repeated logs printed in RS, which keeps receiving the request to open the region, but fails (fail to transit the znode state for this region)."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Combing the logs and source code, we can get the following control flow:",
+      "When SSH processes the dead server, it callsprocessServerShutdown()to get a list of regions in transition on this server. InprocessServerShutdown(), when the region needs to be reassigned, its state is updated “CLOSED”, so it will be reassigned by SSH, but its znode is not deleted.",
+      "Then, SSH will callam.assign(toAssignRegions)to reassign the regions.",
+      "",
+      "",
+      "(2.2) In assign(), for each region to be assigned,asyncSetOfflineInZooKeeper(state,cb, destination)is called to create a znode and set “M_ZK_REGION_OFFLINE”. A OfflineCallback object cb is registered to process the result of this asynchronous operation.",
+      "However, even if the znode already exists,asyncSetOfflineInZooKeeper(state,cb, destination)willalwaysreturn TRUE, because it does not wait for the callback to take action, and neither will the callback throw NodeExistsException. The catch block is a dead code.",
+      "",
+      "",
+      "OfflineCallback.processResult() will process the result of this asynchronous operation:",
+      "When the NodeExists happens, it will just print LOG.warn without throwing NodeExistsException.",
+      "",
+      "",
+      "The following log is printed in processResult() rather than asyncSetOfflineInZooKeeper(), which indicates that the OfflineCallBack “swallows” the NodeExistsException.",
+      "2013-02-08 14:35:06,509 WARN [main-EventThread] master.OfflineCallback(59):Node for/hbase/region-in-transition/871d1c3bdf98a2c93b527cb6cc61327dalready exists",
+      "The problem about the callback is solved in another JIRA-issue.",
+      "(2.3) In the normal case, when the new RS receives the open region request, the znode for this region should be in M_ZK_OFFLINE state, so that the new RS can transit the znode successfully when opening the region. Since the znode is not in expected state, RS fails to transit the znode, which leads to the failure of opening the region.",
+      "Each time when sendRegionOpens() retries, the same story happens in RS, which keeps printing the same logs."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When the region is being opened on RegionServer “10.11.2.92,64485,1360362800564”, the RS dies. HMaster#ServerShutdownHandler does not delete the znode for this region which needs to be reassigned. Besides, before HMaster sending region open request to the RS, it fails to set the region znode “M_ZK_OFFLINE” without throwing any exception (OfflineCallBack “swallows” the NodeExistsException). Therefore, the RS fails to transit the znode due to the wrong znode state.",
+      "HMaster keeps trying sendRegionOpen(), and RS keeps failing to open the region."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Add the znode deletion for the region which needs to be reassigned.",
+      "• hbase-server/src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      ""
+    ]
+  }
+}

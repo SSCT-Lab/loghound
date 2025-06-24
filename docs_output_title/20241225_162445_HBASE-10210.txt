@@ -1,0 +1,84 @@
+{
+  "p": [
+    "HBase-10210"
+  ],
+  "during master startup, RS can be you-are-dead-ed by master in error": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster(master) HRegionServer (slave)ZooKeeper"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“It looks like RS information arriving from 2 sources - ZK and server itself, can conflict. Master doesn't handle such cases (timestamp match), and anyway technically timestamps can collide for two separate servers. So, master YouAreDead-s the already-recorded reporting RS, and adds it too. Then it discovers that the new server has died with fatal error!”",
+        "HMaster log during startup:",
+        "For convenience, we refer to the following region server as RS-3800, (1387451803800 is the startcode of this region server):",
+        "Registering server=h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800",
+        "2013-12-19 11:16:45,290 INFO [master:h2-ubuntu12-sec-1387431063-hbase-10:60000] master.ServerManager: Finished waiting for region servers count to settle; checked in 2, slept for 18262 ms, expecting minimum of 1, maximum of 2147483647, master is running.During HMaster initialization, HMaster finishes waiting for RSs to check in.",
+        "2013-12-19 11:16:45,290 INFO [master:h2-ubuntu12-sec-1387431063-hbase-10:60000] master.ServerManager: Registering server=h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800RS-3800 is registering to onlineServers list",
+        "2013-12-19 11:16:45,290 INFO [master:h2-ubuntu12-sec-1387431063-hbase-10:60000] master.HMaster:Registered server found up in zk but who has not yet reported in: h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800HMaster found that RS-3800 has registered in zk but not reported to HMaster",
+        "2013-12-19 11:16:45,380 INFO [RpcServer.handler=4,port=60000] master.ServerManager: Triggering server recovery; existingServer h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800looks stale, new server:h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800RS-3800 notifies the HMaster’s server manager with its startup, which triggers the server recovery. The server recovery will expire the stale RS, and record the new RS",
+        "2013-12-19 11:16:45,380 INFO [RpcServer.handler=4,port=60000] master.ServerManager: Master doesn't enable ServerShutdownHandler during initialization, delay expiring server h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800",
+        "...",
+        "2013-12-19 11:16:46,925ERROR[RpcServer.handler=7,port=60000] master.HMaster:Region serverh2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800reported a fatal error:",
+        "ABORTINGregion server h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800: org.apache.hadoop.hbase.YouAreDeadException: Server REPORT rejected; currently processing h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800 as dead server",
+        "HMaster finds that RS-3800 died because of YouAreDeadException.",
+        "It also indicates that there must be a FATAL in RS-3800’s log and makes RS-3800 abort.",
+        "When finishing the all assignment attempts for this terminated server, HMaster will select the other available servers to assign the ROOT region."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Based on the log and the source code about HMaster startup, we can locate the code which is related to the initialization.",
+      "(2.2) During initialization, when the serverManager finishes waiting for region servers to report in, HMaster will check ZK for region servers that are up but didn’t register to the serverManager.",
+      "",
+      "With the first loop, RS-3800 got from regionServerTracker(from ZK) is not in serverManager’s onlineServers list through function checkAlreadySameHostPortAndRecordNewServer(), so the log “Registered server found up in zk but who has not yet reported in” is printed. And RS-3800 will be recorded into onlineServers list.",
+      "",
+      "",
+      "(2.3) At this time, RS-3800 informs serverManager of its start through function regionServerStartup(), which will also call checkAlreadySameHostPortAndRecordNewServer(). Since RS-3800 is already in onlineServers list, and the startcode is the same, it will trigger server recovery: expire the stale one (put the stale one intoqueuedDeadServerslist), and record the new one (add the new one intoonlineServerslist). But here, both the stale and new servers are the same (with the same host, port and startcode). As a result, RS-3800 is in queuedDeadServers list as well as onlineServers list.",
+      "(2.4) (After queuedDeadServers list is processed, the servers in this list will be moved to deadServer list first, but the servers will not go down right away.)",
+      "Then RS-3800 will still report to the serverManager, and the serverManger handles it with function:",
+      "",
+      "When the serverManager finds that the server is on the deadServers list, it will reject the current RS with a YouAreDeadException. Then RS-3800 will abort on receiving this response, and notify the HMaster that it aborts."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "There are two different mechanisms to track online region servers:",
+      "ServerManager via regionServerStartup + regionServerReport, maintaining onlineServers list;",
+      "RegionServerTracker via ZooKeeper, maintaining regionServers list.",
+      "At the same time, it happens that the startcodes from two sources above are the same.",
+      "The root cause is actually startcode(timestamp) collision, not synchronization, where the same server is added twice.",
+      "HMaster fails to handle this case, and treats the RS as dead by mistake."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Modify function checkAlreadySameHostPortAndRecordNewServer(): same startcode means same server, and don't expire the server in that case. (Fixing the root cause)",
+      "The developer also add synchronization to onlineServers list.",
+      "“I added sync because there are probably other issues in this code otherwise - it does checks and then additions on the map without any sync, etc.”",
+      "• hbase-server/src/main/java/org/apache/hadoop/hbase/master/HMaster.java",
+      ""
+    ]
+  },
+  "• hbase-server/src/main/java/org/apache/hadoop/hbase/master/ServerManager.java": {},
+  "": {
+    "p": [
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "Only HMaster"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "Although region assignments are initiated by the Master and it knows a region is opening on a RegionServer, the Master depends on the ZooKeeper event update to find out if the opening is succeeded. When a region is opened on a RegionServer, this information is already in the META table. But it takes a very short time for the Master to find that out based on the region transition update from ZooKeeper.",
+      "",
+      ""
+    ]
+  }
+}

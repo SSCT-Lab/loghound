@@ -1,0 +1,122 @@
+{
+  "p": [
+    "HDFS-4315"
+  ],
+  "DNs with multiple BPs can have BPOfferServices fail to start due to unsynchronized map access": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "DFSClient (client-side)applies toNN(server-side)for a new DataNode",
+        "DataNode (client-side)connects toNN(server-side)and shakes hands"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "According to the description, there are multiple NameNodes in this setting, so on each DataNode, there are multiple BlockPools(BPs). “In all of the failing test runs that I saw, the client would end up failing with an error like the following:”",
+        "DFSClient:",
+        "2012-12-14 16:30:36,818 WARN hdfs.DFSClient (DFSOutputStream.java:run(562)) - DataStreamer Exception",
+        "java.io.IOException:Failed to add a datanode. User may turn off this feature by setting dfs.client.block.write.replace-datanode-on-failure.policy in configuration, where the current policy is DEFAULT. (Nodes:current=[127.0.0.1:52552, 127.0.0.1:43557],original=[127.0.0.1:43557, 127.0.0.1:52552])",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.findNewDatanode(DFSOutputStream.java:792)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.addDatanode2ExistingPipeline(DFSOutputStream.java:852)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.setupPipelineForAppendOrRecovery(DFSOutputStream.java:958)",
+        "at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.run(DFSOutputStream.java:469)",
+        "It shows that when DFSClient is setting up pipeline for append or recovery, it fails to add the new DataNode to the existing pipeline: original nodes in the pipeline are [127.0.0.1:43557, 127.0.0.1:52552], while current nodes in pipeline are still these two nodes [127.0.0.1:52552, 127.0.0.1:43557].",
+        "“This suggests that either an entire DN or one of the BPOfferServices of one of the DNs was not starting correctly, or had not started by the time the client was trying to access it.”",
+        "DataNode side:The following error can be seen occasionally.",
+        "java.lang.NullPointerException",
+        "at org.apache.hadoop.hdfs.server.datanode.DataNode.initStorage(DataNode.java:850)",
+        "at org.apache.hadoop.hdfs.server.datanode.DataNode.initBlockPool(DataNode.java:819)",
+        "at org.apache.hadoop.hdfs.server.datanode.BPOfferService.verifyAndSetNamespaceInfo(BPOfferService.java:308)",
+        "at org.apache.hadoop.hdfs.server.datanode.BPServiceActor.connectToNNAndHandshake(BPServiceActor.java:218)",
+        "at org.apache.hadoop.hdfs.server.datanode.BPServiceActor.run(BPServiceActor.java:660)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "The NPE occurs when one of the BPServiceActors in the specific DataNode tries to connect the corresponding NN and shakes hands. So this error will cause one of the BPOfferServices in this DN to not come up."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Based on DN’s callstack, NPE happens in function DataNode.initStorage().",
+      "/**",
+      "* Initializes the {@link#data}. The initialization is done only once, when",
+      "* handshake with the the first namenode is completed.",
+      "*/",
+      "private voidinitStorage(finalNamespaceInfo nsInfo)throwsIOException {",
+      "finalFsDatasetSpi.Factory<?extendsFsDatasetSpi<?>> factory",
+      "= FsDatasetSpi.Factory.getFactory(conf);",
+      "",
+      "if(!factory.isSimulated()) {",
+      "finalStartupOption startOpt =getStartupOption(conf);",
+      "if(startOpt ==null) {throw newIOException(\"Startup option not set.\");",
+      "}",
+      "finalString bpid = nsInfo.getBlockPoolID();",
+      "//read storage info, lock data dirs and transition fs state if necessary",
+      "storage.recoverTransitionRead(this, bpid, nsInfo,dataDirs, startOpt);",
+      "finalStorageInfo bpStorage =storage.getBPStorage(bpid);",
+      "LOG.info(\"Setting up storage: nsid=\"+ bpStorage.getNamespaceID()",
+      "+\";bpid=\"+ bpid +\";lv=\"+storage.getLayoutVersion()",
+      "+\";nsInfo=\"+ nsInfo);",
+      "}",
+      "",
+      "synchronized(this) {",
+      "if(data==null) {data= factory.newInstance(this,storage,conf); }",
+      "}",
+      "}",
+      "After checking all the statements, one possibility is that storage=null; the other possibility is that NPE happens when calling storage.getBPStorage(bpid). The data type ofstorageis DataStorage:",
+      "",
+      "public classDataStorageextendsStorage {…",
+      "// BlockPoolStorage is map of <Block pool Id, BlockPoolStorage>privateMap<String, BlockPoolSliceStorage>bpStorageMap=newHashMap<String, BlockPoolSliceStorage>();",
+      "…",
+      "}",
+      "publicStorageInfogetBPStorage(String bpid) {returnbpStorageMap.get(bpid); }",
+      "So the reason could be concurrent, unsynchronized puts to the HashMap DataStorage#bpStorageMap results in undefined behavior, including previously-included entries no longer appearing to be in themap."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "DN with multiple BPs fails to start due to the NPE which is caused by unsynchronized map access. When DFSClient tries to add a new DN to the existing pipeline, it does not get any new DN from NN, which leads to the “IOException: Failed to add a datanode.” on DFSClient side."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "Modify the data type of bpStorageMap in class DataStorage, so that bpStorageMap can onlysynchronouslyaccessed. And NPE will not happen. Fix the NPE itself.",
+      "•hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/DataStorage.java",
+      "@@ -26,6 +26,7 @@",
+      "import java.nio.channels.FileLock;",
+      "import java.util.ArrayList;",
+      "import java.util.Collection;",
+      "+import java.util.Collections;",
+      "import java.util.HashMap;",
+      "import java.util.Iterator;",
+      "import java.util.Map;",
+      "@@ -78,7 +79,7 @@",
+      "",
+      "// BlockPoolStorage is map of <Block pool Id, BlockPoolStorage>",
+      "private Map<String, BlockPoolSliceStorage> bpStorageMap",
+      "-= newHashMap<String, BlockPoolSliceStorage>();",
+      "+= Collections.synchronizedMap(new HashMap<String, BlockPoolSliceStorage>());",
+      "DataStorage() {",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "The patch is in DataNodes."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "On DFSClient side,",
+      "private voidaddDatanode2ExistingPipeline()throwsIOException {…",
+      "//get a new datanodefinalDatanodeInfo[] original =nodes;finalLocatedBlock lb =dfsClient.namenode.getAdditionalDatanode(src,block,nodes,failed.toArray(newDatanodeInfo[failed.size()]),",
+      "1,dfsClient.clientName);nodes= lb.getLocations();",
+      "//find the new datanodefinal intd =findNewDatanode(original);//transfer replicafinalDatanodeInfo src = d ==0?nodes[1]:nodes[d -1];finalDatanodeInfo[] targets = {nodes[d]};transfer(src, targets, lb.getBlockToken());}",
+      "",
+      "private intfindNewDatanode(finalDatanodeInfo[] original)throwsIOException {if(nodes.length!= original.length+1) {throw newIOException(\"Failed to add a datanode. \"+\"User may turn off this feature by setting \"+ DFSConfigKeys.DFS_CLIENT_WRITE_REPLACE_DATANODE_ON_FAILURE_POLICY_KEY+\" in configuration, where the current policy is \"+dfsClient.dtpReplaceDatanodeOnFailure+\". (Nodes: current=\"+ Arrays.asList(nodes)+\", original=\"+ Arrays.asList(original) +\")\");}",
+      "for(inti =0; i <nodes.length; i++) {intj =0;for(; j < original.length&& !nodes[i].equals(original[j]); j++);",
+      "if(j == original.length) {returni; }",
+      "}",
+      "throw newIOException(\"Failed: new datanode not found: nodes=\"+ Arrays.asList(nodes) +\", original=\"+ Arrays.asList(original));}"
+    ]
+  }
+}

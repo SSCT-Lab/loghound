@@ -1,0 +1,114 @@
+{
+  "p": [
+    "HBase-6299"
+  ],
+  "RS starting region open while failing ack to HMaster.sendRegionOpen() causes inconsistency in HMaster's region state and a series of successive problems": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMaster assigns a region (by sending RPC_OPEN) to RegionServer",
+        "RegionServerupdates the state toZooKeeper ZooKeepernotifiesHMaster"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "HMaster tries to assign the region CDR_STATS_TRAFFIC to RS-006(8078)",
+        "2012-06-29 07:03:38,870 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Using pre-existing plan for region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568.; plan=hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=swbss-hadoop-004,60020,1340890123243, dest=swbss-hadoop-006,60020,1340890678078",
+        "2012-06-29 07:03:38,870 DEBUG org.apache.hadoop.hbase.master.AssignmentManager:Assigning regionCDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568.to swbss-hadoop-006,60020,1340890678078",
+        "2012-06-29 07:03:38,870 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=M_ZK_REGION_OFFLINE, server=swbss-hadoop-002:60000, region=b713fd655fa02395496c5a6e39ddf568",
+        "2012-06-29 07:06:28,882 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-006,60020,1340890678078, region=b713fd655fa02395496c5a6e39ddf568",
+        "2012-06-29 07:06:32,291 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-006,60020,1340890678078, region=b713fd655fa02395496c5a6e39ddf568",
+        "2012-06-29 07:06:32,299 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=RS_ZK_REGION_OPENED, server=swbss-hadoop-006,60020,1340890678078, region=b713fd655fa02395496c5a6e39ddf568",
+        "2012-06-29 07:06:32,299 DEBUG org.apache.hadoop.hbase.master.handler.OpenedRegionHandler: HandlingOPENEDevent for CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. from serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=518945, regions=575, usedHeap=15282, maxHeap=31301); deleting unassigned node",
+        "2012-06-29 07:06:32,299 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:60000-0x2377fee2ae80007 Deleting existing unassigned node for b713fd655fa02395496c5a6e39ddf568 that is in expected state RS_ZK_REGION_OPENED",
+        "2012-06-29 07:06:32,301 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:60000-0x2377fee2ae80007 Successfully deleted unassigned node for region b713fd655fa02395496c5a6e39ddf568 in expected state RS_ZK_REGION_OPENED",
+        "HMaster has handled all the events from ZK successfully. When HMaster is processing RS_ZK_REGION_OPENED, it will call the OpenedRegionHandler and remove region state fromRegionsInTransition(RIT, in HMaster’s memory). Because the RS_ZK_REGION_OPENED indicates that the region is open on the specific RS successfully.",
+        "2012-06-29 07:06:32,301 DEBUG org.apache.hadoop.hbase.master.handler.OpenedRegionHandler:The master has opened the regionCDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. that was online on serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=518945, regions=575, usedHeap=15282, maxHeap=31301)",
+        "",
+        "For the first assign attempt, HMaster’s ServerManager calls sendRegionOpen() (and it will call RS.openRegion()). However, due to the network problem, HMaster fails to receive the response for the openRegion() call, and the call times out. (This timeout is not the regionState timeout which is monitored by TimeoutMonitor)",
+        "2012-06-29 07:07:41,140 WARN org.apache.hadoop.hbase.master.AssignmentManager:Failed assignment ofCDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. to serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=0, regions=575, usedHeap=0, maxHeap=0),trying to assign elsewhere instead; retry=0",
+        "java.net.SocketTimeoutException:Call to /172.16.0.6:60020 failed on socket timeout exception: java.net.SocketTimeoutException: 120000 millis timeout while waiting for channel to be ready for read. ch : java.nio.channels.SocketChannel[connected local=/172.16.0.2:53765 remote=/172.16.0.6:60020]",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.wrapException(HBaseClient.java:805)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient.call(HBaseClient.java:778)",
+        "at org.apache.hadoop.hbase.ipc.HBaseRPC$Invoker.invoke(HBaseRPC.java:283)",
+        "at $Proxy8.openRegion(Unknown Source)",
+        "at org.apache.hadoop.hbase.master.ServerManager.sendRegionOpen(ServerManager.java:573)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.assign(AssignmentManager.java:1127)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.assign(AssignmentManager.java:912)",
+        "at org.apache.hadoop.hbase.master.AssignmentManager.assign(AssignmentManager.java:892)",
+        "at org.apache.hadoop.hbase.master.handler.ClosedRegionHandler.process(ClosedRegionHandler.java:92)",
+        "at org.apache.hadoop.hbase.executor.EventHandler.run(EventHandler.java:162)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)",
+        "at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)",
+        "at java.lang.Thread.run(Thread.java:662)",
+        "Caused by: java.net.SocketTimeoutException: 120000 millis timeout while waiting for channel to be ready for read. ch : java.nio.channels.SocketChannel[connected local=/172.16.0.2:53765 remote=/172.16.0.6:60020]",
+        "at org.apache.hadoop.net.SocketIOWithTimeout.doIO(SocketIOWithTimeout.java:164)",
+        "at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:155)",
+        "at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:128)",
+        "at java.io.FilterInputStream.read(FilterInputStream.java:116)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection$PingInputStream.read(HBaseClient.java:301)",
+        "at java.io.BufferedInputStream.fill(BufferedInputStream.java:218)",
+        "at java.io.BufferedInputStream.read(BufferedInputStream.java:237)",
+        "at java.io.DataInputStream.readInt(DataInputStream.java:370)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.receiveResponse(HBaseClient.java:541)",
+        "at org.apache.hadoop.hbase.ipc.HBaseClient$Connection.run(HBaseClient.java:479)",
+        "",
+        "HMaster attemps to assign for a second time, choosing another RS-164(6294).",
+        "2012-06-29 07:07:41,142 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: No previous transition plan was found (or we are ignoring an existing plan) for CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. so generated a random one; hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=, dest=swbss-hadoop-164,60020,1340888346294; 15 (online=15, exclude=serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=0, regions=575, usedHeap=0, maxHeap=0)) available servers",
+        "2012-06-29 07:07:41,142 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:60000-0x2377fee2ae80007 Creating (or updating) unassigned node for b713fd655fa02395496c5a6e39ddf568 with OFFLINE state",
+        "2012-06-29 07:07:41,145 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Using pre-existing plan for region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568.; plan=hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=, dest=swbss-hadoop-164,60020,1340888346294",
+        "2012-06-29 07:07:41,145 DEBUG org.apache.hadoop.hbase.master.AssignmentManager:Assigning regionCDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. toswbss-hadoop-164,60020,1340888346294",
+        "2012-06-29 07:07:41,149 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-164,60020,1340888346294, region=b713fd655fa02395496c5a6e39ddf568",
+        "2012-06-29 07:07:41,150 WARN org.apache.hadoop.hbase.master.AssignmentManager: Received OPENING for region b713fd655fa02395496c5a6e39ddf568 from server swbss-hadoop-164,60020,1340888346294 but region was in the state null and not in expected PENDING_OPEN or OPENING states",
+        "2012-06-29 07:07:41,296 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-164,60020,1340888346294, region=b713fd655fa02395496c5a6e39ddf568",
+        "2012-06-29 07:07:41,296 WARN org.apache.hadoop.hbase.master.AssignmentManager: Received OPENING for region b713fd655fa02395496c5a6e39ddf568 from server swbss-hadoop-164,60020,1340888346294but region was in the state nulland not in expected PENDING_OPEN or OPENING states",
+        "2012-06-29 07:07:41,302 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=RS_ZK_REGION_OPENED, server=swbss-hadoop-164,60020,1340888346294, region=b713fd655fa02395496c5a6e39ddf568",
+        "2012-06-29 07:07:41,302 WARN org.apache.hadoop.hbase.master.AssignmentManager: Received OPENED for region b713fd655fa02395496c5a6e39ddf568 from server swbss-hadoop-164,60020,1340888346294 butregion was in the state nulland not in expected PENDING_OPEN or OPENING states",
+        "Since the regionState in RIT is removed by the OpenedRegionHandler when the first assign finishes. HMaster fails to handle the transitions (RS_ZK_REGION_OPENING, RS_ZK_REGION_OPENED) from ZK, that is, it fails to update the regionState in RIT and ignores the transitions from znode(ZK).",
+        "Then the HMaster’s balancer triggers “unassignment of region”, which also fails.",
+        "2012-06-29 07:08:38,872 INFO org.apache.hadoop.hbase.master.HMaster: balance hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=swbss-hadoop-006,60020,1340890678078, dest=swbss-hadoop-008,60020,1340891085175",
+        "2012-06-29 07:08:38,872 DEBUG org.apache.hadoop.hbase.master.AssignmentManager:Starting unassignment of regionCDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. (offlining)",
+        "2012-06-29 07:08:47,875 DEBUG org.apache.hadoop.hbase.master.AssignmentManager:Sent CLOSEto serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=0, regions=0, usedHeap=0, maxHeap=0) for region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568.",
+        "...",
+        "2012-06-29 08:04:37,681 INFO org.apache.hadoop.hbase.master.AssignmentManager:Regions in transition timed out:CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. state=PENDING_CLOSE, ts=1340926468331, server=null",
+        "2012-06-29 08:04:37,681 INFO org.apache.hadoop.hbase.master.AssignmentManager: Region has been PENDING_CLOSE for too long, running forced unassign again on region=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568.",
+        "2012-06-29 08:04:47,681 INFO org.apache.hadoop.hbase.master.AssignmentManager: Regions in transition timed out: CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. state=PENDING_CLOSE, ts=1340926468331, server=null",
+        "2012-06-29 08:04:47,682 INFO org.apache.hadoop.hbase.master.AssignmentManager: Region has been PENDING_CLOSE for too long, running forced unassign again on region=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Combining with the source code, we can understand the progress shown in the log (referring (1)).",
+      "The SocketTimeoutException happens when HMaster calls sendRegionOpen() to RS, and it will be caught, and retry.",
+      "",
+      "",
+      "The state machine for each region is tracked in three different places: META table, Master server memory (RIT), and ZooKeeper unassign znodes. As it moves through the state machine, we update the different storage locations at different times.",
+      "The Master holds all region states in memory (through RIT). This information is used by the AssignmentManager to track where each region is, and its current state. Although region assignments are initiated by the Master and it knows a region is opening on a RegionServer, the Master depends on the ZooKeeper event update to find out if the opening is succeeded. When the region opens on RS successfully, the Master will remove RIT for this region, and the (region, RS) mapping will be recorded in META table."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When RS successfully opens the region, HMaster gets this assignment success from ZK, and removes the corresponding RIT for this region. While RS fails to send the response to HMaster, which leads to another attempt to assign the region on the other RS and inconsistency in HMaster’s region state.",
+      "It seems that the first assign is not successful (SocketTimeoutException), but in fact, the region is open on RS-006(8078) and the mapping (region, RS) is recorded in META.",
+      "Although the retry on the second RS(RS-164(6294)) is successful, the mapping will not be recorded in META table, and all the access request to the region will be directed to the first RS."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "When dealing with the RPC failure, add handling of SocketTimeoutException in assign():",
+      "Check if the RS is online. If the RS is online, it shows that the RS is normal, then return.",
+      "",
+      "• hbase-server/src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      "",
+      "",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster",
+      ""
+    ]
+  }
+}

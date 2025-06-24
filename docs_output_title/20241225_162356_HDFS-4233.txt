@@ -1,0 +1,153 @@
+{
+  "p": [
+    "HDFS-4233",
+    "NN keeps serving even after no journals started while rolling edit"
+  ],
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "SecondaryNameNode (client-side) NameNode(server-side)"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Description: We've seen NameNode keeps serving even after rollEditLog() failure. Instead of taking a corrective action or regard this condition as FATAL, it keeps on serving and modifying its file system state. No logs are written from this point, so if the namenode is restarted, there will be data loss.",
+        "The log provided in this bug report is from NameNode, which shows the rollEditLog() failure.",
+        "2012-xx-yy 00:00:00,000[IPC Server handler 00 on 0000]INFO",
+        "org.apache.hadoop.ipc.Server: IPC Server handler 00 on 00000, call:",
+        "rollEditLog(), rpc version=1, client version=6, methodsFingerPrint=403308677",
+        "from 1.1.1.1:12345, error:",
+        "java.io.IOException: Unable to start log segment 12345678: no journals",
+        "successfully started.",
+        "at org.apache.hadoop.hdfs.server.namenode.FSEditLog.startLogSegment(FSEditLog.java:840)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSEditLog.rollEditLog(FSEditLog.java:802)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSImage.rollEditLog(FSImage.java:911)",
+        "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.rollEditLog(FSNamesystem.java:3494)",
+        "at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.rollEditLog(NameNodeRpcServer.java:644)",
+        "at sun.reflect.GeneratedMethodAccessor111.invoke(Unknown Source)",
+        "at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)",
+        "at java.lang.reflect.Method.invoke(Method.java:597)",
+        "at org.apache.hadoop.ipc.WritableRpcEngine$Server.call(WritableRpcEngine.java:394)",
+        "at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1530)",
+        "at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1526)",
+        "at java.security.AccessController.doPrivileged(Native Method)",
+        "at javax.security.auth.Subject.doAs(Subject.java:396)",
+        "at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1212)",
+        "at org.apache.hadoop.ipc.Server$Handler.run(Server.java:1524)",
+        "Since no journals successfully started, NameNode cannot record the edit information, so NameNode fails to rollEditLog()."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) Background of this bug:",
+      "Secondary NameNode despite its name does not act as a namenode. Its main role is to periodically merge the namespace image with the edit log in NameNode to prevent the edit log from becoming too large (this process is also called checkpoint). The Secondary NameNode keeps a copy of the merged namespace image, which can be used in the event of the namenode failing. However, the state of the Secondary NameNode lags that of the primary, so in the event of total failure of the primary, data loss is almost certain. That is, Secondary NameNode doesn't provide failover capabilities. So, in case of NameNode failure, Hadoop admins have to manually recover the data from Secondary NameNode.",
+      "",
+      "(2.2) From the call stack, we can see that function rollEditLog() in NameNode is called through RPC call:",
+      "at org.apache.hadoop.hdfs.server.namenode.FSEditLog.startLogSegment(FSEditLog.java:840)",
+      "at org.apache.hadoop.hdfs.server.namenode.FSEditLog.rollEditLog(FSEditLog.java:802)",
+      "at org.apache.hadoop.hdfs.server.namenode.FSImage.rollEditLog(FSImage.java:911)",
+      "at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.rollEditLog(FSNamesystem.java:3494)",
+      "at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.rollEditLog(NameNodeRpcServer.java:644)",
+      "",
+      "Actually, Secondary NN will call NameNode.rollEditLog() through RPC protocol NameNodeProtocol.",
+      "Function rollEditLog() will close current editLog and opens a new log segment.",
+      "InFSEditLog.rollEditLog():",
+      "synchronized longrollEditLog()throwsIOException {LOG.info(\"Rolling edit logs.\");endCurrentLogSegment(true);// close current editLog",
+      "longnextTxId = getLastWrittenTxId() +1;startLogSegment(nextTxId,true);// opens a new log segment",
+      "assert curSegmentTxId == nextTxId;return nextTxId;}",
+      "",
+      "And the “IOException: Unable to start log segment 12345678: no journals",
+      "successfully started” occurs in function startLogSegment().",
+      "synchronized voidstartLogSegment(final longsegmentTxId,booleanwriteHeaderTxn)throwsIOException {LOG.info(\"Starting log segment at \"+ segmentTxId);Preconditions.checkArgument(segmentTxId >0,\"Bad txid: %s\", segmentTxId);",
+      "Preconditions.checkState(state== State.BETWEEN_LOG_SEGMENTS,\"Bad state: %s\",state);Preconditions.checkState(segmentTxId >curSegmentTxId,\"Cannot start writing to log segment \"+ segmentTxId +\" when previous log segment started at \"+curSegmentTxId);Preconditions.checkArgument(segmentTxId ==txid+1,\"Cannot start log segment at txid %s when next expected \"+\"txid is %s\", segmentTxId,txid+1);",
+      "numTransactions=totalTimeTransactions=numTransactionsBatchedInSync=0;",
+      "// TODO no need to link this back to storage anymore!// See HDFS-2174.storage.attemptRestoreRemovedStorage();",
+      "mapJournalsAndReportErrors(newJournalClosure() {@Overridepublic voidapply(JournalAndStream jas)throwsIOException {jas.startLogSegment(segmentTxId);}",
+      "},\"starting log segment \"+ segmentTxId);",
+      "if(countActiveJournals() ==0) {throw newIOException(\"Unable to start log segment \"+ segmentTxId +\": no journals successfully started.\");}",
+      "curSegmentTxId= segmentTxId;",
+      "state= State.IN_SEGMENT;",
+      "if(writeHeaderTxn) {logEdit(LogSegmentOp.getInstance(FSEditLogOpCodes.OP_START_LOG_SEGMENT));",
+      "logSync();(the patch is in function logSyc())}",
+      "}Since writeHeaderTxn == true, logEdit() and logSync() will be executed.",
+      "logEdit() also calls logSync().",
+      "logEdit():write an operation to the edit log;",
+      "logSync(): sync all modifications done by this thread",
+      "",
+      "",
+      "",
+      "private voidstartLogSegment(longtxId)throwsIOException {Preconditions.checkState(stream==null);stream=manager.startLogSegment(txId);segmentStartsAtTxId= txId;}",
+      "",
+      "publicEditLogOutputStreamstartLogSegment(longtxid)throwsIOException {File newInProgress = NNStorage.getInProgressEditsFile(sd, txid);EditLogOutputStream stm =newEditLogFileOutputStream(newInProgress,outputBufferCapacity);stm.create();",
+      "returnstm;}",
+      "",
+      "The declaration of variable journals :",
+      "privateList<JournalAndStream>journals= Lists.newArrayList();",
+      "So we can see that when start new log segment, there is no check on the validity for the new started streams, i.e., journals.",
+      "",
+      "(2.3) The IOException in the log is in startLogSegment(), so the error which caused the journals invalid may happen before startLogSegment(), i.e. in endCurrentLogSegment() or between these two functions.",
+      "In function endCurrentLogSegment(), it will close current journals if they are active.",
+      "",
+      "synchronized voidendCurrentLogSegment(booleanwriteEndTxn) {LOG.info(\"Ending log segment \"+curSegmentTxId);Preconditions.checkState(state== State.IN_SEGMENT,\"Bad state: %s\",state);if(writeEndTxn) {",
+      "logEdit(LogSegmentOp.getInstance(",
+      "FSEditLogOpCodes.OP_END_LOG_SEGMENT));",
+      "logSync();}printStatistics(true);final longlastTxId = getLastWrittenTxId();",
+      "mapJournalsAndReportErrors(newJournalClosure() {",
+      "@Override",
+      "public voidapply(JournalAndStream jas)throwsIOException {if(jas.isActive()) {jas.close(lastTxId);}}},\"ending log segment\");state= State.BETWEEN_LOG_SEGMENTS;}",
+      "",
+      "We cannot obtain any clue from this function.",
+      "(2.4) The root cause mentioned in the comments is: “The underlying FileJournalManager reportedFileNotFoundExceptionwhen the namenode process ran out ofFile Descriptors(FD).",
+      "When the previous editlog files were closed, they were quickly taken away by socket connections, etc.” (FileJournalManager is also in NameNode)",
+      "Since there is no FileJournalManger logs in this bug report, we have no idea about the root cause by ourselves.",
+      "FileNotFoundException leads to IOException.",
+      "(2.5) Next, how to deal with it.",
+      "· In order to be immune to FD exhaustion, NN should not close the file until a new one is opened. But this may not go well with the current edit rolling mechanism.",
+      "· Given that rollEditLog() is called via RPC from Secondary NN and opening of new edit files fails. The exception is sent back to the caller, but no action is taken.",
+      "· In NN side, when the IOException happens in startLogSegment (), the edit log state is BETWEEN_LOG_SEGMENTS and no further rolling was allowed because endCurrentLogSegment() will fail. But logSync() and logEdit() will goes on as if nothing is wrong.",
+      "· We notice that all these functions (endCurrentLogSegment(), startLogSegment(), and logEdit()) will call function logSync(). logSync() invokes isEmpty(), but it won't check the validity of journals in the list. Although it already has a logic for counting and disabling bad journals, there is nothing equivalent to the resource availability check.",
+      "public voidlogSync() {…booleansync =false;try{synchronized(this) {try{ …// swap buffersassert!journals.isEmpty() :\"no editlog streams\";(Although the variable “journals” is not empty, its validity is not checked.)",
+      "",
+      "for(JournalAndStream jas :journals) {if(!jas.isActive())continue;",
+      "try{jas.getCurrentStream().setReadyToFlush();candidateJournals.add(jas);(candidateJournals will be added here, if current jas.isActive() is true)}catch(IOException ie)LOG.error(\"Unable to get ready to flush.\", ie);badJournals.add(jas);}",
+      "}}finally{// Prevent RuntimeException from blocking other log edit writedoneWithAutoSyncScheduling();}}",
+      "// do the synclongstart =now();for(JournalAndStream jas : candidateJournals) {if(!jas.isActive())continue;try{jas.getCurrentStream().flush();}catch(IOException ie) {",
+      "LOG.error(\"Unable to sync edit log.\", ie);//// remember the streams that encountered an error.//badJournals.add(jas);}}longelapsed =now() - start;disableAndReportErrorOnJournals(badJournals);if(metrics!=null) {// Metrics non-null only when used inside name nodemetrics.addSync(elapsed);}",
+      "}finally{// Prevent RuntimeException from blocking other log edit syncsynchronized(this) {if(sync) {try{-if(badJournals.size() >=journals.size()) {",
+      "+if (badJournals.size() >= journals.size() ||",
+      "+candidateJournals.isEmpty()) {finalString msg =\"Could not sync enough journals to persistent storage. \"+\"Unsynced transactions: \"+ (txid-synctxid);LOG.fatal(msg,newException());terminate(1, msg);}}finally{synctxid= syncStart;// NB: do that if finally block because even if #terminate(2) called above, we must unlock the waiting threads:isSyncRunning=false;}}this.notifyAll();}}}",
+      "The patch adds one condition check in logSync(). When the journal is invalid, just make it FATAL and exit. This at least avoids data loss."
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "NameNode process runs out of File Descriptors (FD), which fails to generate new valid streams for the new editlog, and leads to the IOException in NN."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The patch adds one condition check in logSync(). When the journal is invalid, just make it FATAL and exit. This at least avoids data loss.To make the error expose earlier.",
+      "logSync() is in FSEditLog.java, and this function is not on the call stack.",
+      "The patch is something like making the problem even worse. It upgrades the effect of the error by making current operation FATAL and exit.",
+      "After the fix, the IOExceptionmay still happenin the same situation. Because in function startLogSegment(), logSync() comes after “if(countActiveJournals() == 0) throw IOException”. However, it will lead to FATAL and exit, when logSync() is called in the next endCurrentLogSegment()."
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "One node. The fix is in NameNode."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "The main thread in Secondary NameNode is simple and mainly calls one method, i.e., doWork().",
+      "doWork() will call doCheckpoint(), and doCheckpoint() calls namenode.rollEditLog().",
+      "When doWork() catches the IOException, it will do nothing.",
+      "",
+      "public voiddoWork() {…while(shouldRun) {…try{…",
+      "if(shouldCheckpointBasedOnCount() ||now >=lastCheckpointTime+1000*checkpointPeriod) {doCheckpoint();lastCheckpointTime= now;}}catch(IOException e){LOG.error(\"Exception in doCheckpoint\", e);e.printStackTrace();}catch(Throwable e) {LOG.fatal(\"Throwable Exception in doCheckpoint\", e);e.printStackTrace();terminate(1);}}}",
+      "",
+      "booleandoCheckpoint()throwsIOException{checkpointImage.ensureCurrentDirExists();NNStorage dstStorage =checkpointImage.getStorage();// Tell the namenode to start logging transactions in a new edit file// Returns a token that would be used to upload the merged image.CheckpointSignature sig =namenode.rollEditLog();…returnloadImage;}"
+    ]
+  }
+}

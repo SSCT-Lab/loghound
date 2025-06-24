@@ -1,0 +1,140 @@
+{
+  "p": [
+    "HBase-4124"
+  ],
+  "ZK restarted while a region is being assigned, new active HM re-assigns it but the RS warns 'already online on this server'.": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "HMasterassigns region toRegionServer ZooKeeper"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "While HMaster101 is assigning region to RegionServer105(RS105), ZK restars because of exception:",
+        "HMaster log: (HMaster101, the old active HMaster)",
+        "HMaster101 is assigning region ffe0f4ab26eaa1796d2f99565ff24012(call it 4012 for short) to RegionServer 158-1-91-105,20020,1311231874887 (RS105)",
+        "2011-07-21 07:05:44,712 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:20000-0x1314ac5addb003e Async create of unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 with OFFLINE state",
+        "2011-07-21 07:05:46,661 DEBUG org.apache.hadoop.hbase.master.AssignmentManager$CreateUnassignedAsyncCallback: rs=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=OFFLINE, ts=1311231944712,server=158-1-91-105,20020,1311231874887",
+        "2011-07-21 07:05:46,837 DEBUG org.apache.hadoop.hbase.master.AssignmentManager$ExistsUnassignedAsyncCallback: rs=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=OFFLINE, ts=1311231944712",
+        "...",
+        "2011-07-21 07:05:55,734 INFO org.apache.zookeeper.ClientCnxn: Unable to read additional data from server sessionid 0x1314ac5addb003f, likely server has closed socket, closing socket connection and attempting reconnect",
+        "2011-07-21 07:05:55,835FATALorg.apache.hadoop.hbase.master.HMaster: Error deleting OPENED node in ZK for transition ZK node (2c5d23581fc848c89e5be0555086cf30)",
+        "org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /hbase/unassigned/2c5d23581fc848c89e5be0555086cf30",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:90)",
+        "at org.apache.zookeeper.KeeperException.create(KeeperException.java:42)",
+        "at org.apache.zookeeper.ZooKeeper.delete(ZooKeeper.java:738)",
+        "at org.apache.hadoop.hbase.zookeeper.ZKUtil.deleteNode(ZKUtil.java:962)",
+        "...",
+        "2011-07-21 07:07:00,902 INFO org.apache.hadoop.hbase.master.ServerManager: Registering server=158-1-91-105,20020,1311231874887, regionCount=971, userLoad=true",
+        "2011-07-21 07:07:01,569 INFO org.apache.hadoop.hbase.master.ServerManager: Registering server=158-1-91-101,20020,1311231878544, regionCount=951, userLoad=true",
+        "2011-07-21 07:07:36,903 INFO org.apache.hadoop.hbase.master.ServerManager: Registering server=158-1-91-103,20020,1311232056655, regionCount=0, userLoad=false",
+        "...",
+        "2011-07-21 07:08:03,239 INFO org.apache.hadoop.hbase.master.metrics.MasterMetrics: Initialized",
+        "2011-07-21 07:08:03,288 INFO org.apache.hadoop.hbase.master.ActiveMasterManager:Another master is the active master, 158-1-91-103:20000; waiting to become the next active master",
+        "The FATAL error makes the current HMaster101 abort. When ZK restarts, HMaster103 is elected as the new active HMaster.",
+        "HMaster log: (HMaster103, the new active HMaster)",
+        "Thu Jul 21 07:04:45 UTC 2011 Starting master on 158-1-91-103",
+        "ulimit -n 640000",
+        "2011-07-21 07:04:45,482 INFO org.apache.hadoop.hbase.ipc.HBaseRpcMetrics: Initializing RPC Metrics with hostName=HMaster, port=20000",
+        "...",
+        "When the new HMaster initializes, it will process failover. It will restore state from ZK, i.e., process all regions that are in transition up in zookeeper.",
+        "2011-07-21 07:15:13,719 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Creating (or updating) unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 with OFFLINE state",
+        "HMaster103 is processing region4012’s state in ZK(M_ZK_REGION_OFFLINE)",
+        "2011-07-21 07:30:26,526 INFO org.apache.hadoop.hbase.master.AssignmentManager:Processing regiontest1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.in state M_ZK_REGION_OFFLINE",
+        "Since the state is M_ZK_REGION_OFFLINE, the region is offline, it will be inserted into RIT(RegionInTransition) and handled like closed. Hence, the thread ClosedRegionHandler is created to handle it.",
+        "2011-07-21 07:30:26,562 DEBUG org.apache.hadoop.hbase.master.handler.ClosedRegionHandler: HandlingCLOSEDevent for ffe0f4ab26eaa1796d2f99565ff24012",
+        "ClosedRegionHandler will offline this region, and reassign it.",
+        "2011-07-21 07:30:26,562 DEBUG org.apache.hadoop.hbase.master.AssignmentManager:Forcing OFFLINE; was=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=OFFLINE, ts=1311232513720",
+        "2011-07-21 07:30:26,562 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Creating (or updating) unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 with OFFLINE state",
+        "2011-07-21 07:30:26,577 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: No previous transition plan was found (or we are ignoring an existing plan) for test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. sogenerated a random one; hri=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012., src=, dest=158-1-91-105,20020,1311231874887; 3 (online=3, exclude=null) available servers",
+        "A random region server RS105 is chosen to assign region4012, but the assignment fails due to timeout.",
+        "2011-07-21 07:30:26,577 DEBUG org.apache.hadoop.hbase.master.AssignmentManager:Assigning regiontest1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.to 158-1-91-105,20020,1311231874887",
+        "2011-07-21 07:30:26,603 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=M_ZK_REGION_OFFLINE, server=158-1-91-103:20000, region=ffe0f4ab26eaa1796d2f99565ff24012",
+        "This timeout is detected by the TimeoutMonitor thread, since the region state has been PENDING_OPEN for too long. This suggests that RS105 fails to open the region, so there is no state update. TimeoutMonitor will reassign region4012.",
+        "2011-07-21 07:42:08,737 INFO org.apache.hadoop.hbase.master.AssignmentManager:Regions in transition timed out:test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311233942949",
+        "2011-07-21 07:42:08,737 INFO org.apache.hadoop.hbase.master.AssignmentManager:Region has been PENDING_OPEN for too long, reassigningregion=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:42:49,043 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Forcing OFFLINE; was=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311234169040",
+        "Attempt to assign for the second time: random strategy, RS105 is chosen (there are 3 RSs in total, so it is very likely to choose the same RS), still fail, the same reason as the first time.",
+        "2011-07-21 07:42:49,043 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: No previous transition plan was found (or we are ignoring an existing plan) for test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. sogenerated a random one; hri=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012., src=, dest=158-1-91-105,20020,1311231874887; 3 (online=3, exclude=null) available servers",
+        "2011-07-21 07:42:49,043 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Assigning region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. to158-1-91-105,20020,1311231874887",
+        "2011-07-21 07:46:25,809 INFO org.apache.hadoop.hbase.master.AssignmentManager: Regions in transition timed out: test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311234201519",
+        "2011-07-21 07:46:25,809 INFO org.apache.hadoop.hbase.master.AssignmentManager:Region has been PENDING_OPEN for too long, reassigningregion=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:46:31,872 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Forcing OFFLINE; was=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311234391597",
+        "Attempt to assign for the third time: random strategy, RS103 is chosen, succeed.",
+        "2011-07-21 07:46:31,874 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: No previous transition plan was found (or we are ignoring an existing plan) for test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. so generated a random one; hri=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012., src=, dest=158-1-91-103,20020,1311232056655; 3 (online=3, exclude=null) available servers",
+        "2011-07-21 07:46:31,874 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Assigning region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. to158-1-91-103,20020,1311232056655",
+        "2011-07-21 07:46:32,061 DEBUG org.apache.hadoop.hbase.master.AssignmentManager: Handling transition=RS_ZK_REGION_OPENED,server=158-1-91-103,20020,1311232056655, region=ffe0f4ab26eaa1796d2f99565ff24012",
+        "2011-07-21 07:46:32,493 DEBUG org.apache.hadoop.hbase.master.handler.OpenedRegionHandler: Handling OPENED event for ffe0f4ab26eaa1796d2f99565ff24012; deleting unassigned node",
+        "2011-07-21 07:46:32,493 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Deleting existing unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 that is in expected state RS_ZK_REGION_OPENED",
+        "2011-07-21 07:46:32,693 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Successfully deleted unassigned node for region ffe0f4ab26eaa1796d2f99565ff24012 in expected state RS_ZK_REGION_OPENED",
+        "2011-07-21 07:46:32,717 DEBUG org.apache.hadoop.hbase.master.handler.OpenedRegionHandler: Opened region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. on 158-1-91-103,20020,1311232056655",
+        "Region Server log: (RS105: before ZK restarts, the old master HMaster101 assigns region4012 to RS105; the new master HMaster103 assigns region4012 twice)",
+        "This assignment request is from the old master HMaster101.",
+        "2011-07-21 07:05:48,091 INFO org.apache.hadoop.hbase.regionserver.HRegionServer:Received request to open region: test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:08:44,043 DEBUG org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler: Processing open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:08:44,043 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:20020-0x2314ac6763f0027 Attempting to transition node ffe0f4ab26eaa1796d2f99565ff24012 from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING",
+        "2011-07-21 07:08:44,106 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:20020-0x2314ac6763f0027 Successfully transitioned node ffe0f4ab26eaa1796d2f99565ff24012 from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING",
+        "2011-07-21 07:08:44,106 DEBUG org.apache.hadoop.hbase.regionserver.HRegion: Opening region: REGION => {NAME => 'test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.', STARTKEY => '282139', ENDKEY => '282142', ENCODED => ffe0f4ab26eaa1796d2f99565ff24012, TABLE => {{NAME => 'test1', FAMILIES => [{NAME => 'value', BLOOMFILTER => 'NONE', REPLICATION_SCOPE => '0', VERSIONS => '3', COMPRESSION => 'GZ', TTL => '2592000', BLOCKSIZE => '65536', IN_MEMORY => 'false', BLOCKCACHE => 'true'}]}}",
+        "2011-07-21 07:08:44,106 DEBUG org.apache.hadoop.hbase.regionserver.HRegion: Instantiated test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:08:44,144 INFO org.apache.hadoop.hbase.regionserver.HRegion: Onlined test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.; next sequenceid=1",
+        "2011-07-21 07:08:44,144 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:20020-0x2314ac6763f0027 Attempting to transition node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENING",
+        "2011-07-21 07:08:44,202 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:20020-0x2314ac6763f0027 Successfully transitioned node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENING",
+        "2011-07-21 07:08:44,232 INFO org.apache.hadoop.hbase.catalog.MetaEditor: Updated row test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. in region .META.,,1 with server=158-1-91-105:20020, startcode=1311231874887",
+        "2011-07-21 07:08:44,232 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:20020-0x2314ac6763f0027 Attempting to transition node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENED",
+        "2011-07-21 07:08:44,291 DEBUG org.apache.hadoop.hbase.zookeeper.ZKAssign: regionserver:20020-0x2314ac6763f0027 Successfully transitioned node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENED",
+        "2011-07-21 07:08:44,291 DEBUG org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler:Openedtest1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. It shows that RS105 open the region4012 successfully.",
+        "This assignment request is from the new master HMaster103(first attempt). RS105 finds that region4012 is already online on this server.",
+        "2011-07-21 07:30:26,579 INFO org.apache.hadoop.hbase.regionserver.HRegionServer:Received request to open region: test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:30:26,579 DEBUG org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler: Processing open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:30:26,579WARNorg.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler: Attempted open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.but already online on this serverThis suggests that the assignment from HM101 is successful in RS105 (since region4012 is in RS105’s onlineRegion list), although the state in zk for this assignment is offline.",
+        "This assignment request is from the new master HMaster103(second attempt). still fail",
+        "2011-07-21 07:42:49,046 INFO org.apache.hadoop.hbase.regionserver.HRegionServer:Received request to open region: test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:42:49,046 DEBUG org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler: Processing open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.",
+        "2011-07-21 07:42:49,046WARNorg.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler: Attempted open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.but already online on this server"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Referring to (1).",
+      "When RS receives the assignment request, its OpenRegionHandler will call function process():",
+      "Since the region is already online, RS just returns. The second assignment from the new master also fails due to the same reason.",
+      ""
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "If the RS discovers that the region to be opened on it is already online, it will just return. Then HMaster cannot receive the message until the region state timeout detected by the TimeoutMonitor. If the region continues to assign on this RS, the assignment will always fail.",
+      "Although the region4012 is open on RS105 (the assignment from the old master), the znode state for this region when failover is M_ZK_REGION_OFFLINE. It shows that RS105 fails to update the znode state during the assignment (the reason is not clear).",
+      "Besides, the old and new master do not know that region4012 is open on RS105, and this <region, server> mapping is not in the meta table. And any access to region4012 will be directed to RS103(the third assignment form the new master).",
+      "The region4012 on RS105 is redundant."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "If RS finds that the region to be opened on it is already online, close the region so that the following attempt to assign this region could be successful.",
+      "•src/main/java/org/apache/hadoop/hbase/regionserver/handler/OpenRegionHandler.java",
+      "",
+      "",
+      "•src/main/java/org/apache/hadoop/hbase/master/AssignmentManager.java",
+      "This function is called by HMaster when processing the failover: recovering the existing regions in transition.",
+      "If the region is already in transition, we will not reassign it elsewhere. So if we find that znode is updated by a live server, we should skip this region and just add it into RIT.",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "HMaster and HRegionServer"
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "",
+      ""
+    ]
+  }
+}

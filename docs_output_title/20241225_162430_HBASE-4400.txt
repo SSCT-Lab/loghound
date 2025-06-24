@@ -1,0 +1,77 @@
+{
+  "p": [
+    "",
+    "HBase-4400"
+  ],
+  ".META. getting stuck if RS hosting it is dead and znode state is in RS_ZK_REGION_OPENED": {},
+  "": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "RS2 goes down while it is processing the assignment for META region",
+        "HMaster recovers the META region which was on RS2 from ZK"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "“Start 2 RegionServers. The META is being hosted by RS2 but while processing it goes down.",
+        "Now restart the master and RS1. Master gets the RS name from the znode in RS_ZK_REGION_OPENED. But as RS2 is not online still the master is not able to process the META at all.”",
+        "The following logs are from HMaster, after HMaster restarts:",
+        "",
+        "log-1 and log-3 show the assignment for ROOT log-2 shows the assignment for META",
+        "After the HMaster prints this ERROR, the HMaster will hang due to the META region getting stuck. As a result, the system will also hang."
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "(2.1) When HMaster restarts, during initialization, it will call assignRootAndMeta() to make sure the regions ROOT and META are assigned before recovering the other regions.",
+      "",
+      "",
+      "",
+      "When finish the assignment of ROOT, the following log is printed in log-1.",
+      "2011-09-14 16:43:51,968 INFO org.apache.hadoop.hbase.master.HMaster:-ROOT-assigned=1, rit=false,location=linux76:60020",
+      "(2.2) Then functionprocessRegionInTransitionAndBlockUntilAssigned()is called to process the assignment of META region.",
+      "",
+      "Before fixing, the return value ofprocessRegionInTransition() is true. Functionwait() will make the current execution blocked, thenassignRootAndMeta()will be blocked.",
+      "wait()：Causes the current thread to wait until another thread invokes thenotify()method or thenotifyAll()method for this object.",
+      "",
+      "Then function processRegionsInTransition() is called.",
+      "The state got from ZK for this region is RS_ZK_REGION_OPENED.",
+      "",
+      "",
+      "(2.3) Although the TimeoutMonitor discovers that the META region state has been OPEN for too long, it cannot make it get rid of being blocked.",
+      "2011-09-14 16:46:20,003 INFO org.apache.hadoop.hbase.master.AssignmentManager: Regions in transition timed out: .META.,,1.1028785192 state=OPEN, ts=0",
+      "2011-09-14 16:46:20,004ERRORorg.apache.hadoop.hbase.master.AssignmentManager: Region has been OPEN for too long, we don't know where region was opened so can't do anything",
+      "Function chore() is the main logic in TimeoutMonitor:",
+      "",
+      "Since in HMaster, the META region state is OPEN, chore() will do nothing with it (neither will it be added into unassigns nor assigns)"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "When recovering META region during new HMaster’s initialization, if the META region state got from ZK is RS_ZK_REGION_OPENED, the thread which is processing META region will be blocked within functionprocessRegionInTransitionAndBlockUntilAssigned()due towait(), and no notify() or notifyAll() will be executed to wake up it.",
+      "Therefore, HMaster will hang and the whole system will hang."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "The patch refers to (2.2) on page 4. Fixing the root cause.",
+      "In function processRegionsInTransition(), modify the logic for “caseRS_ZK_REGION_OPENED” when dealing with the META region: if the META region was on a dead server, then it will be forced to offline by calling functionforceOffline().",
+      "",
+      "",
+      "",
+      "Finally, function forceOffline() will call assign() to reassign the META region, when the reassign succeeds, HMaster will notified by ZK and call function regionOnline(), which will call “this.regionsInTransition.notifyAll()” to wake up the blocked thread.",
+      ""
+    ]
+  },
+  "(5) How many nodes are involved in the patch": {
+    "p": [
+      "One node: HMaster.",
+      "The patch is in function processRegionsInTransition(). No callstack in the log.",
+      "",
+      "",
+      ""
+    ]
+  }
+}

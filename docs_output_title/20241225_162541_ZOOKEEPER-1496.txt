@@ -1,0 +1,125 @@
+{
+  "p": [
+    "ZooKeeper-1496"
+  ],
+  "Ephemeral node not getting cleared even after client has exited": {},
+  "(1) Log information": {
+    "(1.1) Roles in this case": {
+      "p": [
+        "zkClientzkServer-91 -> Leader zkServer-55 -> Follower zkServer-102 -> Follower"
+      ]
+    },
+    "(1.2) Symptoms": {
+      "p": [
+        "Environment:",
+        "“Hadoop setup. We were using Namenode HA with bookkeeper as shared storage and auto failover enabled. NN102 was active and NN55 was standby. FailoverController at 102 got shut down due to ZK connection error. The lock-ActiveStandbyElectorLockcreated (ephemeral node) by this failovercontroller is not cleared from ZK”.",
+        "Background: Hadoop HA uses Zookeeper to coordinate and share states. Name node HA uses an active/standby mode so that there is only one active NN at any given time. To compete for the active NN among multiple hosts, an ActiveStandbyElector is designed to integrate with zookeeper to achieve this goal. ActiveStandbyElector is more like a zookeeper handler working between zookeeper and the controller such as ZKFailoverControllerc(ZKFC).",
+        "The main idea is to create an ephemeral node\"ActiveStandbyElectorLock\"and whoever creates this node successfully becomes active. Since this node is ephemeral, the current active one could lose this node if the session expires or connection is lost so that another node has an opportunity to create the same node and become active.",
+        "Based on the environment and background above,the symptom should be: in Hadoop cluster, the active NN 102 does not work, and the standby NN 55 cannot become active (due to the remaining ephemeral node), so the HDFS is not working.",
+        "Thezookeeper logs show",
+        "2015-02-24 18:01:05,616 INFO org.apache.zookeeper.server.PrepRequestProcessor: Got user-level KeeperException when processing sessionid:0x34bb91dede303c9 type:create cxid:0x1 zxid:0xe00002ce3 txntype:-1 reqpath:n/a Error Path:/hadoop-ha/mynameservice/ActiveStandbyElectorLock Error:KeeperErrorCode = NodeExists for /hadoop-ha/mynameservice/ActiveStandbyElectorLock",
+        "",
+        "Environment details:",
+        "ZK-91 -> Leader ZK-55 -> Follower ZK-102 -> Follower",
+        "ZKClient session timeout -> 5seconds",
+        "",
+        "When the user connects to the zk server, and checks ActiveStandbyElectorLock, the result is:",
+        "[zk: xx.xx.xx.55:2182(CONNECTED) 0] get /hadoop-ha/hacluster/ActiveStandbyElectorLock",
+        "haclusternn2HOSt-xx-xx-xx-102 ï¿½ï¿½",
+        "cZxid =0x200000075",
+        "ctime = Tue Jun 26 13:10:19 IST 2012",
+        "mZxid = 0x200000075",
+        "mtime = Tue Jun 26 13:10:19 IST 2012",
+        "pZxid = 0x200000075",
+        "cversion = 0",
+        "dataVersion = 0",
+        "aclVersion = 0",
+        "ephemeralOwner =0x1382791d4e50004",
+        "dataLength = 42",
+        "numChildren = 0",
+        "[zk: xx.xx.xx.55:2182(CONNECTED) 1]",
+        "The result shows that the ephemeral node ActiveStandbyElectorLock exists, and it belongs to session0x1382791d4e50004. The transaction id for creating this ephemeral node iscZxid =0x200000075"
+      ]
+    }
+  },
+  "(2) How to figure out the root cause based on logs": {
+    "p": [
+      "Grepped logs at ZK-91 (leader) for session \"0x1382791d4e50004\".",
+      "(2.1) zkClient sends connection request to zk-102(Follower). When zk-102 receives the connection request (createSession), it will forward this request to the leader.",
+      "The following log shows thecreateSessiontransaction id is0x200000070, and zk-91(Leader) receives the connection request and after successful proposal, it sends committing request to the Follower. But in Leader side the transaction is still in progress, as the request has not reached the FinalRequestProcessor.",
+      "2012-06-26 13:10:12,566 [myid:3] - DEBUG [ProcessThread(sid:3 cport:-1)::CommitProcessor@171] - Processing request:: sessionid:0x1382791d4e50004 type:createSessioncxid:0x0 zxid:0x200000070txntype:-10 reqpath:n/a",
+      "2012-06-26 13:10:13,001 [myid:3] - DEBUG [ProcessThread(sid:3 cport:-1)::Leader@716] - Proposing:: sessionid:0x1382791d4e50004 type:createSession cxid:0x0 zxid:0x200000070 txntype:-10 reqpath:n/a",
+      "2012-06-26 13:10:13,202 [myid:3] - DEBUG [LearnerHandler-/xx.xx.xx.102:13846:CommitProcessor@161] - Committing request:: sessionid:0x1382791d4e50004 type:createSessioncxid:0x0 zxid:0x200000070txntype:-10 reqpath:n/a",
+      "When thiscreateSessionis processed in Leader’s PrepRequestProcessor, this new created session will be added into sessionTracker.",
+      "",
+      "(2.2) The Leader hasn’t seen any pings from 0x1382791d4e50004 and will expire the session.",
+      "At the same time, zkClient sends “create” request, which is then received by the leader (transactionid0x200000072). But the KeeperException happens with this transaction due to “Session expired”.",
+      "2012-06-26 13:10:18,653 [myid:3] - INFO [SessionTracker:ZooKeeperServer@325] -Expiring session0x1382791d4e50004, timeout of 5000ms exceeded",
+      "2012-06-26 13:10:18,803 [myid:3] - INFO [ProcessThread(sid:3 cport:-1)::PrepRequestProcessor@627] - Got user-levelKeeperExceptionwhen processing sessionid:0x1382791d4e50004 type:createcxid:0x1 zxid:0x200000072txntype:-1 reqpath:/hadoop-ha/hacluster/ActiveStandbyElectorLock Error Path:null Error:KeeperErrorCode = Session expired",
+      "In leader, the SessionTracker is implemented by class SessionTrackerImpl, and it is a thread running separately in leader. This SessionTracker will check it the session times out. The main logic is in SessionTrackerImpl.run(), and it removes the SessionImpl corresponding to the 0x1382791d4e50004 before raising the expiry request.",
+      "",
+      "Then expire() will submit a “closeSession” request.",
+      "At this time, zkClient sends “create” request. Then this createSession is processed in Leader’s PrepRequestProcessor:",
+      "caseOpCode.create:",
+      "zks.sessionTracker.checkSession(request.sessionId, request.getOwner());",
+      "",
+      "Since the session.isClosing is already set true by expire(), checkSession() will throw the SessionExpiredException.",
+      "(2.3) Then in leader,closeSessionis processed by PrepRequestProcessor.",
+      "2012-06-26 13:10:18,834 [myid:3] - INFO [ProcessThread(sid:3 cport:-1)::PrepRequestProcessor@476] -Processed session terminationfor sessionid: 0x1382791d4e50004",
+      "2012-06-26 13:10:18,834 [myid:3] - DEBUG [ProcessThread(sid:3 cport:-1)::CommitProcessor@171] - Processing request:: sessionid:0x1382791d4e50004 type:closeSessioncxid:0x0 zxid:0x200000074txntype:-11 reqpath:n/a",
+      "At this time, the session is set closing:",
+      "When thecloseSessionis processed in Leader’s PrepRequestProcessor.pRequest2Txn():",
+      "",
+      "SessionTrackerImp.java",
+      "",
+      "(2.4) The Following log shows,createSession(0x200000070) has reached FinalRequestProcessor.",
+      "The leader commits a proposal forcloseSession(0x200000074).closeSessionhas got enough Ack and committing, but it does not reach the FinalRequestProcessor, so the session info will still exist in the sessionTracker except the SessionImpl object.",
+      "At this time, the leader also receives a “create” request for the second time, and the transactionId is0x200000075.The leader also commits a proposal forcreate.",
+      "2012-06-26 13:10:19,886 [myid:3] - DEBUG [CommitProcessor:3:FinalRequestProcessor@88] - Processing request:: sessionid:0x1382791d4e50004 type:createSessioncxid:0x0 zxid:0x200000070txntype:-10 reqpath:n/a",
+      "",
+      "2012-06-26 13:10:19,892 [myid:3] - DEBUG [ProcessThread(sid:3 cport:-1)::Leader@716] -Proposing:: sessionid:0x1382791d4e50004 type:closeSessioncxid:0x0 zxid:0x200000074txntype:-11 reqpath:n/a",
+      "2012-06-26 13:10:19,893 [myid:3] - DEBUG [ProcessThread(sid:3 cport:-1)::CommitProcessor@171] - Processing request:: sessionid:0x1382791d4e50004 type:createcxid:0x2 zxid:0x200000075txntype:1 reqpath:n/a",
+      "2012-06-26 13:10:19,919 [myid:3] - DEBUG [LearnerHandler-/xx.xx.xx.102:13846:CommitProcessor@161] - Committing request:: sessionid:0x1382791d4e50004 type:closeSessioncxid:0x0 zxid:0x200000074txntype:-11 reqpath:n/a",
+      "",
+      "2012-06-26 13:10:19,920 [myid:3] - DEBUG [ProcessThread(sid:3 cport:-1)::Leader@716] -Proposing:: sessionid:0x1382791d4e50004 type:createcxid:0x2 zxid:0x200000075txntype:1 reqpath:n/a",
+      "2012-06-26 13:10:20,278 [myid:3] - DEBUG [LearnerHandler-/xx.xx.xx.102:13846:CommitProcessor@161] - Committing request:: sessionid:0x1382791d4e50004 type:createcxid:0x2 zxid:0x200000075txntype:1 reqpath:n/a",
+      "Since thecreateSession(0x200000070) has reached FinalRequestProcessor, processRequest() is called and the following statement is executed.",
+      "rc =zks.processTxn(hdr, txn);",
+      "which will call ZooKeeperServer.processTxn()",
+      "",
+      "Now the SessionImpl is added back to the SessionTrackerImpl, then the “create” request is seeing this new SessionImpl (in checkSession()) and will continue successfully to next processor.So the emepheral node can be created successfully.",
+      "",
+      "(2.5)closeSession(0x200000074) request has come to the FinalRequestProcessor and done the session closure.",
+      "Now thecreate(0x200000075)request also reaches in FinalRequestProcessor, which leads to the orphan ephemeral node.",
+      "2012-06-26 13:10:20,608 [myid:3] - DEBUG [CommitProcessor:3:FinalRequestProcessor@88] - Processing request:: sessionid:0x1382791d4e50004 type:closeSessioncxid:0x0 zxid:0x200000074txntype:-11 reqpath:n/a",
+      "2012-06-26 13:10:20,752 [myid:3] - DEBUG [CommitProcessor:3:FinalRequestProcessor@88] - Processing request:: sessionid:0x1382791d4e50004 type:createcxid:0x2 zxid:0x200000075txntype:1 reqpath:n/a"
+    ]
+  },
+  "(3) Root Cause": {
+    "p": [
+      "There is a race condition between session expiry and FinalRequestProcessor: the expiry logic is removing the SessionImpl and issuing thecloseSessionrequest, other side FinalRequestProcessor is creating new SessionImpl into the SessionTracker for thecreateSessionrequest.",
+      "When the secondcreate(0x200000075) request comes in Leader’s PrepRequestProcessor, the previouscreateSession(0x200000070) reaches FinalRequestProcessor aftercloseSession(0x200000074) being processed in PrepRequestProcessor, so the SessionImpl is added back to the SessionTrackerImpl, and “isClosing=false”. As a result,createpasses the checkSession(), and creates the ephemeral node successfully."
+    ]
+  },
+  "(4) Fixing Method": {
+    "p": [
+      "In SessionTrackerImpl.run(), before expiring the session, instead of sessionsById.remove(s.sessionId), it will mark the session as closing (s.isClosing = true).",
+      "With the fix, the new SessionImpl created by FinalRequestProcessor forcreateSessionrequest will not be added into the SessionTracker, and isClosing still equals true. So the secondcreaterequest will not pass checkSession(). Consequently, the ephemeral node for the expired session will not be created.",
+      "•src/java/main/org/apache/zookeeper/server/SessionTrackerImpl.java",
+      "",
+      "",
+      "",
+      "(5) How many nodes are involved in the patch",
+      "zk servers."
+    ]
+  },
+  "(6) Code Snippets": {
+    "p": [
+      "PreRequestProcessor",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

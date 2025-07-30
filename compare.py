@@ -336,9 +336,9 @@ if __name__ == "__main__":
     # 示例使用
     ref_file_path = 'dbugset_resolve.xlsx'
     gener_file_path = r'ProcessData/methods_total_scores/total_score.json'
-    # gener_file_path_wo_path = r'ProcessData/total_scores/total_score-wo-path.json'
+    gener_file_path_wo_path = r'ProcessData/methods_total_scores/total_score_wo_path.json'
     generated_data = process_json_file(gener_file_path)
-    # generated_data_wo_path = process_json_file(gener_file_path_wo_path)
+    generated_data_wo_path = process_json_file(gener_file_path_wo_path)
     reference_data = process_excel_file(ref_file_path)
     process_ref_data(reference_data)
 
@@ -347,12 +347,26 @@ if __name__ == "__main__":
     if reference_data and generated_data:
         # 对比并输出结果
         metrics, err_res = compare_methods(generated_data, reference_data)
-        # metrics_wo_path, err_res_wo_path = compare(generated_data_wo_path, reference_data)
-        # print(metrics)
+        metrics_wo_path, err_res_wo_path = compare_methods(generated_data_wo_path, reference_data)
+        print(metrics)
         print_metrics(metrics)
         print(err_res)
 
-        # print("====================================================================")
-        # print(metrics_wo_path)
-        # print_metrics(metrics_wo_path)
-        # print(err_res_wo_path)
+        print("====================================================================")
+        print(metrics_wo_path)
+        print_metrics(metrics_wo_path)
+        print(err_res_wo_path)
+
+
+    # if reference_data and generated_data:
+    #     # 对比并输出结果
+    #     metrics, err_res = compare(generated_data, reference_data)
+    #     metrics_wo_path, err_res_wo_path = compare(generated_data_wo_path, reference_data)
+    #     print(metrics)
+    #     print_metrics(metrics)
+    #     print(err_res)
+    #
+    #     print("====================================================================")
+    #     print(metrics_wo_path)
+    #     print_metrics(metrics_wo_path)
+    #     print(err_res_wo_path)

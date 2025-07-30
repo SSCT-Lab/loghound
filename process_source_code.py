@@ -21,7 +21,7 @@ def remove_comments(code_str):
     return code_str
 
 
-def preprocess_code(code_str, language, segment_size):
+def preprocess_code(code_str, language, segment_size, remove_duplicates=True):
     """
     对源代码进行预处理，进行标记化、去除特定语言关键词、分割拼接单词、去除停用词以及Porter词干提取。
 
@@ -67,8 +67,18 @@ def preprocess_code(code_str, language, segment_size):
     tokens_no_stopwords = [token for token in split_tokens if token not in stop_words]
 
     # Step 5: Perform Porter stemming to derive the common base form
-    porter = PorterStemmer()
-    stemmed_tokens = [porter.stem(token) for token in tokens_no_stopwords]
+    # porter = PorterStemmer()
+    # stemmed_tokens = [porter.stem(token) for token in tokens_no_stopwords]
+
+    stemmed_tokens = tokens_no_stopwords
+
+    if remove_duplicates:
+        # A deduplication method that retains the original order
+        unique_tokens = []
+        for token in stemmed_tokens:
+            if token not in unique_tokens:
+                unique_tokens.append(token)
+        stemmed_tokens = unique_tokens
 
     # Split the stemmed_tokens into segments
     segmented_tokens = [stemmed_tokens[i:i + segment_size] for i in range(0, len(stemmed_tokens), segment_size)]
@@ -172,7 +182,8 @@ def analyze_project_source_code_methods(source_code_directory, language):
             # 不考虑源代码测试用例
             if 'test' in root.split(os.path.sep):
                 continue
-
+            # if file != "QuorumCnxManager.java":
+            #     continue
             if file.endswith('.' + language):
                 file_path = os.path.join(root, file)
 
@@ -189,6 +200,7 @@ def analyze_project_source_code_methods(source_code_directory, language):
 
                 # 创建项目目录
                 project_dir = os.path.join(output_base_dir, project_name)
+                # project_dir = "test\\source_code_tokens"
                 if not os.path.exists(project_dir):
                     os.makedirs(project_dir)
 
@@ -263,6 +275,8 @@ if __name__ == "__main__":
     # 指定源代码的目录路径
     src = "project_sc"
     for project in os.listdir(src):
+        # if project != "zookeeper-3.3.0":
+        #     continue
         # if project != 'hadoop-0.22.0':
         #     continue
         source_code_directory = os.path.join(src, project)

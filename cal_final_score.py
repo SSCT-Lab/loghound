@@ -30,6 +30,7 @@ def process_vsm_scores(vsm_result):
         vsm_process_result[item[0]] = vsm_score
     return vsm_process_result
 
+
 def add_scores(vsm_path, log_path, path_path, output_path):
     # 提取文件编号
     vsm_files = {extract_name(file): file for file in os.listdir(vsm_path)}
@@ -46,7 +47,7 @@ def add_scores(vsm_path, log_path, path_path, output_path):
         vsm_file = os.path.join(vsm_path, vsm_file_name)
         log_file = os.path.join(log_path, log_files[file_id]) if file_id in log_files else None
         path_file = os.path.join(path_path, path_files[file_id]) if file_id in path_files else None
-        output_file = os.path.join(output_path, f"{file_id}_total_score.txt")
+        output_file = os.path.join(output_path, f"{file_id}_total_score_wo_path.txt")
 
         # 读取每个文件的分数
         vsm_scores = process_vsm_scores(read_file_lines(vsm_file))
@@ -97,8 +98,9 @@ def add_scores(vsm_path, log_path, path_path, output_path):
         })
 
         print(f"Processed and saved: {output_file}")
-    with open(output_path + "\\" + "total_score.json", 'w', encoding='utf-8') as f:
+    with open(output_path + "\\" + "total_score_wo_path.json", 'w', encoding='utf-8') as f:
         json.dump(final_scores, f, indent=2)
+
 
 def write_file_lines(file_path, lines):
     """
@@ -116,6 +118,6 @@ if __name__ == "__main__":
     vsm_path = "ProcessData/vsm_result"
     log_path = "ProcessData/st_methods_result"
     path_path = "ProcessData/path_methods_results"
-    output_path = "ProcessData/methods_total_scores_wo_path"
+    output_path = "ProcessData/methods_total_scores"
 
     add_scores(vsm_path, log_path, path_path, output_path)

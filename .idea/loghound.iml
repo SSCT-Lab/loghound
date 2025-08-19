@@ -2,6 +2,8 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+
+      <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/tgt_sys/apache-cassandra-1.0.0-rc2-src/bin" />
       <excludeFolder url="file://$MODULE_DIR$/tgt_sys/apache-cassandra-1.0.0-rc2-src/build" />
       <excludeFolder url="file://$MODULE_DIR$/tgt_sys/apache-cassandra-1.0.0-rc2-src/conf" />
@@ -53,7 +55,7 @@
       <excludeFolder url="file://$MODULE_DIR$/tgt_sys/zookeeper-3.5.0-alpha" />
       <excludeFolder url="file://$MODULE_DIR$/tgt_sys/zookeeper-release-3.3.0" />
     </content>
-    <orderEntry type="jdk" jdkName="/opt/homebrew/Caskroom/miniconda/base" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

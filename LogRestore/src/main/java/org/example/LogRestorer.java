@@ -18,8 +18,13 @@ public class LogRestorer {
         //mvn clean install -DskipTests #编译项目
         //mvn dependency:copy-dependencies -DoutputDirectory=/Users/linzheyuan/LogRestore/libs
 
+
+ //       String base = "tgt_sys\\hadoop-0.23.0\\hadoop-hdfs-project\\hadoop-hdfs\\target\\classes";
+  //      String libs = "LogRestore\\libs";
+
         String base = "/Users/linzheyuan/loghound/LogRestore/target 2";
         String libs = "/Users/linzheyuan/loghound/LogRestore/libs 2";
+
 
         File libDir = new File(libs);
         if (!libDir.exists()) {
@@ -33,8 +38,13 @@ public class LogRestorer {
             System.err.println("❌ JAVA_HOME is not set");
             return;
         }
-//        String rtJarPath = javaHome + "/lib/rt.jar";
+      
+      //  for windows
+      //    String rtJarPath = javaHome + "\\lib\\rt.jar";
+      //  for macos
+      //  String rtJarPath = javaHome + "/lib/rt.jar";
         String rtJarPath = "/Users/linzheyuan/loghound/LogRestore/jdk1.6.0_45/jre/lib";
+
         File rtJar = new File(rtJarPath);
         if (!rtJar.exists()) {
             System.err.println("❌ rt.jar not found at: " + rtJarPath);
@@ -42,9 +52,14 @@ public class LogRestorer {
         }
 
         StringBuilder cp = new StringBuilder();
-        cp.append(base).append(":").append(rtJarPath);
-        for (File jar : Objects.requireNonNull(libDir.listFiles((d, n) -> n.endsWith(".jar")))) {
-            cp.append(":").append(jar.getAbsolutePath());
+        cp.append(base).append(";").append(rtJarPath);
+        File[] jars = libDir.listFiles();
+        if (jars != null) {
+            for (File jar : jars) {
+                if (jar.getName().endsWith(".jar")) {
+                    cp.append(";").append(jar.getAbsolutePath());
+                }
+            }
         }
 
         Options.v().set_soot_classpath(cp.toString());
@@ -59,7 +74,7 @@ public class LogRestorer {
         PackManager.v().getPack("wjtp").add(new Transform("wjtp.logrestore", new SceneTransformer() {
             @Override
             protected void internalTransform(String phaseName, Map<String, String> options) {
-                List<SootClass> appClasses = new ArrayList<>(Scene.v().getApplicationClasses());
+                List<SootClass> appClasses = new ArrayList(Scene.v().getApplicationClasses());
                 for (SootClass sc : appClasses) {
                     for (SootMethod method : sc.getMethods()) {
                         if (!method.isConcrete()) continue;
@@ -73,7 +88,7 @@ public class LogRestorer {
 
                         ExceptionalUnitGraph graph = new ExceptionalUnitGraph(body);
                         SimpleLocalDefs defs = new SimpleLocalDefs(graph);
-                        List<Unit> unitList = new ArrayList<>(body.getUnits());
+                        List<Unit> unitList = new ArrayList(body.getUnits());
 
                         for (Unit unit : unitList) {
                             Stmt stmt = (Stmt) unit;
@@ -85,12 +100,12 @@ public class LogRestorer {
 
                                 Value arg = invoke.getArg(0);
                                 if (arg instanceof Local) {
-                                    Set<String> fragments = new LinkedHashSet<>();
-                                    resolveAllDefs((Local) arg, stmt, defs, fragments, new HashSet<>());
+                                    Set<String> fragments = new LinkedHashSet();
+                                    resolveAllDefs((Local) arg, stmt, defs, fragments, new HashSet());
 
                                     if (!fragments.isEmpty()) {
                                         System.out.println("Method: " + method.getSignature());
-                                        System.out.println("    Log Template: " + String.join("", fragments));
+                                        System.out.println("    Log Template: " +  fragments);
                                         System.out.println("-----");
                                     }
                                 } else if (arg instanceof StringConstant) {

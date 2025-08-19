@@ -1,4 +1,5 @@
 import json
+import os.path
 
 import pandas as pd
 import re
@@ -91,7 +92,7 @@ def classify_by_system(titles):
     systems = {
         'Cassandra': [],
         'HDFS': [],
-        'MAPREDUCE': [],
+        'MapReduce': [],
         'ZooKeeper': [],
         'HBase': [],
     }
@@ -101,8 +102,8 @@ def classify_by_system(titles):
             systems['Cassandra'].append(title)
         elif title.startswith('HDFS'):
             systems['HDFS'].append(title)
-        elif title.startswith('MAPREDUCE') or title.startswith('MAPREDUCE'):
-            systems['MAPREDUCE'].append(title)
+        elif title.startswith('MapReduce') or title.startswith('MapReduce'):
+            systems['MapReduce'].append(title)
         elif title.startswith('ZOOKEEPER') or title.startswith('ZooKeeper'):
             systems['ZooKeeper'].append(title)
         elif title.startswith('HBASE') or title.startswith('HBase'):
@@ -133,7 +134,7 @@ def compare(generated_data, reference_data):
     system_results = {
         'Cassandra': {'top1': 0, 'top3': 0, "top5": 0, 'total': 33, 'titles': 0},
         'HDFS': {'top1': 0, 'top3': 0, "top5": 0, 'total': 15, 'titles': 0},
-        'MAPREDUCE': {'top1': 0, 'top3': 0, "top5": 0, 'total': 26, 'titles': 0},
+        'MapReduce': {'top1': 0, 'top3': 0, "top5": 0, 'total': 26, 'titles': 0},
         'ZooKeeper': {'top1': 0, 'top3': 0, "top5": 0, 'total': 8, 'titles': 0},
         'HBase': {'top1': 0, 'top3': 0, "top5": 0, 'total': 24, 'titles': 0},
         'Overall': {'top1': 0, 'top3': 0, "top5": 0, 'total': 106, 'titles': 0}
@@ -151,6 +152,7 @@ def compare(generated_data, reference_data):
             # 获取对应title的生成数据和参考数据，如果不存在则为空集
             gen_methods = generated_dict.get(title, set())
             ref_methods = reference_dict.get(title, set())
+
 
             correct_1 = 0
             correct_3 = 0
@@ -224,7 +226,7 @@ def compare_methods(generated_data, reference_data):
     system_results = {
         'Cassandra': {'top1': 0, 'top3': 0, "top5": 0, 'total': 33, 'titles': 0},
         'HDFS': {'top1': 0, 'top3': 0, "top5": 0, 'total': 15, 'titles': 0},
-        'MAPREDUCE': {'top1': 0, 'top3': 0, "top5": 0, 'total': 26, 'titles': 0},
+        'MapReduce': {'top1': 0, 'top3': 0, "top5": 0, 'total': 26, 'titles': 0},
         'ZooKeeper': {'top1': 0, 'top3': 0, "top5": 0, 'total': 8, 'titles': 0},
         'HBase': {'top1': 0, 'top3': 0, "top5": 0, 'total': 24, 'titles': 0},
         'Overall': {'top1': 0, 'top3': 0, "top5": 0, 'total': 106, 'titles': 0}
@@ -324,7 +326,7 @@ def print_metrics(metrics):
     print("-" * 35)
 
     # 按特定顺序输出主要系统
-    systems_order = ['Cassandra', 'HDFS', 'MAPREDUCE', 'ZooKeeper', 'HBase', 'Other', 'Overall']
+    systems_order = ['Cassandra', 'HDFS', 'MapReduce', 'ZooKeeper', 'HBase', 'Other', 'Overall']
 
     for system in systems_order:
         if system in metrics:
@@ -332,15 +334,124 @@ def print_metrics(metrics):
             print(f"{system:<12} {stats['titles']:<8} {stats['top1_match_rate']:.4f} {stats['top3_match_rate']:.4f} {stats['top5_match_rate']:.4f}")
 
 
+def calculate_contains(reference_data):
+    dir = "ProcessData/methods_total_scores"
+    ret = {}
+
+    reference_dict = {item['title']: item.get('methods', []) for item in reference_data}
+    for title, methods in reference_dict.items():
+        with open(f"{dir}/{title}_total_score.txt", "r", encoding="utf-8") as f:
+            datas = f.readlines()
+        with open(f"{dir}/{title}_total_score_wo_path.txt", "r", encoding="utf-8") as f:
+            datas_wo_path = f.readlines()
+        ret_list = ret.get(title, [])
+
+        ret_list.append(search_method_score(title, methods, datas))
+        ret_list.append(search_method_score(title, methods, datas_wo_path))
+        print(title, ret_list[0], ret_list[1])
+        ret_list.append(float(ret_list[0]) - float(ret_list[1]))
+        if ret_list[2] > 0:
+            ret[title] = ret_list
+
+    return ret
+
+
+def search_method_score(title, methods, datas):
+    for data in datas:
+        gen_method, score = data.strip().split(":")
+        for method in methods:
+            if gen_method.split("\\")[-1] == method.split("/")[-1].replace("$", "#"):
+                return score
+    return 0.0
+
+
+def test(reference_data, i):
+    dir = "call_graph"
+    ret = {
+        "Cassandra": [0, 33],
+        "HBase": [0, 17],
+        "MapReduce": [0, 26],
+        "HDFS": [0, 15],
+        "ZooKeeper": [0, 8]
+    }
+
+    reference_dict = {item['title']: item.get('methods', []) for item in reference_data}
+    for title, methods in reference_dict.items():
+        if not os.path.exists(f"{dir}/{title}-path.json"):
+            continue
+        with open(f"{dir}/{title}-path.json", "r", encoding="utf-8") as f:
+            # print(title)
+            data = json.load(f)
+
+        all_methods = extract_all_methods(data)
+
+        for method in all_methods:
+            for m in methods:
+                if method.replace("()", "").split(".")[-1] == m.split("/")[-1].replace("$", "#"):
+                    ret[title.split("-")[0]][0] += 1
+
+    return ret
+
+
+def extract_all_methods(data, methods=None):
+    """
+    递归提取JSON数据中的所有方法名
+    :param data: 要处理的数据（可以是字典、列表或其他类型）
+    :param methods: 用于收集方法的集合（默认自动创建）
+    :return: 包含所有方法名的集合
+    """
+    if methods is None:
+        methods = set()  # 使用集合避免重复
+
+    # 如果是列表，递归处理每个元素
+    if isinstance(data, list):
+        for item in data:
+            extract_all_methods(item, methods)
+
+    # 如果是字典，处理键和值
+    elif isinstance(data, dict):
+        for key, value in data.items():
+            # 键就是方法名，添加到集合中
+            methods.add(key)
+            # 递归处理值（可能包含嵌套的方法）
+            extract_all_methods(value, methods)
+
+    return methods
+
+
+
 if __name__ == "__main__":
     # 示例使用
     ref_file_path = 'dbugset_resolve.xlsx'
-    gener_file_path = r'ProcessData/methods_total_scores/total_score.json'
-    gener_file_path_wo_path = r'ProcessData/methods_total_scores/total_score_wo_path.json'
+    gener_file_path = r'ProcessData/methods_total_scores/total_score-cov.json'
+    gener_file_path_wo_path = r'ProcessData/methods_total_scores/total_score-v4.json'
     generated_data = process_json_file(gener_file_path)
     generated_data_wo_path = process_json_file(gener_file_path_wo_path)
     reference_data = process_excel_file(ref_file_path)
     process_ref_data(reference_data)
+    # for i in range(0, 11):
+    # gener_file_path = f'ProcessData/methods_total_scores/total_score.json'
+    # generated_data = process_json_file(gener_file_path)
+
+    # metrics, err_res = compare_methods(generated_data, reference_data)
+    # # print(metrics)
+    # # print(f"------------------------深度为{i}-----------------------------------")
+    # print_metrics(metrics)
+    # print(err_res)
+    # for i in range(0, 11):
+    #     ret = test(reference_data, i)
+    #
+    #     # print(ret)
+    #
+    #     cnt = 0
+    #     print(f"------------------------深度为{i}-----------------------------------")
+    #     for key, value in ret.items():
+    #         cnt += value[0]
+    #         print(f"{key}:{value[0] / value[1]}")
+    #     print(f"All: {cnt / 72}")
+    #
+    # with open("test/call_graph_valid.json", "w", encoding="utf-8") as f:
+    #     json.dump(ret, f, indent=2)
 
     # print(reference_data)
     # print(generated_data)

@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import evaluation
 
@@ -31,63 +32,70 @@ def process_vsm_scores(vsm_result):
     return vsm_process_result
 
 
-def add_scores(vsm_path, log_path, path_path, output_path):
-    # 提取文件编号
+def add_scores(alpha: float = 1.0, beta: float = 1.0, gamma: float = 1.0, kafa: float = 1.0, vsm_path=os.path.join("ProcessData", "vsm_result"), log_path=os.path.join("ProcessData", "st_methods_result"), coverage_path=os.path.join("ProcessData", "code_coverage"), path_path=os.path.join("ProcessData", "path_methods_results"), output_path=os.path.join("ProcessData", "methods_total_scores")):
     vsm_files = {extract_name(file): file for file in os.listdir(vsm_path)}
     log_files = {extract_name(file): file for file in os.listdir(log_path)}
+    coverage_files = {extract_name(file): file for file in os.listdir(coverage_path)}
     path_files = {extract_name(file): file for file in os.listdir(path_path)}
     final_scores = []
 
-    # 如果输出路径不存在，则创建
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
     for file_id, vsm_file_name in vsm_files.items():
-        # 获取对应的文件路径
+        # Get the corresponding file path
         vsm_file = os.path.join(vsm_path, vsm_file_name)
         log_file = os.path.join(log_path, log_files[file_id]) if file_id in log_files else None
+        coverage_file = os.path.join(coverage_path, coverage_files[file_id]) if file_id in coverage_files else None
         path_file = os.path.join(path_path, path_files[file_id]) if file_id in path_files else None
-        output_file = os.path.join(output_path, f"{file_id}_total_score_wo_path.txt")
+        output_file = os.path.join(output_path, f"{file_id}_total_score-v4.txt")
 
-        # 读取每个文件的分数
+        # Get the score of each file
         vsm_scores = process_vsm_scores(read_file_lines(vsm_file))
         log_scores = read_file_lines(log_file) if log_file else []
+        coverage_scores = read_file_lines(coverage_file) if coverage_file else []
         path_scores = read_file_lines(path_file) if path_file else []
 
-        # 逐行累加得分
+        # Accumulate the score line by line
         total_scores = {}
         for class_path, vsm_score in vsm_scores.items():
-            class_name = class_path.split("\\")[-1].replace(".java", "")  # 提取类名
+            class_method_name = class_path.replace("$", "\\").split("\\")[-1]
             # print(class_name)
 
-            # 初始化类路径的得分
+            # The score of the initialization method path
             if class_path not in total_scores:
                 total_scores[class_path] = 0.0
-            total_scores[class_path] += vsm_score  # 累加 VSM 分数
+            total_scores[class_path] += alpha * float(vsm_score)  # 累加 VSM 分数
 
-            # 匹配并累加 log_scores
+            # Match and accumulate log_scores
             for log_class_path, log_score in log_scores:
-                if log_class_path == class_path or log_class_path.split("\\")[-1] == class_name:
-                    total_scores[class_path] += log_score
+                if log_class_path == class_path or log_class_path.replace("$", "\\").split("\\")[-1] == class_method_name:
+                    total_scores[class_path] += beta * float(log_score)
 
-            # 匹配并累加 path_scores
-            # for path_class_path, path_score in path_scores:
-            #     path_class = path_class_path.split("\\")[-1].replace(".java", "")
-            #     print(path_class, class_name)
-            #     if path_class_path == class_path or path_class == class_name:
-            #         total_scores[class_path] += path_score
+            # Match and accumulate coverage_scores
+            for method_name, coverage_score in coverage_scores:
+                if method_name.replace("$", ".").split(".")[-1] == class_method_name:
+                    score = gamma * float(coverage_score)
+                    total_scores[class_path] += score
 
-        # 转换为最终格式 [类路径, 总得分]
+                    # Match and accumulate path_scores
+            for path_class_path, path_score in path_scores:
+                path_class = path_class_path.replace("$", "\\").split("\\")[-1]
+                if path_class_path == class_path or path_class == class_method_name:
+                    total_scores[class_path] += kafa * path_score
+
+        # Convert to the final format [Classpath, total score]
         final_score = sorted(
             [[key, value] for key, value in total_scores.items()],
-            key=lambda x: x[1],  # 按照第二项 (value) 排序
-            reverse=True  # 设置为 True 表示降序排序，False 为升序
+            key=lambda x: x[1],  # Sort by the second item (value)
+            reverse=True  # Setting it to True indicates descending sorting, while False indicates ascending sorting
         )
 
         # print(final_score)
 
-        # 写入结果
+        # Write the result
         write_file_lines(output_file, final_score)
+        print(f"Processed and saved: {output_file}")
 
         location = []
         for item in final_score[0:5]:
@@ -97,19 +105,25 @@ def add_scores(vsm_path, log_path, path_path, output_path):
             "location": location
         })
 
-        print(f"Processed and saved: {output_file}")
-    with open(output_path + "\\" + "total_score_wo_path.json", 'w', encoding='utf-8') as f:
+    total_score = os.path.join(output_path, "total_score-v4.json")
+
+    with open(total_score, 'w', encoding='utf-8') as f:
         json.dump(final_scores, f, indent=2)
+
+    logging.info("Total score calculation completed.")
+    logging.info("Total score saved to: " + total_score)
+    print(f"Processed and saved: {total_score}")
+    return total_score
 
 
 def write_file_lines(file_path, lines):
     """
-    将结果写入文件。
+    Write the result to the file.
     """
     try:
         with open(file_path, 'w', encoding='utf-8') as file:
             for line in lines:
-                file.write(f"{line}\n")
+                file.write(f"{line[0]}:{line[1]}\n")
     except Exception as e:
         print(f"Error writing to file {file_path}: {e}")
 
@@ -118,6 +132,7 @@ if __name__ == "__main__":
     vsm_path = "ProcessData/vsm_result"
     log_path = "ProcessData/st_methods_result"
     path_path = "ProcessData/path_methods_results"
+    coverage_path = "ProcessData/code_coverage"
     output_path = "ProcessData/methods_total_scores"
 
-    add_scores(vsm_path, log_path, path_path, output_path)
+    add_scores(0, 0.4, 1, 0.04, vsm_path, log_path, coverage_path, path_path, output_path)

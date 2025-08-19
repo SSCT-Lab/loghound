@@ -1,3 +1,4 @@
+.idea
 tgt_sys/apache-zookeeper-3.5.8
 tgt_sys/apache*
 tgt_sys/ha*
@@ -12,3 +13,6 @@ tgt_sys/*.tar.gz
 tgt_sys/*.tar.gz.1
 tgt_sys/coverage_out
 tgt_sys/coverage_results
+tgt_sys/apache-cassandra-1.0.0-rc2-src/
+log_variable_analysis.txt
+method_coverage_results.json

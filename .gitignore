@@ -1,2 +1,14 @@
 tgt_sys/apache-zookeeper-3.5.8
-LogRestore/libs
+tgt_sys/apache*
+tgt_sys/ha*
+tgt_sys/zookeeper*
+tgt_sys/java-se-7u75-ri
+LogRestore/libs*
+LogRestore/jdk*
+LogRestore/target*
+tgt_sys/hbase*
+tgt_sys/codeql*
+tgt_sys/*.tar.gz
+tgt_sys/*.tar.gz.1
+tgt_sys/coverage_out
+tgt_sys/coverage_results

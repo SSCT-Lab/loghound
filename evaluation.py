@@ -4,11 +4,11 @@ import json
 
 def normalize_vsm_scores(vsm_scores):
     """
-    归一化 VSMScore 到 0 到 1 之间.
+    Normalize the VSMScore to between 0 and 1.
     Args:
-        vsm_scores (dict): 文件路径 -> VSMScore 映射.
+        vsm_scores (dict): Mapping file path -> VSMScore.
     Returns:
-        dict: 归一化后的 VSMScore 映射.
+        dict: The normalized VSMScore's mapping.
     """
     min_score = min(vsm_scores.values())
     max_score = max(vsm_scores.values())
@@ -16,7 +16,7 @@ def normalize_vsm_scores(vsm_scores):
     if max_score == min_score:  # 避免除零
         return {file: 1.0 for file in vsm_scores}
 
-    # 归一化公式：N(x) = (x - min) / (max - min)
+    # Normalization formula: N(x) = (x - min) / (max - min)
     return {file: (score - min_score) / (max_score - min_score) for file, score in vsm_scores.items()}
 
 

@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import nltk
@@ -164,45 +165,46 @@ def extract_classes_and_methods(code_str):
 
 def analyze_project_source_code_methods(source_code_directory, language):
     """
-        遍历指定目录中的所有源代码文件，将每个方法的token单独保存到对应的txt文件中。
+        Traverse all source code files in the specified directory and save the token of each method separately to the corresponding txt file.
 
         参数：
-        source_code_directory (str): 源代码目录的路径。
-        language (str): 编程语言（如 'java'）。
+        source_code_directory (str): The path of the source code directory.
+        language (str): Programming languages (such as 'java').
     """
     segment_size = 800
-    # 创建 source_code_tokens 目录（如果不存在）
+    # Create the source_code_tokens directory (if it does not exist)
     output_base_dir = 'ProcessData/source_code_methods_tokens'
     if not os.path.exists(output_base_dir):
         os.makedirs(output_base_dir)
 
-    # 遍历目录及其子目录
+    # Get the project name
+    project_name = os.path.basename(source_code_directory)
+
+    # Create the project directory
+    project_dir = os.path.join(output_base_dir, project_name)
+    if os.path.exists(project_dir):
+        logging.info("The directory already exists. Skipping...")
+        return
+    os.makedirs(project_dir)
+
+    # Traverse the directory and its subdirectories
     for root, dirs, files in os.walk(source_code_directory):
+
         for file in files:
-            # 不考虑源代码测试用例
+            # Do not consider the source code test cases
             if 'test' in root.split(os.path.sep):
                 continue
-            # if file != "QuorumCnxManager.java":
-            #     continue
+
             if file.endswith('.' + language):
                 file_path = os.path.join(root, file)
 
-                # 相对路径
+                # relative path
                 relative_path = os.path.relpath(file_path, source_code_directory)
 
-                # 处理代码
+                # Processing Code
                 with open(file_path, 'r', encoding='utf-8', errors="replace") as f:
                     code_str = f.read()
                     classes_and_methods = extract_classes_and_methods(code_str)
-
-                # 获取项目名称
-                project_name = os.path.basename(source_code_directory)
-
-                # 创建项目目录
-                project_dir = os.path.join(output_base_dir, project_name)
-                # project_dir = "test\\source_code_tokens"
-                if not os.path.exists(project_dir):
-                    os.makedirs(project_dir)
 
                 for class_name, method_name, method_code in classes_and_methods:
                     tokens = preprocess_code(method_code, language, segment_size)
@@ -210,12 +212,12 @@ def analyze_project_source_code_methods(source_code_directory, language):
                     for j in range(len(tokens)):
                         output_file = os.path.join(project_dir, f"{class_name}#{method_name}_{j + 1}_tokens.txt")
                         with open(output_file, 'w', encoding='utf-8') as f:
-                            # 写入相对路径作为第一行
+                            # Write the relative path as the first line
                             f.write('\\'.join(relative_path.split('\\')[:-1]) + "\\" + class_name + '#' + method_name + '\n')
-                            # 写入处理后的 tokens
+                            # Write the processed tokens
                             f.write('\n'.join(tokens[j]))
-
-                        print(f"已处理并保存：{output_file}")
+                        logging.info(f"Processed and saved: {output_file}")
+                        print(f"Processed and saved: {output_file}")
 
 
 def analyze_project_source_code(source_code_directory, language):
@@ -269,6 +271,7 @@ def analyze_project_source_code(source_code_directory, language):
                         f.write('\n'.join(tokens[i]))
 
                 print(f"已处理并保存：{output_file}")
+    return output_base_dir
 
 
 if __name__ == "__main__":

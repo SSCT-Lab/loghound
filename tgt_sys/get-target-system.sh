@@ -8,6 +8,7 @@ urls=(
     "https://archive.apache.org/dist/cassandra/1.0.0/apache-cassandra-1.0.0-rc2-src.tar.gz",
     "https://archive.apache.org/dist/cassandra/1.2.0/apache-cassandra-1.2.0-src.tar.gz",
     "https://archive.apache.org/dist/cassandra/2.0.0/apache-cassandra-2.0.0-src.tar.gz",
+    "https://archive.apache.org/dist/hadoop/common/hadoop-0.21.0/hadoop-0.20.1.tar.gz"
     "https://archive.apache.org/dist/hadoop/common/hadoop-0.21.0/hadoop-0.21.0.tar.gz",
     "https://archive.apache.org/dist/hadoop/common/hadoop-0.22.0/hadoop-0.22.0.tar.gz",
     "https://archive.apache.org/dist/hadoop/common/hadoop-0.23.0/hadoop-0.23.0.tar.gz",

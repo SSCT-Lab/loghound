@@ -1,7 +1,7 @@
 import json
 import re
 import os
-from generate_call_graph import generate_call_graph
+import generate_call_graph
 # 在文件开头添加networkx导入
 import networkx as nx
 import evaluation
@@ -178,7 +178,7 @@ def build_graph_from_execution_paths(execution_paths):
                 # print(sub_path)
                 if isinstance(sub_path, dict):
                     for called_method in sub_path.keys():
-                        print(called_method)
+                        # print(called_method)
                         G.add_edge(method, called_method)
                         add_edges_from_path(sub_path)
 
@@ -201,7 +201,6 @@ def calculate_pagerank_path_score(execution_paths, vsm_result, beta=0.2):
     """
     # 构建图结构
     G = build_graph_from_execution_paths(execution_paths)
-    print("构建图结构完成")
     # 计算PageRank分数
     pagerank_scores = nx.pagerank(G, alpha=0.85)
 
@@ -241,30 +240,42 @@ def calculate_pagerank_path_methods_score(execution_paths, vsm_result, beta=0.2)
     """
     # 构建图结构
     G = build_graph_from_execution_paths(execution_paths)
-    print("构建图结构完成")
     # 计算PageRank分数
     pagerank_scores = nx.pagerank(G, alpha=0.85)
 
     # 获取所有方法名映射
     method_pagerank_map = {}
     for node in G.nodes():
-        full_name = node.split(".")[-1].replace("()", "")
-        print(full_name)
-        if full_name not in method_pagerank_map:
-            method_pagerank_map[full_name] = 0
-        method_pagerank_map[full_name] += pagerank_scores[node]
+        # full_name = node.split(".")[-1].replace("()", "")
+        # print(full_name)
+        if node not in method_pagerank_map:
+            method_pagerank_map[node] = 0
+        method_pagerank_map[node] += pagerank_scores[node]
 
     # 结合VSM分数计算最终分数
     final_scores = {}
-    for vsm_key, vsm_value in vsm_result.items():
-        vsm_method_name = vsm_key.split("$")[-1] if "$" in vsm_key else vsm_key.split("\\")[-1]
-        print("vsm_method_name：" + vsm_method_name)
-        vsm_score = float(vsm_value)
-        if method_pagerank_map.get(vsm_method_name, 0) == 0:
-            continue
-        pagerank_score = method_pagerank_map.get(vsm_method_name, 0)
+    for method_name, pagerank_score in method_pagerank_map.items():
+        # 查找对应的VSM分数，不存在则为0
+        vsm_score = 0.0
+        # 在vsm_result中查找匹配的方法
+        for vsm_key, vsm_value in vsm_result.items():
+            vsm_method_name = vsm_key.split("$")[-1] if "$" in vsm_key else vsm_key.split("\\")[-1]
+            if vsm_method_name == method_name.split(".")[-1].replace("()", ""):
+                vsm_score = float(vsm_value)
+                break
+
+        # 计算最终分数
         final_score = beta * vsm_score + (1 - beta) * pagerank_score
-        final_scores[vsm_key] = final_score
+        final_scores[method_name] = final_score
+    # for vsm_key, vsm_value in vsm_result.items():
+    #     vsm_method_name = vsm_key.split("$")[-1] if "$" in vsm_key else vsm_key.split("\\")[-1]
+    #     print("vsm_method_name：" + vsm_method_name)
+    #     vsm_score = float(vsm_value)
+    #     if method_pagerank_map.get(vsm_method_name, 0) == 0:
+    #         continue
+    #     pagerank_score = method_pagerank_map.get(vsm_method_name, 0)
+    #     final_score = beta * vsm_score + (1 - beta) * pagerank_score
+    #     final_scores[vsm_key] = final_score
 
     return final_scores
 
@@ -329,34 +340,33 @@ def analyze_paths(issue_report, vsm_result):
         print(f"Error processing bug report {title}: {e}")
 
 
-def analyze_methods_paths(issue_report, vsm_result):
+def analyze_methods_paths(issue_report, vsm_result, output_directory):
     """
-    用于计算方法级别的路径分数
+    Used to calculate the path score at the method level
     :param issue_report:
     :param vsm_result:
     :return:
     """
     try:
-        title = issue_report["title"]
-        if os.path.exists(f"call_graph\\{title}-path.json"):
-            execution_paths = json.load(open(f"call_graph\\{title}-path.json", 'r', encoding='utf-8'))
-        else:
-            # execution_paths = generate_call_graph(issue_report)
+        title = issue_report['title']
+        execution_paths = get_execution_paths(issue_report)
+        if not execution_paths:
             return None
+
         # 保存路径和得分到单独的文件
-        output_directory = f"ProcessData/path_methods_results"
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
         output_file_path = f"{output_directory}/{title}_paths_score.txt"
         # 使用PageRank计算路径得分
         final_scores = calculate_pagerank_path_methods_score(execution_paths, vsm_result, beta=0.2)
-        # print(final_scores)
+        final_scores = {k: score for k, score in final_scores.items() if score > 0}
+        final_scores = evaluation.normalize_vsm_scores(final_scores)
+        print(final_scores)
         with open(output_file_path, "w", encoding="utf-8") as output_file:
             for k, v in final_scores.items():
                 if v > 0:  # 只写入非零分数
                     output_file.write(f"{k}: {v}\n")
         print(f"Processed and saved: {output_file_path}")
-
         # 计算路径得分
         # with open(output_file_path, "w", encoding="utf-8") as output_file:
         #     for k, v in vsm_result.items():
@@ -369,44 +379,128 @@ def analyze_methods_paths(issue_report, vsm_result):
         print(f"Error processing bug report {title}: {e}")
 
 
-if __name__ == "__main__":
-    file_path = "parsed_enhanced_logs.json"
-    with open(file_path, "r", encoding="utf-8") as f:
+def get_execution_paths(issue_report):
+    title = issue_report["title"]
+    call_graph_file = os.path.join("ProcessData", "call_graph", f"{title}-path.json")
+    if os.path.exists(call_graph_file):
+        execution_paths = json.load(open(call_graph_file, 'r', encoding='utf-8'))
+    else:
+        execution_paths = generate_call_graph.generation(issue_report, os.path.join("ProcessData", "tree",
+                                                                                    issue_report['version'] + ".json"))
+    return execution_paths
+
+
+def process_method(method_sig):
+    without_generics = re.sub(r'<.*>', '', method_sig)
+    without_params = re.sub(r'\(.*\)', '', without_generics)
+    method_sig = "#".join(without_params.rsplit(".", 1))
+    return method_sig
+
+
+def process_code_coverage(issue, methods, alpha=1):
+    version = issue["version"]
+    coverage_dir = "coverage"
+    with open(os.path.join(coverage_dir, f"{version}_coverage.json")) as f:
+        coverage_data = json.load(f)
+
+    cov_methods = dict()
+    total = 1
+    for method in methods:
+        method = method.replace("()", "")
+        value = cov_methods.get(method, set())
+        for cov_data in coverage_data:
+            method_sig = cov_data["method_sig"]
+            covering_tests = cov_data["covering_tests"]
+            method_sig = process_method(method_sig)
+            if method_sig.split(".")[-1] == method.split(".")[-1]:
+                old = len(value)
+                for test in covering_tests:
+                    value.add(test)
+                new = len(value)
+                total += new - old
+        cov_methods[method] = value
+    methods_scores = dict()
+    n = len(cov_methods)
+    for method, tests in cov_methods.items():
+        methods_scores[method] = (len(tests) + alpha) / (total + alpha * n)
+        methods_scores[method] = 1 - methods_scores[method]
+
+    methods_scores = dict(sorted(
+        methods_scores.items(),
+        key=lambda item: item[1],  # Sort by the second item (value)
+        reverse=True  # Setting it to True indicates descending sorting, while False indicates ascending sorting
+    ))
+    if not os.path.exists(os.path.join("ProcessData", "code_coverage")):
+        os.makedirs(os.path.join("ProcessData", "code_coverage"))
+    output = os.path.join("ProcessData", "code_coverage", issue['title'] + "_coverage.txt")
+    with open(output, "w", encoding="utf-8") as f:
+        for k, v in methods_scores.items():
+            if v > 0:
+                f.write(f"{k}: {v}\n")
+    return methods_scores
+
+
+def get_methods(execution_paths, methods=None):
+    """
+        Recursively extract all methods from the nested structure
+
+        parameter:
+            data: Nested data structures containing methods
+            methods: A collection used for storing the extraction results
+
+        return:
+            A list of all extracted methods (de-duplicated)
+        """
+    if methods is None:
+        methods = set()
+
+    # If it is a list, each element is processed recursively
+    if isinstance(execution_paths, list):
+        for item in execution_paths:
+            get_methods(item, methods)
+
+    # If it is a dictionary, handle keys and values
+    elif isinstance(execution_paths, dict):
+        for key, value in execution_paths.items():
+            methods.add(key)
+            get_methods(value, methods)
+
+    return list(methods)
+
+
+def process_path_score(structuration_info):
+    with open(structuration_info, "r", encoding="utf-8") as f:
         data = json.load(f)
+    output_directory = f"ProcessData/path_methods_results"
     for item in data:
         title = item["title"]
         try:
-            vsm_directory = f'ProcessData/vsm_result'
-            # 读取vsm得分
+            vsm_directory = os.path.join('ProcessData', 'vsm_result')
+            # Obtain the VSM score.
             vsm_name = title + "_vsm.txt"
-            with open(f"{vsm_directory}/{vsm_name}", "r") as f:
+            with open(os.path.join(vsm_directory, vsm_name), "r") as f:
                 vsm_result = f.read().split("\n")
             process_vsm_score = evaluation.normalize_vsm_scores(process_vsm_scores(vsm_result))
-            analyze_methods_paths(item, process_vsm_score)
-            # analyze_paths(item, process_vsm_score)
+            analyze_methods_paths(item, process_vsm_score, output_directory)
+            execution_paths = get_execution_paths(item)
+            methods = get_methods(execution_paths)
+            process_code_coverage(item, methods)
             print(f"Success processing file {title}")
         except Exception as e:
             print(f"Error processing file {title}: {e}")
+    return output_directory
 
-    # for project_name in project_names:
-    #     log_directory = f'../pathidea/ProcessData/log_texts/{project_name}'
-    #     vsm_directory = f'../pathidea/ProcessData/vsm_result'
-    #     if not os.path.exists(log_directory):
-    #         print(f"Directory for {project_name} not found.")
-    #     else:
-    #         files = [item for item in os.listdir(log_directory) if os.path.isfile(os.path.join(log_directory, item))]
-    #         for name in files:
-    #             try:
-    #                 # 读取日志内容
-    #                 with open(f"{log_directory}/{name}", "r") as f:
-    #                     log_text = f.read()
-    #                 # 读取vsm得分
-    #                 vsm_name = name.split("_")[0] + "_token_vsm.txt"
-    #                 with open(f"{vsm_directory}/{vsm_name}", "r") as f:
-    #                     vsm_result = f.read().split("\n")
-    #                 process_vsm_score = evaluation.normalize_vsm_scores(process_vsm_scores(vsm_result))
-    #                 # Analyze the execution paths and compute scores
-    #                 analyze_paths(project_name, log_text, process_vsm_score, name.replace("_report_text.txt", ""))
-    #                 print(f"Success processing file {name}")
-    #             except Exception as e:
-    #                 print(f"Error processing file {name}: {e}")
+
+if __name__ == '__main__':
+    # with open("parsed_enhanced_logs.json", "r", encoding="utf-8") as f:
+    #     data = json.load(f)
+    #
+    # for item in data:
+    #     title = item["title"]
+    #     call_graph_file = os.path.join("call_graph", f"{title}-path.json")
+    #     if not os.path.exists(call_graph_file):
+    #         continue
+    #     execution_paths = json.load(open(call_graph_file, 'r', encoding='utf-8'))
+    #     methods = get_methods(execution_paths)
+    #     methods_scores = process_code_coverage(item, methods)
+    process_path_score("parsed_enhanced_logs.json")

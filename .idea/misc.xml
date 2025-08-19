@@ -3,5 +3,13 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.10 (llm-website)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="/opt/homebrew/Caskroom/miniconda/base" project-jdk-type="Python SDK" />
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/LogRestore/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (loghound)" project-jdk-type="Python SDK" />
 </project>

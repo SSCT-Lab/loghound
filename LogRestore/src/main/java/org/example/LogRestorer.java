@@ -18,8 +18,8 @@ public class LogRestorer {
         //mvn clean install -DskipTests #编译项目
         //mvn dependency:copy-dependencies -DoutputDirectory=/Users/linzheyuan/LogRestore/libs
 
-        String base = "tgt_sys/apache-zookeeper-3.5.8/zookeeper-server/target/classes";
-        String libs = "/Users/linzheyuan/LogRestore/libs";
+        String base = "/Users/linzheyuan/loghound/LogRestore/target 2";
+        String libs = "/Users/linzheyuan/loghound/LogRestore/libs 2";
 
         File libDir = new File(libs);
         if (!libDir.exists()) {
@@ -28,11 +28,13 @@ public class LogRestorer {
         }
 
         String javaHome = System.getProperty("java.home");
+        System.out.println(javaHome);
         if (javaHome == null) {
             System.err.println("❌ JAVA_HOME is not set");
             return;
         }
-        String rtJarPath = javaHome + "/lib/rt.jar";
+//        String rtJarPath = javaHome + "/lib/rt.jar";
+        String rtJarPath = "/Users/linzheyuan/loghound/LogRestore/jdk1.6.0_45/jre/lib";
         File rtJar = new File(rtJarPath);
         if (!rtJar.exists()) {
             System.err.println("❌ rt.jar not found at: " + rtJarPath);

@@ -1,0 +1,9 @@
+---
+library: false
+warnOnImplicitThis: false
+compileForOverlayEval: false
+name: loghound/static-coverage
+version: 0.0.1
+
+dependencies:
+  codeql/java-all: "*"

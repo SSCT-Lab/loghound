@@ -1,11 +1,10 @@
 #!/bin/bash
 
-# 定义需要排除的目录列表
+# If u unfortunately have to keep some folders unrelated to codeql db, add them here
 EXCLUDED_DIRS=(
-    "zookeeper-3.5.0-alpha"
-    "apache-cassandra-2.0.0-src"
+    "old_version"
     "codeql2"
-    "java-se-7u75-ri"
+    "package"
 )
 
 # 遍历当前目录下的所有子目录

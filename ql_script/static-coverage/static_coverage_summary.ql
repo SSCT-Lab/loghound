@@ -22,9 +22,13 @@ predicate isMainFile(File f) {
 //  f.getRelativePath().matches("%src/java/main/%")
  // or
 //  f.getRelativePath().matches("src/%")
-f.getRelativePath().matches("common/src/java/%") or
-f.getRelativePath().matches("hdfs/src/java/%") or
-f.getRelativePath().matches("mapred/src/java/%")
+    f.getRelativePath().matches("%src/main/java/%")
+//for hadoop 0.21 0.22
+//f.getRelativePath().matches("common/src/java/%") or
+//f.getRelativePath().matches("hdfs/src/java/%") or
+//f.getRelativePath().matches("mapred/src/java/%")or
+//f.getRelativePath().matches("mapreduce/src/java/%")
+
 }
 
 predicate isTestFile(File f) {
@@ -37,10 +41,15 @@ f.getRelativePath().matches("src/test/%") or
  // f.getRelativePath().matches("src/java/systest/%")
  // or
  // f.getRelativePath().matches("%src/java/test/%")
+ f.getRelativePath().matches("%src/test/java/%")
 
- f.getRelativePath().matches("common/src/test/%") or
-f.getRelativePath().matches("hdfs/src/test/%") or
-f.getRelativePath().matches("mapred/src/test/%")
+    //for hadoop 0.21 0.22
+    //f.getRelativePath().matches("common/src/test/%") or
+    //f.getRelativePath().matches("hdfs/src/test/%") or
+    //f.getRelativePath().matches("mapred/src/test/%") or
+    //f.getRelativePath().matches("mapreduce/src/test/%")
+
+
 }
 
 predicate isMainMethod(Method m) {

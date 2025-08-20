@@ -12,45 +12,76 @@
 
 import java
 
-// ---------- 路径归属：兼容 Cassandra 2.0 与 Maven 目录 ----------
-predicate isMainFile(File f) {
- // f.getRelativePath().matches("src/java/%") or
-//  f.getRelativePath().matches("src/main/java/%")
- // or
-//  f.getRelativePath().matches("src/java/main/%")
-//  or
-//  f.getRelativePath().matches("%src/java/main/%")
- // or
-//  f.getRelativePath().matches("src/%")
-    f.getRelativePath().matches("%src/main/java/%")
-//for hadoop 0.21 0.22
-//f.getRelativePath().matches("common/src/java/%") or
-//f.getRelativePath().matches("hdfs/src/java/%") or
-//f.getRelativePath().matches("mapred/src/java/%")or
-//f.getRelativePath().matches("mapreduce/src/java/%")
+/** Cassandra */
+predicate isCassandra(File f) { f.getRelativePath().matches("cassandra-%") }
 
+predicate isMainFileCassandra(File f) { f.getRelativePath().matches("src/java/%") }
+
+predicate isTestFileCassandra(File f) { f.getRelativePath().matches("test/%") }
+
+/** hadoop */
+predicate isHadoop021(File f) { f.getRelativePath().matches("hadoop-0.21%") }
+
+predicate isMainFileHadoop021(File f) {
+  f.getRelativePath().matches("common/src/java/%") or
+  f.getRelativePath().matches("hdfs/src/java/%") or
+  f.getRelativePath().matches("mapred/src/java/%")
 }
 
-predicate isTestFile(File f) {
-f.getRelativePath().matches("src/test/%") or
- // f.getRelativePath().matches("test/%") or
- // f.getRelativePath().matches("src/test/java/%")
- // or
- // f.getRelativePath().matches("src/java/test/%")
- // or
- // f.getRelativePath().matches("src/java/systest/%")
- // or
- // f.getRelativePath().matches("%src/java/test/%")
- f.getRelativePath().matches("%src/test/java/%")
-
-    //for hadoop 0.21 0.22
-    //f.getRelativePath().matches("common/src/test/%") or
-    //f.getRelativePath().matches("hdfs/src/test/%") or
-    //f.getRelativePath().matches("mapred/src/test/%") or
-    //f.getRelativePath().matches("mapreduce/src/test/%")
-
-
+predicate isTestFileHadoop021(File f) {
+  f.getRelativePath().matches("common/src/test/%") or
+  f.getRelativePath().matches("hdfs/src/test/%") or
+  f.getRelativePath().matches("mapred/src/test/%")
 }
+
+predicate isHadoop023(File f) {
+  f.getRelativePath().matches("hadoop-0.23%") or
+  f.getRelativePath().matches("hadoop-1.%") or
+  f.getRelativePath().matches("hadoop-2.%")
+}
+
+predicate isMainFileHadoop023(File f) { f.getRelativePath().matches("%/src/main/java/%") }
+
+predicate isTestFileHadoop023(File f) { f.getRelativePath().matches("%/src/test/java/%") }
+
+/** hbase */
+predicate isHbase9094(File f) {
+  f.getRelativePath().matches("hbase-0.90%") or
+  f.getRelativePath().matches("hbase-0.92%") or
+  f.getRelativePath().matches("hbase-0.94%")
+}
+
+predicate isMainFileHbase9094(File f) { f.getRelativePath().matches("src/main/java/%") }
+
+predicate isTestFileHbase9094(File f) { f.getRelativePath().matches("src/test/java/%") }
+
+predicate isHbase95(File f) {
+  f.getRelativePath().matches("hbase-0.95%") or
+  f.getRelativePath().matches("hbase-0.96%") or
+  f.getRelativePath().matches("hbase-0.98%")
+}
+
+predicate isMainFileHbase95(File f) { f.getRelativePath().matches("%/src/main/java/%") }
+
+predicate isTestFileHbase95(File f) { f.getRelativePath().matches("%/src/test/java/%") }
+
+/** zookeeper */
+predicate isZookeeper(File f) { f.getRelativePath().matches("zookeeper-%") }
+
+predicate isMainFileZookeeper(File f) {
+  f.getRelativePath().matches("src/java/main/%") or
+  f.getRelativePath().matches("src/java/generated/%")
+}
+
+predicate isTestFileZookeeper(File f) {
+  f.getRelativePath().matches("src/java/test/%") or
+  f.getRelativePath().matches("src/java/systest/%")
+}
+
+/** Unified entry */
+predicate isMainFile(File f) { isMainFileZookeeper(f) }
+
+predicate isTestFile(File f) { isTestFileZookeeper(f) }
 
 predicate isMainMethod(Method m) {
   exists(CompilationUnit cu |
@@ -137,3 +168,5 @@ where
 select m.getDeclaringType().getCompilationUnit().getFile().getRelativePath() as filePath,
   methodSigOf(m) as methodSig, hit as internalCovered, total as internalTotal,
   labelOfTest(t) as coveringTest order by filePath, methodSig, coveringTest
+// from File f
+// select f.getRelativePath()

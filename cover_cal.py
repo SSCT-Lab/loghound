@@ -5,8 +5,13 @@ import glob
 
 # 存储方法覆盖率和覆盖测试的字典
 input_dir = "/Users/linzheyuan/loghound/tgt_sys/coverage_out"
+if not os.path.exists(input_dir+"/json"):
+    os.makedirs(input_dir+"/json")
+    print(f"Folder created: {input_dir+"/json"}")
+else:
+    print(f"Folder already exists: {input_dir+"/json"}")
 
-for csv_file in glob.glob(os.path.join(input_dir, "ha021-new_coverage.csv")):
+for csv_file in glob.glob(os.path.join(input_dir, "*.csv")):
     method_coverage_and_tests = {}
     print(f"Processing {csv_file}...")
     # 假设数据存储在一个名为 input_data.csv 的文件中，你可以根据实际情况修改

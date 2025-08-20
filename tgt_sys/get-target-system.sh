@@ -48,6 +48,7 @@ urls=(
     "https://archive.apache.org/dist/hbase/hbase-0.96.1/hbase-0.96.1-src.tar.gz"
     "https://archive.apache.org/dist/hbase/hbase-0.98.0/hbase-0.98.0-src.tar.gz"
 
+    "https://archive.apache.org/dist/zookeeper/zookeeper-3.4.5/zookeeper-3.4.5.tar.gz"
     "https://github.com/apache/zookeeper/archive/refs/tags/release-3.3.0.tar.gz"
     "https://archive.apache.org/dist/zookeeper/zookeeper-3.5.0-alpha/zookeeper-3.5.0-alpha.tar.gz"
 )
@@ -97,6 +98,7 @@ filenames=(
     "hbase-0.96.1-src.tar.gz"
     "hbase-0.98.0-src.tar.gz"
 
+    "zookeeper-3.4.5.tar.gz"
     "zookeeper-release-3.3.0.tar.gz"
     "zookeeper-3.5.0-alpha.tar.gz"
 )
@@ -147,6 +149,7 @@ folders=(
     "hbase-0.96.1"
     "hbase-0.98.0"
 
+    "zookeeper-3.4.5"
     "zookeeper-3.3.0"
     "zookeeper-3.5.0-alpha"
 )

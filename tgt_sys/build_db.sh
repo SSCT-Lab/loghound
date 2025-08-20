@@ -5,6 +5,7 @@ EXCLUDED_DIRS=(
     "old_version"
     "codeql2"
     "package"
+    "coverage_out"
 )
 
 # 遍历当前目录下的所有子目录
@@ -32,8 +33,8 @@ for dir in */; do
 
         # 创建CodeQL数据库，数据库名使用目录名的缩写
         # 提取主要名称和版本号作为数据库名
-        db_name=$(echo "$dir_name" | sed -E 's/^apache-|^release-//; s/-src//; s/([a-z]+)-.*/\1/; s/([A-Z][a-z]+)/\L\1/')$(echo "$dir_name" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 | tr -d '.')
-
+        #db_name=$(echo "$dir_name" | sed -E 's/^apache-|^release-//; s/-src//; s/([a-z]+)-.*/\1/; s/([A-Z][a-z]+)/\L\1/')$(echo "$dir_name" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 | tr -d '.')
+        db_name="$dir_name"
         echo "创建CodeQL数据库: $db_name"
 
         # 执行CodeQL数据库创建命令

@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env zsh
+# Bash may causes some unexpected errors
 
 # urls
 urls=(

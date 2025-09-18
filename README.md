@@ -74,6 +74,7 @@ project_root/
 ├── cover_cal.py
 ├── eval.py
 ├── read_version_json.py
+├── requirements.txt
 ├── smp.py
 └── README.md
 ```

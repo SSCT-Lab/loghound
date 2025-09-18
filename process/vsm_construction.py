@@ -1,9 +1,12 @@
-import json
 import logging
 import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from multiprocessing import Pool
+from process import process_tools, param_lib, evaluation
+from process.process_tools import process_scores, read_file_lines
+
+logger = logging.getLogger(__name__)
 
 
 def get_bug_tokens(base_path):
@@ -19,7 +22,6 @@ def get_bug_tokens(base_path):
 
     # Sort by file name and ensure the order is consistent
     tokens_files.sort()
-
     for tokens_file in tokens_files:
         tokens_file_path = os.path.join(base_path, tokens_file)
         logging.info(f"Processing: {tokens_file}")
@@ -92,82 +94,58 @@ def process_source_file(args):
     return relative_path, similarity
 
 
-def aggregate_vsm_results(vsm_results):
-    # 定义一个字典，用于聚合同一类的多个tokens文件
-    aggregated_results = {}
-
-    for relative_path, similarity in vsm_results:
-        # 提取类名（假设类名是文件名的第一部分）
-        class_name = relative_path.split('_')[0]
-
-        # 如果字典中没有该类名，直接添加
-        if class_name not in aggregated_results:
-            aggregated_results[class_name] = (relative_path, similarity)
-        else:
-            # 更新为相似度更高的文件
-            if similarity > aggregated_results[class_name][1]:
-                aggregated_results[class_name] = (relative_path, similarity)
-
-    # 返回聚合后的结果
-    return list(aggregated_results.values())
-
-
 def aggregate_vsm_results_methods(vsm_results):
     """
-    按照方法命来进行聚合
+    Aggregate according to the method
     :param vsm_results:
     :return:
     """
-    # 定义一个字典，用于聚合同一类的多个tokens文件
+    # Define a dictionary for aggregating multiple token files of the same class
     aggregated_results = {}
 
     for relative_path, similarity in vsm_results:
-        # 提取类名#方法名
-        # print(relative_path)
-        full_name = relative_path
-
-        # 如果字典中没有该类名，直接添加
+        full_name = relative_path.replace("\\", ".")
         if full_name not in aggregated_results:
             aggregated_results[full_name] = (relative_path, similarity)
         else:
-            # 更新为相似度更高的文件
             if similarity > aggregated_results[full_name][1]:
                 aggregated_results[full_name] = (relative_path, similarity)
 
-    # 返回聚合后的结果
     return list(aggregated_results.values())
 
 
 def process_vsm_result(bug_reports_token, structuration_info):
-    source_code_token = os.path.join("ProcessData", "source_code_methods_tokens")
+    source_code_token = os.path.join("ProcessData", "source_code_tokens")
 
     # Obtain the tokens of the error report along with the corresponding project name and the name of the error report
     bug_reports_tokens, bug_report_names = get_bug_tokens(bug_reports_token)
-    # print(bug_report_names)
-    # print(bug_reports_tokens)
-    with open(structuration_info, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = process_tools.read_json(structuration_info)
     projects = {item['title']: item['version'] for item in data}
 
     # Define a list of stop words
-    stop_words = ['public', 'class', 'void', 'new', 'if', 'else', 'for', 'while', 'return',
-                  '{', '}', '(', ')', ';', '...']
+    stop_words = param_lib.stop_words
 
     for i, (bug_tokens, bug_report_name) in enumerate(zip(bug_reports_tokens, bug_report_names)):
         # Convert the tokens of the error report to strings
         bug_report_text = ' '.join(bug_tokens)
-
+        # if os.path.exists(os.path.join("ProcessData", "vsm_result", f"{bug_report_name.replace('_token.txt', '')}_vsm.txt")):
+        #     print(f"The VSM result of {bug_report_name} has been processed. Skipping....")
+        #     logger.info(f"The VSM result of {bug_report_name} has been processed. Skipping....")
+        #     continue
+        print(f"Processing: {bug_report_name}")
+        if os.path.exists(os.path.join("ProcessData", "vsm_result", f"{bug_report_name.replace('_token.txt', '')}_vsm.txt")):
+            print(f"The VSM result of {bug_report_name} has been processed. Skipping....")
+            logger.info(f"The VSM result of {bug_report_name} has been processed. Skipping....")
+            continue
         project_name = projects.get(bug_report_name.replace("_token.txt", ""))
         if project_name.startswith("MAPREDUCE") or project_name.startswith("HDFS"):
             project_name = project_name.replace("MAPREDUCE", "hadoop")
             project_name = project_name.replace("HDFS", "hadoop")
 
-        # print(project_name)
-
         # Obtain all the source code tokens files under the corresponding project
         source_files = get_source_files(source_code_token, project_name)
-
         if not source_files:
+            logger.info(f"The source code tokens file of the project {project_name} was not found")
             print(f"The source code tokens file of the project {project_name} was not found")
             continue
 
@@ -177,17 +155,13 @@ def process_vsm_result(bug_reports_token, structuration_info):
              stop_words)
             for source_file in source_files
         ]
-
         # Use a multiprocess pool to process source code files in parallel
         with Pool(processes=4) as pool:  # Adjust the number of processes according to the number of your CPU cores
             vsm_results = pool.map(process_source_file, args_list)
 
-        # Aggregate the results by class name and retain only the files with the highest similarity
-        # aggregated_results = aggregate_vsm_results(vsm_results)
-
         # Aggregate the results by class_name#method_name, and only retain the files with the highest similarity
         aggregated_results = aggregate_vsm_results_methods(vsm_results)
-
+        # print(aggregated_results)
         # Sort by similarity from high to low
         aggregated_results.sort(key=lambda x: x[1], reverse=True)
 
@@ -195,11 +169,8 @@ def process_vsm_result(bug_reports_token, structuration_info):
         output_file = save_vsm_result(bug_report_name.replace("_token.txt", ""), aggregated_results)
 
         # output result
-        logging.info(
+        logger.info(
             f"The similarity analysis of the bug report({bug_report_name}) has been completed and saved to {output_file}")
         print(
             f"The similarity analysis of the bug report({bug_report_name}) has been completed and saved to {output_file}")
     return os.path.join("ProcessData", "vsm_result")
-
-if __name__ == '__main__':
-    process_vsm_result()

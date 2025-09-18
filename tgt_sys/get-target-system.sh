@@ -11,7 +11,7 @@ urls=(
     "https://archive.apache.org/dist/hadoop/common/hadoop-0.21.0/hadoop-0.20.1.tar.gz"
     "https://archive.apache.org/dist/hadoop/common/hadoop-0.21.0/hadoop-0.21.0.tar.gz",
     "https://archive.apache.org/dist/hadoop/common/hadoop-0.22.0/hadoop-0.22.0.tar.gz",
-    "https://archive.apache.org/dist/hadoop/common/hadoop-0.23.0/hadoop-0.23.0.tar.gz",
+    "https://archive.apache.org/dist/hadoop/common/hadoop-0.23.0/hadoop-0.23.0-src.tar.gz",
     "https://archive.apache.org/dist/hadoop/common/hadoop-1.2.0/hadoop-1.2.0.tar.gz",
     "https://archive.apache.org/dist/hadoop/common/hadoop-2.0.0-alpha/hadoop-2.0.0-alpha-src.tar.gz",
     "https://archive.apache.org/dist/hadoop/common/hadoop-2.1.1-beta/hadoop-2.1.1-beta-src.tar.gz",
@@ -23,7 +23,7 @@ urls=(
     "https://archive.apache.org/dist/hbase/hbase-0.94.0/hbase-0.94.0.tar.gz",
     "https://archive.apache.org/dist/hbase/hbase-0.95.0/hbase-0.95.0.tar.gz",
     "https://archive.apache.org/dist/hbase/hbase-0.96.1/hbase-0.96.1.tar.gz",
-    "https://archive.apache.org/dist/hbase/hbase-0.94.0/hbase-0.98.0.tar.gz",
+    "https://archive.apache.org/dist/hbase/hbase-0.98.0/hbase-0.98.0.tar.gz",
     "https://github.com/apache/zookeeper/archive/refs/tags/release-3.3.0.tar.gz",
     "https://archive.apache.org/dist/zookeeper/zookeeper-3.5.0-alpha/zookeeper-3.5.0-alpha.tar.gz"
 )

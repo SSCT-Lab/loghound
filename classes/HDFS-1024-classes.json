@@ -1,0 +1,167 @@
+[
+  {
+    "class": "org.mortbay.log",
+    "type": "WARN",
+    "content": "Committed before 410 GetImage failed. java.nio.channels.CancelledKeyException"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file fsimage size 2337800192 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file edits size 254702213 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file fsimage size 9220979 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file edits size 3190207 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "fsOwner=hadoop,hadoop"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "supergroup=supergroup"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "isPermissionEnabled=true"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.common.Storage",
+    "type": "INFO",
+    "content": "Number of files = 64126"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.common.Storage",
+    "type": "INFO",
+    "content": "Number of files under construction = 15"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.common.Storage",
+    "type": "INFO",
+    "content": "Edits file /export/hadoop/dfs/namesecondary/current/edits of size 3190207 edits # 30862 loaded in 0 seconds."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.common.Storage",
+    "type": "INFO",
+    "content": "Image file of size 9244565 saved in 0 seconds."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "Number of transactions: 0 Total time for transactions(ms): 0Number of transactions batched in Syncs: 0 Number of syncs: 0 SyncTimes(ms): 0"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Posted URL 10.10.20.221:50070putimage=1&port=50090&machine=10.10.20.222&token=-18:996348214:1231385509605:1269762207000:1269758607364"
+  },
+  {
+    "class": "org.mortbay.log",
+    "type": "ERROR",
+    "content": "/getimage"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "WARN",
+    "content": "Checkpoint done. New Image Size: 9244565"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "Number of transactions: 0 Total time for transactions(ms): 0Number of transactions batched in Syncs: 0 Number of syncs: 0 SyncTimes(ms): 0"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file fsimage size 4521984 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file edits size 2745394 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "fsOwner=hadoop,hadoop"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "supergroup=supergroup"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "isPermissionEnabled=true"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.common.Storage",
+    "type": "INFO",
+    "content": "Number of files = 64295"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "ERROR",
+    "content": "Exception in doCheckpoint:"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "Number of transactions: 0 Total time for transactions(ms): 0Number of transactions batched in Syncs: 0 Number of syncs: 0 SyncTimes(ms): 0"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.common.Storage",
+    "type": "INFO",
+    "content": "Recovering storage directory /export/hadoop/dfs/namesecondary from failed checkpoint."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file fsimage size 4521984 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "INFO",
+    "content": "Downloaded file edits size 2745394 bytes."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "fsOwner=hadoop,hadoop"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "supergroup=supergroup"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSNamesystem",
+    "type": "INFO",
+    "content": "isPermissionEnabled=true"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.common.Storage",
+    "type": "INFO",
+    "content": "Number of files = 64295"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.SecondaryNameNode",
+    "type": "ERROR",
+    "content": "Exception in doCheckpoint:"
+  }
+]

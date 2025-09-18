@@ -1,0 +1,8 @@
+[
+  {
+    "class": "CuratorFrameworkImpl",
+    "type": "ERROR",
+    "line": null,
+    "content": "Background exception was not retry-able or retry gave up"
+  }
+]

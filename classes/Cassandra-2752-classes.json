@@ -1,0 +1,42 @@
+[
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "Queueing comparison #<Differencer #<TreeRequest manual-repair-0c17c5f9-583f-4a31-a6d4-a9e7306fb46e, /1.10.42.82, (JP,XXX), (Token(bytes[6e]),Token(bytes[313039]))>>"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "Endpoints somewhere/1.10.42.81 and /1.10.42.82 have 2 range(s) out of sync for (JP,XXX) on (Token(bytes[6e]),Token(bytes[313039]))"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "Performing streaming repair of 2 ranges for #<TreeRequest manual-repair-0c17c5f9-583f-4a31-a6d4-a9e7306fb46e, /z, (JP,XXX), (Token(bytes[6e]),Token(bytes[313039]))>"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Stream context metadata[/data/cassandra/node0/data/JP/XXX-g-3-Data.db sections=1 progress=0/36592 - 0%], 1 sstables."
+  },
+  {
+    "class": "StreamOutSession",
+    "type": "INFO",
+    "content": "Streaming to /1.10.42.82"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[CompactionExecutor:9,1,main]"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[CompactionExecutor:12,1,main]"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[Thread-132,5,main]"
+  }
+]

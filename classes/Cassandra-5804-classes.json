@@ -1,0 +1,57 @@
+[
+  {
+    "class": "AntiEntropyService.java",
+    "type": "INFO",
+    "content": "[repair #79afee40-f4bf-11e2-bfb6-bd4071a4c32e] new session: will sync /192.168.1.93, /192.168.2.92, /192.168.2.91, /192.168.1.91 on range (6575400599453278172,6596229519918600663) for ks1.[cf1, cf2]"
+  },
+  {
+    "class": "AntiEntropyService.java",
+    "type": "INFO",
+    "content": "[repair #79afee40-f4bf-11e2-bfb6-bd4071a4c32e] requesting merkle trees for cf1 (to [/192.168.2.92, /192.168.2.91, /192.168.1.91, /192.168.1.93])"
+  },
+  {
+    "class": "MessagingService.java",
+    "type": "TRACE",
+    "content": "/192.168.1.93 sending TREE_REQUEST to 320929@/192.168.2.91"
+  },
+  {
+    "class": "MessagingService.java",
+    "type": "TRACE",
+    "content": "/192.168.1.93 sending TREE_REQUEST to 320930@/192.168.1.93"
+  },
+  {
+    "class": "MessagingService.java",
+    "type": "TRACE",
+    "content": "Message-to-self TYPE:ANTI_ENTROPY VERB:TREE_REQUEST going over MessagingService"
+  },
+  {
+    "class": "MessagingService.java",
+    "type": "TRACE",
+    "content": "/192.168.1.93 sending TREE_REQUEST to 320931@/192.168.2.92"
+  },
+  {
+    "class": "MessagingService.java",
+    "type": "TRACE",
+    "content": "/192.168.1.93 sending TREE_REQUEST to 320932@/192.168.1.91"
+  },
+  {
+    "class": "AntiEntropyService.java",
+    "type": "DEBUG",
+    "content": "Queueing validation compaction for #<TreeRequest 79afee40-f4bf-11e2-bfb6-bd4071a4c32e, /192.168.1.93, (ks1,cf1), (6575400599453278172,6596229519918600663)>"
+  },
+  {
+    "class": "OutboundTcpConnection.java",
+    "type": "DEBUG",
+    "content": "error writing to /192.168.2.92"
+  },
+  {
+    "class": "StorageService.java",
+    "type": "DEBUG",
+    "content": "Forcing flush on keyspace ks1, CF cf1"
+  },
+  {
+    "class": "OutboundTcpConnection.java",
+    "type": "DEBUG",
+    "content": "error writing to /192.168.2.91"
+  }
+]

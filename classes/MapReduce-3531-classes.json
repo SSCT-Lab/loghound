@@ -1,0 +1,12 @@
+[
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler",
+    "type": "INFO",
+    "content": "nodeUpdate: <NMHost>:48490 clusterResources: memory: 3225600"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.ResourceManager",
+    "type": "ERROR",
+    "content": "Error in handling event type NODE_UPDATE to the scheduler"
+  }
+]

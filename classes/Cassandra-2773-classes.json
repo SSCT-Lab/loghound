@@ -1,0 +1,57 @@
+[
+  {
+    "class": "org.apache.cassandra.cache.KeyCache",
+    "type": "INFO",
+    "content": "reading saved cache /var/lib/cassandra/saved_caches/SOCommContent_S1-AgentPropsMirror-KeyCache"
+  },
+  {
+    "class": "org.apache.cassandra.cache.KeyCache",
+    "type": "INFO",
+    "content": "reading saved cache /var/lib/cassandra/saved_caches/SOCommContent_S1-AgentProps-KeyCache"
+  },
+  {
+    "class": "org.apache.cassandra.db.ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Opening /var/lib/cassandra/data/SOCommContent_S1/AgentProps-f-7"
+  },
+  {
+    "class": "org.apache.cassandra.db.ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Opening /var/lib/cassandra/data/SOCommContent_S1/AgentProps-f-6"
+  },
+  {
+    "class": "org.apache.cassandra.db.ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Opening /var/lib/cassandra/data/SOCommContent_S1/AgentProps-f-5"
+  },
+  {
+    "class": "org.apache.cassandra.db.CommitLog",
+    "type": "INFO",
+    "content": "Creating new commitlog segment /var/lib/cassandra/commitlog/CommitLog-1308864039522.log"
+  },
+  {
+    "class": "org.apache.cassandra.db.CommitLog",
+    "type": "INFO",
+    "content": "Replaying /var/lib/cassandra/commitlog/CommitLog-1308164298316.log, /var/lib/cassandra/commitlog/CommitLog-1308632419965.log, /var/lib/cassandra/commitlog/CommitLog-1308841938215.log, /var/lib/cassandra/commitlog/CommitLog-1308856663370.log, /var/lib/cassandra/commitlog/CommitLog-1308864021483.log"
+  },
+  {
+    "class": "org.apache.cassandra.db.CommitLog",
+    "type": "INFO",
+    "content": "Finished reading /var/lib/cassandra/commitlog/CommitLog-1308164298316.log"
+  },
+  {
+    "class": "org.apache.cassandra.db.CommitLog",
+    "type": "INFO",
+    "content": "Finished reading /var/lib/cassandra/commitlog/CommitLog-1308632419965.log"
+  },
+  {
+    "class": "java.lang.Thread",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[MutationStage:5,5,main]"
+  },
+  {
+    "class": "java.lang.Thread",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[MutationStage:58,5,main]"
+  }
+]

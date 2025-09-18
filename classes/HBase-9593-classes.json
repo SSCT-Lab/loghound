@@ -1,0 +1,72 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "DEBUG",
+    "content": "STARTUP: Server HOST-10-18-40-153,61020,1379600260255 came back up, removed it from the dead servers list"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "INFO",
+    "content": "Registering server=HOST-10-18-40-153,61020,1379600260255"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Connected to master at HOST-10-18-40-153/10.18.40.153:61000"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Telling master at HOST-10-18-40-153,61000,1379600055284 that we are up with port=61020, startcode=1379600260255"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Failed assignment of -ROOT-,,0.70236052 to HOST-10-18-40-153,61020,1379600260255, trying to assign elsewhere instead; retry=0"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Found an existing plan for -ROOT-,,0.70236052 destination server is HOST-10-18-40-153,61020,1379600260255"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "No previous transition plan was found (or we are ignoring an existing plan) for -ROOT-,,0.70236052 so generated a random one; hri=-ROOT-,,0.70236052, src=, dest=HOST-10-18-40-153,61020,1379600260255; 1 (online=1, available=1) available servers"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:61000-0x14135a277ff017d Creating (or updating) unassigned node for 70236052 with OFFLINE state"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=M_ZK_REGION_OFFLINE, server=HOST-10-18-40-153,61000,1379600055284, region=70236052/-ROOT-"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Found an existing plan for -ROOT-,,0.70236052 destination server is HOST-10-18-40-153,61020,1379600260255"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Using pre-existing plan for region -ROOT-,,0.70236052; plan=hri=-ROOT-,,0.70236052, src=, dest=HOST-10-18-40-153,61020,1379600260255"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Assigning region -ROOT-,,0.70236052 to HOST-10-18-40-153,61020,1379600260255"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Failed assignment of -ROOT-,,0.70236052 to HOST-10-18-40-153,61020,1379600260255, trying to assign elsewhere instead; retry=1"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Found an existing plan for -ROOT-,,0.70236052 destination server is HOST-10-18-40-153,61020,1379600260255"
+  }
+]

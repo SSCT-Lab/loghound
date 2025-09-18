@@ -1,0 +1,37 @@
+[
+  {
+    "class": "Gossiper",
+    "type": "ERROR",
+    "content": "Gossip error"
+  },
+  {
+    "class": "GCInspector",
+    "type": "WARN",
+    "content": "Heap is 0.9552299542288667 full."
+  },
+  {
+    "class": "StorageService",
+    "type": "WARN",
+    "content": "Flushing CFS(Keyspace='x', ColumnFamily='x') to relieve memory pressure"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-x@766608353(261434/1801824 serialized/live bytes, 5150 ops)"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /10.x.x.x is now UP"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /10.x.x.x is now UP"
+  },
+  {
+    "class": "Gossiper",
+    "type": "ERROR",
+    "content": "Gossip error"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #80fe25a0-9730-11e2-0000-ebe7011631ff Sending completed merkle tree to /54.246.XXX.YYY for (Geo,GeoCountryMetadata)"
+  },
+  {
+    "class": "OutboundTcpConnection",
+    "type": "DEBUG",
+    "content": "error writing to ec2-54-246-XXX.YYY.eu-west-1.compute.amazonaws.com/54.246.XXX.YYY"
+  }
+]

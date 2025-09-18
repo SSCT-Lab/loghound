@@ -1,0 +1,7 @@
+[
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "IPC Server handler 00 on 00000, call: rollEditLog(), rpc version=1, client version=6, methodsFingerPrint=403308677 from 1.1.1.1:12345, error:"
+  }
+]

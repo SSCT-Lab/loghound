@@ -1,0 +1,7 @@
+[
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "WARN",
+    "content": "Unable to connect to master. Retrying. Error was:"
+  }
+]

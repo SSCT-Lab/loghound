@@ -1,0 +1,17 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "For namenode svsrs00127/11.164.162.226:8020 using DELETEREPORT_INTERVAL of 300000 msec"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "BLOCKREPORT_INTERVAL of 21600000msec Initial delay: 0msec; heartBeatInterval=3000"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "ERROR",
+    "content": "Exception in BPOfferService for Block pool BP-1678908700-11.164.162.226-1342785481826 (storage id DS-1031100678-11.164.162.251-5010-1341933415989) service to svsrs00127/11.164.162.226:8020"
+  }
+]

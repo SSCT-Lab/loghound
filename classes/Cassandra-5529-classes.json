@@ -1,0 +1,12 @@
+[
+  {
+    "class": "org.apache.hadoop.mapred.Child",
+    "type": "WARN",
+    "content": "Error running child"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.Task",
+    "type": "INFO",
+    "content": "Runnning cleanup for the task"
+  }
+]

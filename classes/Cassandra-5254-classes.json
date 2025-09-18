@@ -1,0 +1,47 @@
+[
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /tmp/dtest-iaYzzR/test/node1/data/system/schema_columns/system-schema_columns-hf-2-Data.db (558 bytes) for commitlog position ReplayPosition(segmentId=1360857665931, position=4770)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "CFS(Keyspace='ks', ColumnFamily='cf') liveRatio is 20.488836662749705 (just-counted was 20.488836662749705). calculation took 96ms for 144 columns"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "Announcing shutdown"
+  },
+  {
+    "class": "MessagingService",
+    "type": "INFO",
+    "content": "Waiting for messaging service to quiesce"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /127.0.0.3 is now dead."
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /127.0.0.3 is now dead."
+  },
+  {
+    "class": "MessagingService",
+    "type": "INFO",
+    "content": "MessagingService shutting down server thread."
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /127.0.0.3 is now UP"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /127.0.0.3 is now dead."
+  }
+]

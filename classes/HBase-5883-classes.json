@@ -1,0 +1,27 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.SplitLogManager",
+    "type": "INFO",
+    "content": "finished splitting (more than or equal to) 861248320 bytes in 4 log files in [hdfs://192.168.47.205:9000/hbase/.logs/HOST-192-168-47-202,60020,1333715537172-splitting] in 26374ms"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "FATAL",
+    "content": "Master server abort: loaded coprocessors are: []"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "FATAL",
+    "content": "Unhandled exception. Starting shutdown."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "Aborting"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "DEBUG",
+    "content": "Stopping service threads"
+  }
+]

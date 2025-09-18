@@ -1,0 +1,177 @@
+[
+  {
+    "class": "CommitLog",
+    "type": "INFO",
+    "content": "Recovery complete"
+  },
+  {
+    "class": "CommitLog",
+    "type": "INFO",
+    "content": "Log replay complete"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Cassandra version: 0.7.0-beta1-SNAPSHOT"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Thrift API version: 10.0.0"
+  },
+  {
+    "class": "SystemTable",
+    "type": "INFO",
+    "content": "Saved Token found: 85070591730234615865843651857942052864"
+  },
+  {
+    "class": "SystemTable",
+    "type": "INFO",
+    "content": "Saved ClusterName found: FOO"
+  },
+  {
+    "class": "SystemTable",
+    "type": "INFO",
+    "content": "Saved partitioner not found. Using org.apache.cassandra.dht.RandomPartitioner"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "switching in a fresh Memtable for LocationInfo at CommitLogContext(file='/local1/junkbox/cassandra/commitlog/CommitLog-1282721389770.log', position=41336)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-LocationInfo@916236367(95 bytes, 2 operations)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-LocationInfo@916236367(95 bytes, 2 operations)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /local1/junkbox/cassandra/data/system/LocationInfo-e-6-Data.db"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Starting up server gossip"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Loaded 0 rows into the Super2 cache"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "INFO",
+    "content": "Binding thrift service to /0.0.0.0:9160"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "INFO",
+    "content": "Using TFramedTransport with a max frame size of 15728640 bytes."
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "Node /192.168.34.28 is now part of the cluster"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "Node /192.168.34.29 is now part of the cluster"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "Node /192.168.34.26 is now part of the cluster"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "INFO",
+    "content": "Listening for thrift clients..."
+  },
+  {
+    "class": "Mx4jTool",
+    "type": "INFO",
+    "content": "Will not load MX4J, mx4j-tools.jar is not in the classpath"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "INFO",
+    "content": "Started hinted handoff for endpoint /192.168.34.28"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /192.168.34.28 is now UP"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "INFO",
+    "content": "Finished hinted handoff of 0 rows to endpoint /192.168.34.28"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "INFO",
+    "content": "Started hinted handoff for endpoint /192.168.34.29"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /192.168.34.29 is now UP"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "INFO",
+    "content": "Finished hinted handoff of 0 rows to endpoint /192.168.34.29"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "INFO",
+    "content": "Started hinted handoff for endpoint /192.168.34.26"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /192.168.34.26 is now UP"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "INFO",
+    "content": "Finished hinted handoff of 0 rows to endpoint /192.168.34.26"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "Node /192.168.34.27 has restarted, now UP again"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "INFO",
+    "content": "Started hinted handoff for endpoint /192.168.34.27"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Node /192.168.34.27 state jump to normal"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Will not change my token ownership to /192.168.34.27"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "ERROR",
+    "content": "Uncaught exception in thread Thread[HINTED-HANDOFF-POOL:1,5,main]"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "Waiting for repair requests to: []"
+  }
+]

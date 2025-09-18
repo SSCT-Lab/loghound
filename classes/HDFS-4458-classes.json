@@ -1,0 +1,42 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "WARN",
+    "content": "DIR* NameSystem.startFile: Failed to create file[/system/balancer.id] for [DFSClient_NONMapReduce_413051464_1] on client [10.111.57.222], because this file is already being created by [DFSClient_NONMapReduce_-732728704_1] on [10.111.57.222]"
+  },
+  {
+    "class": "org.apache.hadoop.security.UserGroupInformation",
+    "type": "ERROR",
+    "content": "PriviledgedActionException as:root (auth:SIMPLE) cause:org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException: Failed to create file [/system/balancer.id] for[DFSClient_NONMapReduce_413051464_1] on client [10.111.57.222], because this file is already being created by[DFSClient_NONMapReduce_-732728704_1] on [10.111.57.222]"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "IPC Server handler 2 on 8020, call org.apache.hadoop.hdfs.protocol.ClientProtocol.create from 10.111.57.222:41630: error: org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException: Failed to create file [/system/balancer.id] for[DFSClient_NONMapReduce_413051464_1] on client [10.111.57.222], because this file is already being created by[DFSClient_NONMapReduce_-732728704_1] on [10.111.57.222]"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* NameSystem.allocateBlock: /system/balancer.id. BP-986428099-10.111.57.222-1359353997106 blk_-2102764247427435122_1002"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* addStoredBlock: blockMap updated: 10.111.57.224:50010 is added to blk_-2102764247427435122_1002"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* addStoredBlock: blockMap updated: 10.111.57.225:50010 is added to blk_-2102764247427435122_1002"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* addStoredBlock: blockMap updated: 10.111.57.223:50010 is added to blk_-2102764247427435122_1002"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "DIR* NameSystem.completeFile: file /system/balancer.id is closed by DFSClient_NONMapReduce_-732728704_1"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "class": "org.apache.hadoop.mapred.Task",
+    "type": "INFO",
+    "content": "Communication exception: java.io.IOException: Failed on local exception: java.nio.channels.ClosedByInterruptException; Host Details : local host is: hostname.com/$ip_addr\"; destination host is: \"\"hostname.com\":12345;"
+  }
+]

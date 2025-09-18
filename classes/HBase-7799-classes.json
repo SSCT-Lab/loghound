@@ -1,0 +1,172 @@
+[
+  {
+    "class": "master.RegionStates",
+    "type": "INFO",
+    "content": "Found opening region {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OPENING, ts=1360362901596, server=10.11.2.92,64485,1360362800564} to be reassigned by SSH for 10.11.2.92,64485,1360362800564"
+  },
+  {
+    "class": "master.RegionStates",
+    "type": "INFO",
+    "content": "Region {NAME => 'IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d.', STARTKEY => '7333332c', ENDKEY => '7ffffff8', ENCODED => 871d1c3bdf98a2c93b527cb6cc61327d,} transitioned from {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OPENING, ts=1360362901596, server=10.11.2.92,64485,1360362800564} to {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=CLOSED, ts=1360362906500, server=null}"
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Forcing OFFLINE; was={IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=CLOSED, ts=1360362906500, server=null}"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:64483-0x13cbbf1025d0000 Async create of unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d with OFFLINE state"
+  },
+  {
+    "class": "master.OfflineCallback",
+    "type": "WARN",
+    "content": "Node for /hbase/region-in-transition/871d1c3bdf98a2c93b527cb6cc61327d already exists"
+  },
+  {
+    "class": "master.OfflineCallback",
+    "type": "DEBUG",
+    "content": "rs={IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OFFLINE, ts=1360362906506, server=null}, server=10.11.2.92,64488,1360362800651"
+  },
+  {
+    "class": "master.OfflineCallback$ExistCallback",
+    "type": "DEBUG",
+    "content": "rs={IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OFFLINE, ts=1360362906506, server=null}, server=10.11.2.92,64488,1360362800651"
+  },
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,64488,1360362800651"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:64488-0x13cbbf1025d0004 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,64488,1360362800651"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:64488-0x13cbbf1025d0004 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPEN failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,64488,1360362800651"
+  },
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,65343,1360362907858"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:65343-0x13cbbf1025d000f Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,65343,1360362907858"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:65343-0x13cbbf1025d000f Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPEN failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,65343,1360362907858"
+  },
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,49317,1360362971256"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:49317-0x13cbbf1025d0011 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,49317,1360362971256"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:49317-0x13cbbf1025d0011 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPEN failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,49317,1360362971256"
+  },
+  {
+    "class": "master.OfflineCallback",
+    "type": "DEBUG",
+    "content": "rs={IntegrationTestRebalanceAndKillServersTargeted,0ccccccc,1360362805563.f6daa3cccefad73f8141d200ce58645b. state=OFFLINE, ts=1360363161900, server=null}, server=10.11.2.92,49476,1360363036574"
+  },
+  {
+    "class": "client.MetaScanner",
+    "type": "DEBUG",
+    "content": "Current INFO from scan results = {NAME => 'IntegrationTestRebalanceAndKillServersTargeted,e6666658,1360362805564.763919a2e8ebd05f3735805ba2541ed6.', STARTKEY => 'e6666658', ENDKEY => 'f3333324', ENCODED => 763919a2e8ebd05f3735805ba2541ed6,}"
+  },
+  {
+    "class": "client.MetaScanner",
+    "type": "DEBUG",
+    "content": "Scanning .META. starting at row=IntegrationTestRebalanceAndKillServersTargeted,e6666658,00000000000000 for max=10 rows using hconnection 0x610f7612"
+  },
+  {
+    "class": "client.MetaScanner",
+    "type": "DEBUG",
+    "content": "Current INFO from scan results = {NAME => 'IntegrationTestRebalanceAndKillServersTargeted,e6666658,1360362805564.763919a2e8ebd05f3735805ba2541ed6.', STARTKEY => 'e6666658', ENDKEY => 'f3333324', ENCODED => 763919a2e8ebd05f3735805ba2541ed6,}"
+  },
+  {
+    "class": "client.HConnectionManager$HConnectionImplementation",
+    "type": "DEBUG",
+    "content": "Cached location for IntegrationTestRebalanceAndKillServersTargeted,e6666658,1360362805564.763919a2e8ebd05f3735805ba2541ed6. is 10.11.2.92:64486"
+  },
+  {
+    "class": "client.MetaScanner",
+    "type": "DEBUG",
+    "content": "Current INFO from scan results = {NAME => 'IntegrationTestRebalanceAndKillServersTargeted,f3333324,1360362805564.d362fd7914d7e74e3cff35e8bcaa8c9f.', STARTKEY => 'f3333324', ENDKEY => '', ENCODED => d362fd7914d7e74e3cff35e8bcaa8c9f,}"
+  },
+  {
+    "class": "client.HConnectionManager$HConnectionImplementation$Process",
+    "type": "TRACE",
+    "content": "Will retry requests to [10.11.2.92:64486] after delay of [32041] for rows [ed777f62b485b3975ac2d4ca644d619e-24475;]"
+  },
+  {
+    "class": "master.OfflineCallback",
+    "type": "WARN",
+    "content": "Node for /hbase/region-in-transition/871d1c3bdf98a2c93b527cb6cc61327d already exists"
+  },
+  {
+    "class": "master.OfflineCallback",
+    "type": "DEBUG",
+    "content": "rs={IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OFFLINE, ts=1360363161906, server=null}, server=10.11.2.92,49780,1360363101797"
+  },
+  {
+    "class": "master.OfflineCallback",
+    "type": "WARN",
+    "content": "Node for /hbase/region-in-transition/763919a2e8ebd05f3735805ba2541ed6 already exists"
+  },
+  {
+    "class": "master.OfflineCallback",
+    "type": "DEBUG",
+    "content": "rs={IntegrationTestRebalanceAndKillServersTargeted,e6666658,1360362805564.763919a2e8ebd05f3735805ba2541ed6. state=OFFLINE, ts=1360363161906, server=null}, server=10.11.2.92,64486,1360362800604"
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "INFO",
+    "content": "10.11.2.92,49780,1360363101797 unassigned znodes=5 of total=5"
+  },
+  {
+    "class": "master.RegionStates",
+    "type": "INFO",
+    "content": "Region {NAME => 'IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d.', STARTKEY => '7333332c', ENDKEY => '7ffffff8', ENCODED => 871d1c3bdf98a2c93b527cb6cc61327d,} transitioned from {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=OFFLINE, ts=1360363161906, server=null} to {IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. state=PENDING_OPEN, ts=1360363162117, server=10.11.2.92,49780,1360363101797}"
+  },
+  {
+    "class": "master.OfflineCallback$ExistCallback",
+    "type": "DEBUG",
+    "content": "rs={IntegrationTestRebalanceAndKillServersTargeted,f3333324,1360362805564.d362fd7914d7e74e3cff35e8bcaa8c9f. state=OFFLINE, ts=1360363161913, server=null}, server=10.11.2.92,64486,1360362800604"
+  },
+  {
+    "class": "master.RegionStates",
+    "type": "INFO",
+    "content": "Region {NAME => 'IntegrationTestRebalanceAndKillServersTargeted,99999990,1360362805563.569ec0c144f9033bb42e5e4936fdda4f.', STARTKEY => '99999990', ENDKEY => 'a666665c', ENCODED => 569ec0c144f9033bb42e5e4936fdda4f,} transitioned from {IntegrationTestRebalanceAndKillServersTargeted,99999990,1360362805563.569ec0c144f9033bb42e5e4936fdda4f. state=OFFLINE, ts=1360363161911, server=null} to {IntegrationTestRebalanceAndKillServersTargeted,99999990,1360362805563.569ec0c144f9033bb42e5e4936fdda4f. state=PENDING_OPEN, ts=1360363162117, server=10.11.2.92,49780,1360363101797}"
+  },
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Received request to open region: IntegrationTestRebalanceAndKillServersTargeted,7333332c,1360362805563.871d1c3bdf98a2c93b527cb6cc61327d. on 10.11.2.92,49780,1360363101797"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:49780-0x13cbbf1025d0015 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,49780,1360363101797"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:49780-0x13cbbf1025d0015 Attempt to transition the unassigned node for 871d1c3bdf98a2c93b527cb6cc61327d from M_ZK_REGION_OFFLINE to RS_ZK_REGION_FAILED_OPEN failed, the node existed but was in the state RS_ZK_REGION_OPENING set by the server 10.11.2.92,49780,1360363101797"
+  }
+]

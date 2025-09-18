@@ -1,0 +1,6 @@
+api_key:
+  sk-xxx
+model:
+  qwen-turbo
+base_url:
+  https://dashscope.aliyuncs.com/compatible-mode/v1

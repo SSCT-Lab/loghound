@@ -1,0 +1,27 @@
+[
+  {
+    "class": "ipc.Client",
+    "type": "DEBUG",
+    "content": "Connecting to /160.161.0.155:8020"
+  },
+  {
+    "class": "ipc.Client",
+    "type": "DEBUG",
+    "content": "closing ipc connection to vm2/160.161.0.155:8020: 10000 millis timeout while waiting for channel to be ready for connect. ch : java.nio.channels.SocketChannel[connection-pending remote=/160.161.0.155:8020]"
+  },
+  {
+    "class": "ipc.Client",
+    "type": "DEBUG",
+    "content": "IPC Client (31594013) connection to /160.161.0.155:8020 from hdfs/hadoop@HADOOP.COM: closed"
+  },
+  {
+    "class": "retry.RetryInvocationHandler",
+    "type": "WARN",
+    "content": "Exception while invoking class org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolTranslatorPB.create."
+  },
+  {
+    "class": "ipc.Client",
+    "type": "DEBUG",
+    "content": "Stopping client"
+  }
+]

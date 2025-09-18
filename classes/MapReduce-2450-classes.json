@@ -1,0 +1,82 @@
+[
+  {
+    "class": "org.apache.hadoop.metrics.jvm.JvmMetrics",
+    "type": "INFO",
+    "content": "Cannot initialize JVM Metrics with processName=MAP, sessionId= - already initialized"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.MapTask",
+    "type": "INFO",
+    "content": "numReduceTasks: 800"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.MapTask",
+    "type": "INFO",
+    "content": "io.sort.mb = 300"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.MapTask",
+    "type": "INFO",
+    "content": "data buffer = 239075328/298844160"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.MapTask",
+    "type": "INFO",
+    "content": "record buffer = 786432/983040"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.MapTask",
+    "type": "INFO",
+    "content": "Starting flush of map output"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.MapTask",
+    "type": "INFO",
+    "content": "Finished spill 0"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskRunner",
+    "type": "INFO",
+    "content": "Task:attempt_200903022127_0001_m_003163_0 is done. And is in the process of commiting"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskRunner",
+    "type": "INFO",
+    "content": "Communication exception: java.io.IOException: Call to /127.0.0.1:50311 failed on local exception: java.nio.channels.ClosedChannelException"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskRunner",
+    "type": "INFO",
+    "content": "Task 'attempt_200903022127_0001_m_003163_0' done."
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "WARN",
+    "content": "IPC Server Responder, call ping(attempt_200903022127_0001_m_003163_0) from 127.0.0.1:56884: output error"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "IPC Server handler 10 on 50311 caught: java.nio.channels.ClosedChannelException"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskRunner",
+    "type": "INFO",
+    "content": "Task attempt_201104190103_0002_r_000442_0 is allowed to commit now"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.FileOutputCommitter",
+    "type": "INFO",
+    "content": "Saved output of task 'attempt_201104190103_0002_r_000442_0' to hdfs://r05b02043.yh.aliyun.com:9000/group/dc/willwu/terasort-out"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskRunner",
+    "type": "INFO",
+    "content": "Communication exception: java.io.IOException: Call to /127.0.0.1:48950 failed on local exception: java.nio.channels.ClosedByInterruptException"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskRunner",
+    "type": "INFO",
+    "content": "Task 'attempt_201104190103_0002_r_000442_0' done."
+  }
+]

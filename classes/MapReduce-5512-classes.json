@@ -1,0 +1,92 @@
+[
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "ERROR",
+    "content": "Caught exception: java.io.IOException: Call to jobtrackerhost/100.70.178.36:9010 failed on local exception: java.io.IOException: An existing connection was forcibly closed by the remote host"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "INFO",
+    "content": "Resending 'status' to 'jobtrackerhost' with reponseId ‘-27775’ (if the last heartbeat got through, resend the previous status information)"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: jobtrackerhost/100.70.178.36:9010. Already tried 0 time(s); maxRetries=45"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: jobtrackerhost/100.70.178.36:9010. Already tried 3 time(s); maxRetries=45"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "INFO",
+    "content": "Recieved ReinitTrackerAction from JobTracker"
+  },
+  {
+    "class": "org.apache.hadoop.filecache.TrackerDistributedCacheManager",
+    "type": "INFO",
+    "content": "Cleanup..."
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "INFO",
+    "content": "Shutting down: Map-events fetcher for all reduce tasks on tracker_workernode0:127.0.0.1/127.0.0.1:63692"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "Stopping server on 63692"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "WARN",
+    "content": "Reinitializing local state"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "INFO",
+    "content": "Starting tasktracker with owner as hdp"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "INFO",
+    "content": "Good mapred local directories are: c:\\hdfs\\mapred\\local"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "IPC Server handler 0 on 63692: exiting"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "IPC Server handler 2 on 63692: exiting"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "INFO",
+    "content": "TaskTracker up at: 127.0.0.1/127.0.0.1:62593"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "INFO",
+    "content": "Starting tracker tracker_workernode0:127.0.0.1/127.0.0.1:62593"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "IPC Server Responder: starting"
+  },
+  {
+    "class": "org.apache.hadoop.security.UserGroupInformation",
+    "type": "ERROR",
+    "content": "PriviledgedActionException as:hdp cause:java.io.IOException: Call to jobtrackerhost/100.70.178.36:9010 failed on local exception: java.io.IOException: An existing connection was forcibly closed by the remote host"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskTracker",
+    "type": "ERROR",
+    "content": "Got fatal exception while reinitializing TaskTracker: java.io.IOException: Call to jobtrackerhost/100.70.178.36:9010 failed on local exception: java.io.IOException: An existing connection was forcibly closed by the remote host"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "class": "master.RegionStates",
+    "type": "INFO",
+    "content": "Onlined 1588230740 on kiyo.gq1.ygridcore.net,57016,1377814510039"
+  },
+  {
+    "class": "client.HConnectionManager$HConnectionImplementation",
+    "type": "DEBUG",
+    "content": "locateRegionInMeta parentTable=hbase:meta, metaLocation={region=hbase:meta,,1.1588230740, hostname=kiyo.gq1.ygridcore.net,57016,1377814510039, seqNum=0}, attempt=2 of 35 failed; retrying after sleep of 302 because: org.apache.hadoop.hbase.exceptions.RegionOpeningException: Region is being opened: 1588230740"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:57016-0x140cc24e86a0003 Transitioning 1588230740 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "zookeeper.RecoverableZooKeeper",
+    "type": "WARN",
+    "content": "Possibly transient ZooKeeper, quorum=localhost:61251, exception=org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /hbase/region-in-transition/1588230740"
+  },
+  {
+    "class": "util.RetryCounter",
+    "type": "INFO",
+    "content": "Sleeping 2000ms before retry #1..."
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENED, server=kiyo.gq1.ygridcore.net,57016,1377814510039, region=1588230740, current state from region state map ={1588230740 state=OPENING, ts=1377814529578, server=kiyo.gq1.ygridcore.net,57016,1377814510039}"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:44745-0x140cc24e86a0001-0x140cc24e86a0001 Deleting existing unassigned node 1588230740 in expected state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "zookeeper.ZooKeeperWatcher",
+    "type": "DEBUG",
+    "content": "master:44745-0x140cc24e86a0001-0x140cc24e86a0001 Received ZooKeeper Event, type=NodeDeleted, state=SyncConnected, path=/hbase/region-in-transition/1588230740"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "regionserver:57016-0x140cc24e86a0003-0x140cc24e86a0003 Attempt to transition the unassigned node for 1588230740 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENED failed, the node existed and was in the expected state but then when setting data it no longer existed"
+  },
+  {
+    "class": "handler.OpenRegionHandler",
+    "type": "WARN",
+    "content": "Completed the OPEN of region hbase:meta,,1.1588230740 but when transitioning from OPENING to OPENED got a version mismatch, someone else clashed so now unassigning -- closing region on server: kiyo.gq1.ygridcore.net,57016,1377814510039"
+  },
+  {
+    "class": "regionserver.HRegion",
+    "type": "DEBUG",
+    "content": "Closing hbase:meta,,1.1588230740: disabling compactions & flushes"
+  },
+  {
+    "class": "regionserver.HRegion",
+    "type": "DEBUG",
+    "content": "Updates disabled for region hbase:meta,,1.1588230740"
+  },
+  {
+    "class": "regionserver.HStore",
+    "type": "INFO",
+    "content": "Closed info"
+  },
+  {
+    "class": "regionserver.HRegion",
+    "type": "INFO",
+    "content": "Closed hbase:meta,,1.1588230740"
+  },
+  {
+    "class": "handler.OpenRegionHandler",
+    "type": "INFO",
+    "content": "Opening of region {ENCODED => 1588230740, NAME => 'hbase:meta,,1', STARTKEY => '', ENDKEY => ''} failed, transitioning from OPENING to FAILED_OPEN in ZK, expecting version 1"
+  },
+  {
+    "class": "zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:57016-0x140cc24e86a0003-0x140cc24e86a0003 Transitioning 1588230740 from RS_ZK_REGION_OPENING to RS_ZK_REGION_FAILED_OPEN"
+  },
+  {
+    "class": "zookeeper.ZKUtil",
+    "type": "DEBUG",
+    "content": "regionserver:57016-0x140cc24e86a0003-0x140cc24e86a0003 Unable to get data of znode /hbase/region-in-transition/1588230740 because node does not exist (not necessarily an error)"
+  },
+  {
+    "class": "handler.OpenRegionHandler",
+    "type": "WARN",
+    "content": "Unable to mark region {ENCODED => 1588230740, NAME => 'hbase:meta,,1', STARTKEY => '', ENDKEY => ''} as FAILED_OPEN. It's likely that the master already timed out this open attempt, and thus another RS already has the region."
+  }
+]

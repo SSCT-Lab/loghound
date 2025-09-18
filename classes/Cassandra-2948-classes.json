@@ -1,0 +1,47 @@
+[
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Moving miles/10.2.129.41 from Token(bytes[00]) to Token(bytes[07])."
+  },
+  {
+    "class": "StorageService",
+    "type": "DEBUG",
+    "content": "Table ks: work map {/10.2.129.16=[(Token(bytes[04]),Token(bytes[07])]]}."
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Sleeping 30000 ms before start streaming/fetching ranges."
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Moving: fetching new ranges and streaming old ranges"
+  },
+  {
+    "class": "StorageService",
+    "type": "DEBUG",
+    "content": "[Move->STREAMING] Work Map: {ks={(Token(bytes[0c]),Token(bytes[00])]=[miles/10.2.129.41]}}"
+  },
+  {
+    "class": "StorageService",
+    "type": "DEBUG",
+    "content": "[Move->FETCHING] Work Map: {ks={/10.2.129.16=[(Token(bytes[04]),Token(bytes[07])]]}}"
+  },
+  {
+    "class": "StorageService",
+    "type": "DEBUG",
+    "content": "Requesting from /10.2.129.16 ranges (Token(bytes[04]),Token(bytes[07])]"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Beginning transfer to miles/10.2.129.41"
+  },
+  {
+    "class": "StreamOut",
+    "type": "DEBUG",
+    "content": "Ranges are (Token(bytes[0c]),Token(bytes[00])]"
+  }
+]

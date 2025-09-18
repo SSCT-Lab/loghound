@@ -1,0 +1,62 @@
+[
+  {
+    "class": "UNKNOWN",
+    "type": "INFO",
+    "line": null,
+    "content": "Session establishment complete on server 223.prod/172.17.135.38:12913, sessionid = 0x134485fd7bcb26f, negotiated timeout = 6000"
+  },
+  {
+    "class": "UNKNOWN",
+    "type": "INFO",
+    "line": null,
+    "content": "Client session timed out, have not heard from server in 9827ms for sessionid 0x134485fd7bcb26f, closing socket connection and attempting reconnect"
+  },
+  {
+    "class": "UNKNOWN",
+    "type": "INFO",
+    "line": null,
+    "content": "Unable to reconnect to ZooKeeper service, session 0x134485fd7bcb26f has expired, closing socket connection"
+  },
+  {
+    "class": "ZooKeeperServer",
+    "type": "INFO",
+    "line": "314",
+    "content": "Expiring session 0x134485fd7bcb26f, timeout of 6000ms exceeded"
+  },
+  {
+    "class": "PrepRequestProcessor",
+    "type": "INFO",
+    "line": "391",
+    "content": "Processed session termination for sessionid: 0x134485fd7bcb26f"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "1580",
+    "content": "Established session 0x134485fd7bcb26f with negotiated timeout 6000 for client /172.17.136.82:45020"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "1435",
+    "content": "Closed socket connection for client /172.17.136.82:45020 which had sessionid 0x134485fd7bcb26f"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "770",
+    "content": "Client attempting to renew session 0x134485fd7bcb26f at /172.17.136.82:49367"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "1573",
+    "content": "Invalid session 0x134485fd7bcb26f for client /172.17.136.82:49367, probably expired"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "1435",
+    "content": "Closed socket connection for client /172.17.136.82:49367 which had sessionid 0x134485fd7bcb26f"
+  }
+]

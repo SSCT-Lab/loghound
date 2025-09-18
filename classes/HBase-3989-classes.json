@@ -1,0 +1,22 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "WARN",
+    "content": "error telling master we are up"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Telling master at 157-5-111-22:20000 that we are up"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "WARN",
+    "content": "error telling master we are up"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Telling master at 157-5-111-22:20000 that we are up"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "class": "org.apache.hadoop.mapred.ShuffleHandler",
+    "type": "ERROR",
+    "content": "Shuffle error:"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.ShuffleHandler",
+    "type": "ERROR",
+    "content": "Shuffle error [id: 0x01901fc1, /xx.xx.xx.xx:xx => /xx.xx.xx.xx:xx] EXCEPTION: java.io.IOException: Connection reset by peer"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.ShuffleHandler",
+    "type": "ERROR",
+    "content": "Shuffle error:"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.ShuffleHandler",
+    "type": "ERROR",
+    "content": "Shuffle error:"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.ShuffleHandler",
+    "type": "ERROR",
+    "content": "Shuffle error [id: 0x01fd225b, /xx.xx.xx.xx:xx => /xx.xx.xx.xx:xx] EXCEPTION: java.io.IOException: Broken pipe"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.ShuffleHandler",
+    "type": "ERROR",
+    "content": "Shuffle error:"
+  }
+]

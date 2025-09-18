@@ -1,0 +1,112 @@
+[
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Received task from /10.80.90.51 to stream 7871 ranges to /10.80.90.53"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Performing streaming repair of 7871 ranges with /10.80.90.53"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Stream context metadata [/var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4840-Data.db sections=5086 progress=0/350803667 - 0%, /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4787-Data.db sections=6079 progress=0/1160848303 - 0%, /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4825-Data.db sections=5526 progress=0/571701570 - 0%, /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4879-Data.db sections=3043 progress=0/3086625 - 0%], 11 sstables."
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Streaming to /10.80.90.53"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Beginning transfer to /10.80.90.51"
+  },
+  {
+    "class": "CFS(Keyspace='MyBusinessKeyspace', ColumnFamily='MyBusinessHistoryCF')",
+    "type": "INFO",
+    "content": "Flushing memtables for [CFS(Keyspace='MyBusinessKeyspace', ColumnFamily='MyBusinessHistoryCF')]..."
+  },
+  {
+    "class": "CFS(Keyspace='MyBusinessKeyspace', ColumnFamily='MyBusinessHistoryCF')",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-MyBusinessHistoryCF@554695962(2424273/24900316 serialized/live bytes, 51289 ops)"
+  },
+  {
+    "class": "CFS(Keyspace='MyBusinessKeyspace', ColumnFamily='MyBusinessHistoryCF')",
+    "type": "INFO",
+    "content": "Writing Memtable-MyBusinessHistoryCF@554695962(2424273/24900316 serialized/live bytes, 51289 ops)"
+  },
+  {
+    "class": "CFS(Keyspace='MyBusinessKeyspace', ColumnFamily='MyBusinessHistoryCF')",
+    "type": "INFO",
+    "content": "Completed flushing /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4881-Data.db (2083586 bytes) for commitlog position ReplayPosition(segmentId=1358949372387, position=2780498)"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Stream context metadata [/var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4787-Data.db sections=6645 progress=0/1303785158 - 0%, /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4840-Data.db sections=5775 progress=0/392625457 - 0%, /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4879-Data.db sections=4083 progress=0/3265613 - 0%], 12 sstables."
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Streaming to /10.80.90.51"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Successfully sent /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4840-Data.db to /10.80.90.53"
+  },
+  {
+    "class": "Thread[Thread-3087,5,main]",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[Thread-3087,5,main]"
+  },
+  {
+    "class": "CFS(Keyspace='OpsCenter', ColumnFamily='pdps')",
+    "type": "INFO",
+    "content": "liveRatio is 2.3633228082745292 (just-counted was 2.3633228082745292). calculation took 2ms for 1256 columns"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Successfully sent /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4787-Data.db to /10.80.90.53"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Successfully sent /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4878-Data.db to /10.80.90.53"
+  },
+  {
+    "class": "Memtable-MyBusinessHistoryCF@709374075",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-MyBusinessHistoryCF@709374075(7410300/48461437 serialized/live bytes, 155356 ops) [cassandra01(/10.80.90.51)]"
+  },
+  {
+    "class": "Memtable-MyBusinessHistoryCF@709374075",
+    "type": "INFO",
+    "content": "Writing Memtable-MyBusinessHistoryCF@709374075(7410300/48461437 serialized/live bytes, 155356 ops) [cassandra01(/10.80.90.51)]"
+  },
+  {
+    "class": "Memtable-MyBusinessHistoryCF@709374075",
+    "type": "INFO",
+    "content": "Completed flushing /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4952-Data.db (4474554 bytes) for commitlog position ReplayPosition(segmentId=1358949134910, position=13864741) [cassandra01(/10.80.90.51)]"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Successfully sent /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4922-Data.db to /10.80.90.52 [cassandra01(/10.80.90.51)]"
+  },
+  {
+    "class": "streaming task #aa70f8e0-656c-11e2-b226-d966287ae7ca",
+    "type": "INFO",
+    "content": "Successfully sent /var/lib/cassandra/data/MyBusinessKeyspace/MyBusinessHistoryCF/MyBusinessKeyspace-MyBusinessHistoryCF-ia-4922-Data.db to /10.80.90.53 [cassandra01(/10.80.90.51)]"
+  },
+  {
+    "class": "Thread[Streaming to /10.80.90.52:2,5,main]",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[Streaming to /10.80.90.52:2,5,main] [cassandra01(/10.80.90.51)]"
+  }
+]

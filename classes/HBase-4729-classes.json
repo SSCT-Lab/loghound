@@ -1,0 +1,27 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "FATAL",
+    "content": "Unexpected ZK exception creating node CLOSING"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.SplitTransaction",
+    "type": "INFO",
+    "content": "Starting split of region TestTable,0012469153,1320253135043.f7e1783e65ea8d621a4bc96ad310f101."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.SplitTransaction",
+    "type": "DEBUG",
+    "content": "regionserver:62023-0x132f043bbde0710 Creating ephemeral node for f7e1783e65ea8d621a4bc96ad310f101 in SPLITTING state"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:62023-0x132f043bbde0710 Attempting to transition node f7e1783e65ea8d621a4bc96ad310f101 from RS_ZK_REGION_SPLITTING to RS_ZK_REGION_SPLITTING"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.SplitTransaction",
+    "type": "INFO",
+    "content": "Still waiting on the master to process the split for f7e1783e65ea8d621a4bc96ad310f101"
+  }
+]

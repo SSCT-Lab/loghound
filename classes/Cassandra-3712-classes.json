@@ -1,0 +1,82 @@
+[
+  {
+    "class": "CompactionManager",
+    "type": "INFO",
+    "content": "Cleaning up SSTableReader(path='/ke/cassandra/data/kev3/URLs-hc-457-Data.db')"
+  },
+  {
+    "class": "MeteredFlusher",
+    "type": "INFO",
+    "content": "flushing high-traffic column family CFS(Keyspace='kev3', ColumnFamily='URLs') (estimated 156787206 bytes)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-URLs.URLs_1_idx@1347180703(16324791/156973287 serialized/live bytes, 173288 ops)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-URLs.URLs_1_idx@1347180703(16324791/156973287 serialized/live bytes, 173288 ops)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "CFS(Keyspace='kev3', ColumnFamily='URLs.URLs_1_idx') liveRatio is 7.692510757866615 (just-counted was 4.512127842861816). calculation took 8648ms for 97329 columns"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /ke/cassandra/data/kev3/URLs.URLs_1_idx-hc-143-Data.db (26375495 bytes)"
+  },
+  {
+    "class": "GCInspector",
+    "type": "INFO",
+    "content": "GC for ParNew: 206 ms for 1 collections, 934108624 used; max is 2034237440"
+  },
+  {
+    "class": "MeteredFlusher",
+    "type": "INFO",
+    "content": "flushing high-traffic column family CFS(Keyspace='kev3', ColumnFamily='URLs') (estimated 188842513 bytes)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-URLs.URLs_1_idx@164871630(19662738/189069779 serialized/live bytes, 208494 ops)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-URLs.URLs_1_idx@164871630(19662738/189069779 serialized/live bytes, 208494 ops)"
+  },
+  {
+    "class": "GCInspector",
+    "type": "INFO",
+    "content": "GC for ParNew: 402 ms for 2 collections, 981893424 used; max is 2034237440"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /ke/cassandra/data/kev3/URLs.URLs_1_idx-hc-144-Data.db (31755390 bytes)"
+  },
+  {
+    "class": "MeteredFlusher",
+    "type": "INFO",
+    "content": "flushing high-traffic column family CFS(Keyspace='kev3', ColumnFamily='URLs') (estimated 174605041 bytes)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-URLs.URLs_1_idx@284469330(18158445/174605041 serialized/live bytes, 192702 ops)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-URLs.URLs_1_idx@284469330(18158445/174605041 serialized/live bytes, 192702 ops)"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[CompactionExecutor:260,1,RMI Runtime]"
+  }
+]

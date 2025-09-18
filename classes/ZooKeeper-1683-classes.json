@@ -1,0 +1,22 @@
+[
+  {
+    "class": "ConnectionState",
+    "type": "ERROR",
+    "content": "Background exception caught"
+  },
+  {
+    "class": "ClientCnxn",
+    "type": "WARN",
+    "content": "Session 0x0 for server null, unexpected error, closing socket connection and attempting reconnect"
+  },
+  {
+    "class": "ClientCnxnSocketNIO",
+    "type": "DEBUG",
+    "content": "Ignoring exception during shutdown input"
+  },
+  {
+    "class": "ClientCnxnSocketNIO",
+    "type": "DEBUG",
+    "content": "Ignoring exception during shutdown output"
+  }
+]

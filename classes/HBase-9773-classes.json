@@ -1,0 +1,37 @@
+[
+  {
+    "class": "beaver.machine",
+    "type": "INFO",
+    "content": "ERROR: Region { meta => hbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a., hdfs => hdfs://gs-hdp2-secure-1381559462-hbase-12.cs1cloud.internal:8020/apps/hbase/data/data/hbase/namespace/a0ac0825ba2d0830614e7f808f31787a, deployed => } not deployed on any region server."
+  },
+  {
+    "class": "beaver.machine",
+    "type": "INFO",
+    "content": "Trying to fix unassigned region..."
+  },
+  {
+    "class": "master.HMaster",
+    "type": "INFO",
+    "content": "Client=hbase//172.18.145.105 assign hbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a."
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Sent CLOSE to gs-hdp2-secure-1381559462-hbase-1.cs1cloud.internal,60020,1381564439794 for region hbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a."
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "No previous transition plan found (or ignoring an existing plan) for hbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a.; generated random plan=hri=hbase:namespace,,1381564449706.a0ac0825ba2d0830614e7f808f31787a., src=, dest=gs-hdp2-secure-1381559462-hbase-9.cs1cloud.internal,60020,1381564439807; 4 (online=4, available=4) available servers, forceNewPlan=true"
+  },
+  {
+    "class": "master.HMaster",
+    "type": "FATAL",
+    "content": "Master server abort: loaded coprocessors are: [org.apache.hadoop.hbase.security.access.AccessController]"
+  },
+  {
+    "class": "master.HMaster",
+    "type": "FATAL",
+    "content": "Unexpected state : {a0ac0825ba2d0830614e7f808f31787a state=OPEN, ts=1381564451344, server=gs-hdp2-secure-1381559462-hbase-1.cs1cloud.internal,60020,1381564439794} .. Cannot transit it to OFFLINE."
+  }
+]

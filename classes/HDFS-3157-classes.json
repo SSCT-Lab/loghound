@@ -1,0 +1,117 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: duplicate requested for blk_2903555284838653156 to add as corrupt on XX.XX.XX.XX by /XX.XX.XX.XX because reported RBW replica with genstamp 1002 does not match COMPLETE block's genstamp in block map 1003"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* Removing block blk_2903555284838653156_1003 from neededReplications as it has enough replicas."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "WARN",
+    "content": "Unexpected error trying to delete block blk_2903555284838653156_1003. BlockInfo not found in volumeMap."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "WARN",
+    "content": "Error processing datanode Command"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "opWriteBlock BP-2087796974-10.10.11.90-1336591801017:blk_-571802999240948417_1003 received exception org.apache.hadoop.hdfs.server.datanode.ReplicaAlreadyExistsException: Block BP-2087796974-10.10.11.90-1336591801017:blk_-571802999240948417_1003 already exists in state RBW and thus cannot be created."
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK markBlockAsCorrupt: block blk_-6891652617965059210_1002 could not be marked as corrupt as it does not belong to any file"
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* ask 127.0.0.1:54681 to replicate blk_3471690017167574595_1003 to datanode(s) 127.0.0.1:54041"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "DatanodeRegistration(127.0.0.1, storageID=DS-1047816814-192.168.44.128-54681-1336847251649, infoPort=62840, ipcPort=26036, storageInfo=lv=-40;cid=testClusterID;nsid=1646783488;c=0) Starting thread to transfer block BP-1770179175-192.168.44.128-1336847247907:blk_3471690017167574595_1003 to 127.0.0.1:54041"
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* processReport: from DatanodeRegistration(127.0.0.1, storageID=DS-1047816814-192.168.44.128-54681-1336847251649, infoPort=62840, ipcPort=26036, storageInfo=lv=-40;cid=testClusterID;nsid=1646783488;c=0), blocks: 1, processing time: 0 msecs"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "BlockReport of 1 blocks took 0 msec to generate and 2 msecs for RPC and NN processing"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "sent block report, processed command:org.apache.hadoop.hdfs.server.protocol.FinalizeCommand@12eb0b3"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "Receiving block BP-1770179175-192.168.44.128-1336847247907:blk_3471690017167574595_1003 src: /127.0.0.1:33583 dest: /127.0.0.1:54041"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "opWriteBlock BP-1770179175-192.168.44.128-1336847247907:blk_3471690017167574595_1003 received exception org.apache.hadoop.hdfs.server.datanode.ReplicaAlreadyExistsException: Block BP-1770179175-192.168.44.128-1336847247907:blk_3471690017167574595_1003 already exists in state RBW and thus cannot be created."
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "ERROR",
+    "content": "127.0.0.1:54041:DataXceiver error processing WRITE_BLOCK operation src: /127.0.0.1:33583 dest: /127.0.0.1:54041"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "DataTransfer: Transmitted BP-1770179175-192.168.44.128-1336847247907:blk_3471690017167574595_1003 (numBytes=100) to /127.0.0.1:54041"
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* processReport: from DatanodeRegistration(127.0.0.1, storageID=DS-610636930-192.168.44.128-20029-1336847250644, infoPort=52843, ipcPort=46734, storageInfo=lv=-40;cid=testClusterID;nsid=1646783488;c=0), blocks: 0, processing time: 0 msecs"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "BlockReport of 0 blocks took 0 msec to generate and 3 msecs for RPC and NN processing"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "sent block report, processed command:org.apache.hadoop.hdfs.server.protocol.FinalizeCommand@a1364a"
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: blk_3471690017167574595 added as corrupt on 127.0.0.1:54041 by /127.0.0.1 because reported RBW replica with genstamp 1002 does not match COMPLETE block's genstamp in block map 1003"
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* processReport: from DatanodeRegistration(127.0.0.1, storageID=DS-1452741455-192.168.44.128-54041-1336847250645, infoPort=10314, ipcPort=16230, storageInfo=lv=-40;cid=testClusterID;nsid=1646783488;c=0), blocks: 1, processing time: 2 msecs"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "BlockReport of 1 blocks took 0 msec to generate and 4 msecs for RPC and NN processing"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "INFO",
+    "content": "sent block report, processed command:org.apache.hadoop.hdfs.server.protocol.FinalizeCommand@17194a4"
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK* Removing block blk_3471690017167574595_1003 from neededReplications as it has enough replicas."
+  }
+]

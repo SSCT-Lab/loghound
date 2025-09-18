@@ -1,0 +1,17 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "STOPPED: Failed initialization"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "ERROR",
+    "content": "Failed init"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "FATAL",
+    "content": "ABORTING region server om-host2,26003,1364524173470: Unhandled exception: cannot get log writer"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "class": "Processing response on a callback from 3840@/10.179.64.227",
+    "type": "DEBUG",
+    "content": "Processing response on a callback from 3840@/10.179.64.227"
+  },
+  {
+    "class": "Preprocessed data response",
+    "type": "DEBUG",
+    "content": "Preprocessed data response"
+  },
+  {
+    "class": "Processing response on a callback from 3841@/10.179.111.137",
+    "type": "DEBUG",
+    "content": "Processing response on a callback from 3841@/10.179.111.137"
+  },
+  {
+    "class": "Preprocessed digest response",
+    "type": "DEBUG",
+    "content": "Preprocessed digest response"
+  },
+  {
+    "class": "Processing response on a callback from 3837@/10.179.111.137",
+    "type": "DEBUG",
+    "content": "Processing response on a callback from 3837@/10.179.111.137"
+  },
+  {
+    "class": "Preprocessed data response",
+    "type": "DEBUG",
+    "content": "Preprocessed data response"
+  },
+  {
+    "class": "Preprocessed digest response",
+    "type": "DEBUG",
+    "content": "Preprocessed digest response"
+  },
+  {
+    "class": "resolving 2 responses",
+    "type": "DEBUG",
+    "content": "resolving 2 responses"
+  },
+  {
+    "class": "Fatal exception in thread Thread[ReadRepairStage:526,5,main]",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[ReadRepairStage:526,5,main]"
+  },
+  {
+    "class": "Fatal exception in thread Thread[ReadRepairStage:525,5,main]",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[ReadRepairStage:525,5,main]"
+  },
+  {
+    "class": "Fatal exception in thread Thread[ReadRepairStage:528,5,main]",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[ReadRepairStage:528,5,main]"
+  }
+]

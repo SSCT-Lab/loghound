@@ -1,0 +1,7 @@
+[
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.ApplicationMasterService",
+    "type": "ERROR",
+    "content": "AppAttemptId doesnt exist in cache appattempt_1318579738195_0004_000001"
+  }
+]

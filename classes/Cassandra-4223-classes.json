@@ -1,0 +1,132 @@
+[
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "MOVING: fetching new ranges and streaming old ranges"
+  },
+  {
+    "class": "StreamIn",
+    "type": "DEBUG",
+    "content": "Requesting from /192.168.1.7 ranges (24504928094253812322316810666345578171,28356863910078205288614550619314017619]"
+  },
+  {
+    "class": "StreamInSession",
+    "type": "DEBUG",
+    "content": "Adding file /var/lib/cassandra/data/FMM_Studio/PartsData-hc-1-Data.db to Stream Request queue"
+  },
+  {
+    "class": "IncomingStreamReader",
+    "type": "DEBUG",
+    "content": "Receiving stream"
+  },
+  {
+    "class": "IncomingStreamReader",
+    "type": "DEBUG",
+    "content": "Creating file for /var/lib/cassandra/data/FMM_Studio/PartsData-tmp-hc-154-Data.db with 1 estimated keys"
+  },
+  {
+    "class": "IncomingStreamReader",
+    "type": "DEBUG",
+    "content": "Estimated keys 1"
+  },
+  {
+    "class": "StreamInSession",
+    "type": "DEBUG",
+    "content": "Finished /var/lib/cassandra/data/FMM_Studio/PartsData-hc-1-Data.db sections=1 progress=305641/305641 - 100%. Sending ack to org.apache.cassandra.streaming.StreamInSession@3ea5c544"
+  },
+  {
+    "class": "StreamInSession",
+    "type": "INFO",
+    "content": "Finished streaming session 26132848816442266 from /192.168.1.7"
+  },
+  {
+    "class": "StreamInSession",
+    "type": "DEBUG",
+    "content": "Adding file /var/lib/cassandra/data/OpsCenter/rollups60-hc-6-Data.db to Stream Request queue"
+  },
+  {
+    "class": "IncomingStreamReader",
+    "type": "DEBUG",
+    "content": "Receiving stream"
+  },
+  {
+    "class": "StreamRequestVerbHandler",
+    "type": "DEBUG",
+    "content": "Received a StreamRequestMessage from /192.168.1.9"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Beginning transfer to /192.168.1.9"
+  },
+  {
+    "class": "StreamOut",
+    "type": "DEBUG",
+    "content": "Ranges are (24504928094253812322316810666345578171,28356863910078205288614550619314017619]"
+  },
+  {
+    "class": "StreamRequestVerbHandler",
+    "type": "DEBUG",
+    "content": "Received a StreamRequestMessage from /192.168.1.9"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Beginning transfer to /192.168.1.9"
+  },
+  {
+    "class": "StreamOut",
+    "type": "DEBUG",
+    "content": "Ranges are (24504928094253812322316810666345578171,28356863910078205288614550619314017619]"
+  },
+  {
+    "class": "FileStreamTask",
+    "type": "DEBUG",
+    "content": "Done streaming /var/lib/cassandra/data/FMM_Studio/PartsData-hc-1-Data.db sections=1 progress=305641/305641 - 100%"
+  },
+  {
+    "class": "StreamReplyVerbHandler",
+    "type": "DEBUG",
+    "content": "Received StreamReply StreamReply(sessionId=26132848816442266, file='/var/lib/cassandra/data/FMM_Studio/PartsData-hc-1-Data.db', action=FILE_FINISHED)"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[MiscStage:1,5,main]"
+  },
+  {
+    "class": "StreamReplyVerbHandler",
+    "type": "DEBUG",
+    "content": "Received StreamReply StreamReply(sessionId=26132848816442266, file='', action=SESSION_FINISHED)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-pdps@1010287800(7600673/192386927 serialized/live bytes, 245183 ops)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /var/lib/cassandra/data/OpsCenter/pdps-hc-7-Data.db (7880098 bytes)"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Beginning transfer to /192.168.1.9"
+  },
+  {
+    "class": "FileStreamTask",
+    "type": "DEBUG",
+    "content": "Done streaming /var/lib/cassandra/data/OpsCenter/rollups7200-hc-3-Data.db sections=1 progress=69548/69548 - 100%"
+  },
+  {
+    "class": "StreamReplyVerbHandler",
+    "type": "DEBUG",
+    "content": "Received StreamReply StreamReply(sessionId=26132848816442266, file='/var/lib/cassandra/data/OpsCenter/rollups7200-hc-3-Data.db', action=FILE_FINISHED)"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[MiscStage:2,5,main]"
+  }
+]

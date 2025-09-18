@@ -1,0 +1,7 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.client.HConnectionManager$HConnectionImplementation",
+    "type": "WARN",
+    "content": "RemoteException connecting to RS"
+  }
+]

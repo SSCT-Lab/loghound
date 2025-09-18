@@ -1,0 +1,7 @@
+[
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl",
+    "type": "ERROR",
+    "content": "Container launch failed for container_1320233407485_0002_01_001434 : java.lang.reflect.UndeclaredThrowableException"
+  }
+]

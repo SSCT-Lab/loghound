@@ -1,0 +1,122 @@
+[
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "41",
+    "content": "READPACKET OK"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "38",
+    "content": "READPACKET FORCED FAIL"
+  },
+  {
+    "class": "SendAckRequestProcessor",
+    "type": "WARN",
+    "line": "46",
+    "content": "Closing connection to leader, exception during packet send"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "41",
+    "content": "READPACKET OK"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "41",
+    "content": "READPACKET OK"
+  },
+  {
+    "class": "SendAckRequestProcessor",
+    "type": "WARN",
+    "line": "63",
+    "content": "Closing connection to leader, exception during packet send"
+  },
+  {
+    "class": "Follower",
+    "type": "WARN",
+    "line": "309",
+    "content": "Exception when following the leader"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "833",
+    "content": "closing session:0x12334e7ba770000 NIOServerCnxn: java.nio.channels.SocketChannel[connected local=/127.0.0.1:2181 remote=/127.0.0.1:33152]"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "833",
+    "content": "closing session:0x12334e7226f0000 NIOServerCnxn: java.nio.channels.SocketChannel[connected local=/127.0.0.1:2181 remote=/127.0.0.1:33116]"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "41",
+    "content": "READPACKET OK"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "38",
+    "content": "READPACKET FORCED FAIL"
+  },
+  {
+    "class": "RecvWorker",
+    "type": "WARN",
+    "line": "621",
+    "content": "08-19 16:05:25,546 - WARN  [Thread-3:QuorumCnxManager$RecvWorker@621] - Connection broken:"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "41",
+    "content": "READPACKET OK"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "618",
+    "content": "Notification: 1, 4294967500, 2, 1, LOOKING, LOOKING, 1"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "642",
+    "content": "Adding vote"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "38",
+    "content": "READPACKET FORCED FAIL"
+  },
+  {
+    "class": "SendWorker",
+    "type": "WARN",
+    "line": "550",
+    "content": "Exception when using channel: 2"
+  },
+  {
+    "class": "SendWorker",
+    "type": "WARN",
+    "line": "554",
+    "content": "Send worker leaving thread"
+  },
+  {
+    "class": "ReadRequestFailsIntermittently",
+    "type": "INFO",
+    "line": "38",
+    "content": "READPACKET FORCED FAIL"
+  },
+  {
+    "class": "SyncRequestProcessor",
+    "type": "FATAL",
+    "line": "131",
+    "content": "Severe unrecoverable error, exiting"
+  }
+]

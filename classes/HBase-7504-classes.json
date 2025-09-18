@@ -1,0 +1,32 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "DEBUG",
+    "content": "Added=dw88.kgb.sqa.cm4,60020,1351671478752 to dead servers, submitted shutdown handler to be executed, root=true, meta=false"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.ServerShutdownHandler",
+    "type": "INFO",
+    "content": "Splitting logs for dw88.kgb.sqa.cm4,60020,1351671478752"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.ServerShutdownHandler",
+    "type": "INFO",
+    "content": "Server dw88.kgb.sqa.cm4,60020,1351671478752 was carrying ROOT. Trying to assign."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "DEBUG",
+    "content": "Server REPORT rejected; currently processing dw88.kgb.sqa.cm4,60020,1351671478752 as dead server"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.ServerShutdownHandler",
+    "type": "INFO",
+    "content": "Skipping log splitting for dw88.kgb.sqa.cm4,60020,1351671478752"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.util.Sleeper",
+    "type": "WARN",
+    "content": "We slept 229128ms instead of 100000ms, this is likely due to a long garbage collecting pause and it's usually bad, see http://hbase.apache.org/book.html#trouble.rs.runtime.zkexpired"
+  }
+]

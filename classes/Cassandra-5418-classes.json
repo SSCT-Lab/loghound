@@ -1,0 +1,22 @@
+[
+  {
+    "class": "CassandraDaemon",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[Streaming to /10.10.45.60:28,5,main]"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[Thread-2076,5,main]"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[Thread-1424,5,main]"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[Streaming to /10.10.45.58:55,5,main]"
+  }
+]

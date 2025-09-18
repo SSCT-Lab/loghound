@@ -1,0 +1,22 @@
+[
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "Node /10.171.47.226 is now part of the cluster"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /10.171.47.226 is now UP"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Nodes /10.171.47.226 and /10.171.55.77 have the same token 61078635599166706937511052402724559481. /10.171.47.226 is the new owner"
+  },
+  {
+    "class": "TokenMetadata",
+    "type": "WARN",
+    "content": "Token 61078635599166706937511052402724559481 changing ownership from /10.171.55.77 to /10.171.47.226"
+  }
+]

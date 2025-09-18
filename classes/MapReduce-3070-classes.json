@@ -1,0 +1,7 @@
+[
+  {
+    "class": "nodemanager.NodeManager",
+    "type": "FATAL",
+    "content": "Error starting NodeManager"
+  }
+]

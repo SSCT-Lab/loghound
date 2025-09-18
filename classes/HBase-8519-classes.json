@@ -1,0 +1,82 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.metrics.MasterMetrics",
+    "type": "INFO",
+    "content": "Initialized"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "DEBUG",
+    "content": "HMaster started in backup mode. Stalling until master znode is written."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper",
+    "type": "INFO",
+    "content": "Node /hbase/master already exists and this is not a retry"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ActiveMasterManager",
+    "type": "INFO",
+    "content": "Adding ZNode for /hbase/backup-masters/xxx.com,60000,1368137285373 in backup master directory"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ActiveMasterManager",
+    "type": "INFO",
+    "content": "Another master is the active master, xxx.com,60000,1368137283107; waiting to become the next active master"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ActiveMasterManager",
+    "type": "DEBUG",
+    "content": "No master available. Notifying waiting threads"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "Cluster went down before this master became active"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "DEBUG",
+    "content": "Stopping service threads"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.HBaseServer",
+    "type": "INFO",
+    "content": "Stopping server on 60000"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.metrics.MasterMetrics",
+    "type": "INFO",
+    "content": "Initialized"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper",
+    "type": "INFO",
+    "content": "Node /hbase/master already exists and this is not a retry"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ActiveMasterManager",
+    "type": "INFO",
+    "content": "Adding ZNode for /hbase/backup-masters/xxx.com,60000,1368235217501 in backup master directory"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ActiveMasterManager",
+    "type": "INFO",
+    "content": "Current master has this master's address, xxx.com,60000,1368234912934; master was restarted? Deleting node."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ActiveMasterManager",
+    "type": "DEBUG",
+    "content": "No master available. Notifying waiting threads"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "Cluster went down before this master became active"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "DEBUG",
+    "content": "Stopping service threads"
+  }
+]

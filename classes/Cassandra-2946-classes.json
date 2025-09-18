@@ -1,0 +1,27 @@
+[
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[HintedHandoff:1,1,main]"
+  },
+  {
+    "class": "HintedHandOffManager",
+    "type": "DEBUG",
+    "content": "Checking remote schema before delivering hints"
+  },
+  {
+    "class": "CassandraServer",
+    "type": "DEBUG",
+    "content": "checking schema agreement"
+  },
+  {
+    "class": "StorageProxy",
+    "type": "DEBUG",
+    "content": "Schemas are in agreement."
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[HintedHandoff:1,1,main]"
+  }
+]

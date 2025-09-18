@@ -1,0 +1,87 @@
+[
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "Node /127.0.0.2 is now part of the cluster"
+  },
+  {
+    "class": "Gossiper",
+    "type": "INFO",
+    "content": "InetAddress /127.0.0.2 is now UP"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Starting repair command #1, repairing 2 ranges."
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "[repair #4768dfb0-f812-11e0-0000-fe8ebeead9fb] new session: will sync /127.0.0.1, /127.0.0.2 on range (Token(bytes[4d6ccfeaa8bb59551751a2816fde9343]),Token(bytes[63e5b6995466cd3221cba16646ae19ed])] for Test.[Response]"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "[repair #4768dfb0-f812-11e0-0000-fe8ebeead9fb] requests for merkle tree sent for Response (to [/127.0.0.1, /127.0.0.2])"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-Response@1405292188(108646086/135807607 serialized/live bytes, 5298 ops)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-Response@1405292188(108646086/135807607 serialized/live bytes, 5298 ops)"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "[repair #4768dfb0-f812-11e0-0000-fe8ebeead9fb] Received merkle tree for Response from /127.0.0.2"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /home/cspriegel/Development/cassandra1/data/Test/Response-h-3-Data.db (108914411 bytes)"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "[repair #4768dfb0-f812-11e0-0000-fe8ebeead9fb] Received merkle tree for Response from /127.0.0.1"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "[repair #4ececb70-f812-11e0-0000-fe8ebeead9fb] new session: will sync /127.0.0.1, /127.0.0.2 on range (Token(bytes[63e5b6995466cd3221cba16646ae19ed]),Token(bytes[4d6ccfeaa8bb59551751a2816fde9343])] for Test.[Response]"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "[repair #4ececb70-f812-11e0-0000-fe8ebeead9fb] requests for merkle tree sent for Response (to [/127.0.0.1, /127.0.0.2])"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "[repair #4768dfb0-f812-11e0-0000-fe8ebeead9fb] Endpoints /127.0.0.2 and /127.0.0.1 have 6 range(s) out of sync for Response"
+  },
+  {
+    "class": "StreamingRepairTask",
+    "type": "INFO",
+    "content": "[streaming task #4ed904a0-f812-11e0-0000-fe8ebeead9fb] Performing streaming repair of 6 ranges with /127.0.0.2"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Stream context metadata [/home/cspriegel/Development/cassandra1/data/Test/Response-h-1-Data.db sections=6 progress=0/34987700 - 0%, /home/cspriegel/Development/cassandra1/data/Test/Response-h-2-Data.db sections=4 progress=0/41162000 - 0%, /home/cspriegel/Development/cassandra1/data/Test/Response-h-3-Data.db sections=1 progress=0/10290500 - 0%], 3 sstables."
+  },
+  {
+    "class": "StreamOutSession",
+    "type": "INFO",
+    "content": "Streaming to /127.0.0.2"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[ValidationExecutor:1,5,main]"
+  }
+]

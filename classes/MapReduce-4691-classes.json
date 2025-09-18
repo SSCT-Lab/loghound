@@ -1,0 +1,22 @@
+[
+  {
+    "class": "org.apache.hadoop.mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Application state is completed. FinalApplicationStatus=SUCCEEDED. Redirecting to job history server"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.ClientServiceDelegate",
+    "type": "WARN",
+    "content": "Error from remote end: Unknown job job_1348097917603_3019"
+  },
+  {
+    "class": "org.apache.hadoop.security.UserGroupInformation",
+    "type": "ERROR",
+    "content": "PriviledgedActionException as:xxx (auth:KERBEROS) cause:org.apache.hadoop.yarn.exceptions.impl.pb.YarnRemoteExceptionPBImpl: Unknown job job_1348097917603_3019"
+  },
+  {
+    "class": "org.apache.pig.tools.pigstats.JobStats",
+    "type": "WARN",
+    "content": "Failed to get map task report"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "class": "Exception",
+    "type": "ERROR",
+    "content": "ERROR 05:45:39,305 Exception encountered during startup"
+  },
+  {
+    "class": "Exception",
+    "type": "ERROR",
+    "content": "ERROR 02:58:45,376 Exception in thread Thread[WRITE-cassandra-1/10.179.65.102,5,main]"
+  }
+]

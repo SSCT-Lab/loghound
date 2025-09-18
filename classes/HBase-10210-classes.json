@@ -1,0 +1,32 @@
+[
+  {
+    "class": "master.ServerManager",
+    "type": "INFO",
+    "content": "Finished waiting for region servers count to settle; checked in 2, slept for 18262 ms, expecting minimum of 1, maximum of 2147483647, master is running."
+  },
+  {
+    "class": "master.ServerManager",
+    "type": "INFO",
+    "content": "Registering server=h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800"
+  },
+  {
+    "class": "master.HMaster",
+    "type": "INFO",
+    "content": "Registered server found up in zk but who has not yet reported in: h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800"
+  },
+  {
+    "class": "master.ServerManager",
+    "type": "INFO",
+    "content": "Triggering server recovery; existingServer h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800 looks stale, new server:h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800"
+  },
+  {
+    "class": "master.ServerManager",
+    "type": "INFO",
+    "content": "Master doesn't enable ServerShutdownHandler during initialization, delay expiring server h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800"
+  },
+  {
+    "class": "master.HMaster",
+    "type": "ERROR",
+    "content": "Region server h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800 reported a fatal error: ABORTING region server h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800: org.apache.hadoop.hbase.YouAreDeadException: Server REPORT rejected; currently processing h2-ubuntu12-sec-1387431063-hbase-8.cs1cloud.internal,60020,1387451803800 as dead server"
+  }
+]

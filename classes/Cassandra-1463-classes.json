@@ -1,0 +1,27 @@
+[
+  {
+    "class": "Gossiper.java",
+    "type": "INFO",
+    "content": "FatClient /10.251.243.191 has been silent for 3600000ms, removing from gossip"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "ERROR",
+    "content": "Gossip error"
+  },
+  {
+    "class": "Cassandra.java",
+    "type": "ERROR",
+    "content": "Internal error processing batch_mutate"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "INFO",
+    "content": "FatClient /10.179.65.102 has been silent for 3600000ms, removing from gossip"
+  },
+  {
+    "class": "Cassandra.java",
+    "type": "ERROR",
+    "content": "Uncaught exception in thread Thread[Timer-0,5,main]"
+  }
+]

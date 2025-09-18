@@ -1,0 +1,12 @@
+[
+  {
+    "class": "ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: linux-f330.site/10.18.40.182:8032. Already tried 0 time(s)."
+  },
+  {
+    "class": "ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: linux-f330.site/10.18.40.182:8032. Already tried 9 time(s)."
+  }
+]

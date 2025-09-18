@@ -1,0 +1,37 @@
+[
+  {
+    "class": "org.apache.hadoop.mapred.Merger",
+    "type": "INFO",
+    "content": "Down to the last merge-pass, with 3 segments left of total size: 1969310 bytes"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.Task",
+    "type": "INFO",
+    "content": "Task:attempt_201202272306_0794_m_000094_0 is done. And is in the process of commiting"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.Task",
+    "type": "INFO",
+    "content": "Communication exception: java.io.IOException: Call to /127.0.0.1:35400 failed on local exception: java.nio.channels.ClosedByInterruptException"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.Task",
+    "type": "INFO",
+    "content": "Task 'attempt_201202272306_0794_m_000094_0' done."
+  },
+  {
+    "class": "org.apache.hadoop.mapred.Merger",
+    "type": "INFO",
+    "content": "Down to the last merge-pass, with 3 segments left of total size: 1974104 bytes"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.Task",
+    "type": "INFO",
+    "content": "Task:attempt_201202272306_0794_m_000000_0 is done. And is in the process of commiting"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.Task",
+    "type": "INFO",
+    "content": "Task 'attempt_201202272306_0794_m_000000_0' done."
+  }
+]

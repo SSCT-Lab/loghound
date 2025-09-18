@@ -1,0 +1,142 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Using pre-existing plan for region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568.; plan=hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=swbss-hadoop-004,60020,1340890123243, dest=swbss-hadoop-006,60020,1340890678078"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Assigning region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. to swbss-hadoop-006,60020,1340890678078"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=M_ZK_REGION_OFFLINE, server=swbss-hadoop-002:60000, region=b713fd655fa02395496c5a6e39ddf568"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-006,60020,1340890678078, region=b713fd655fa02395496c5a6e39ddf568"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-006,60020,1340890678078, region=b713fd655fa02395496c5a6e39ddf568"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENED, server=swbss-hadoop-006,60020,1340890678078, region=b713fd655fa02395496c5a6e39ddf568"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.OpenedRegionHandler",
+    "type": "DEBUG",
+    "content": "Handling OPENED event for CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. from serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=518945, regions=575, usedHeap=15282, maxHeap=31301); deleting unassigned node"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:60000-0x2377fee2ae80007 Deleting existing unassigned node for b713fd655fa02395496c5a6e39ddf568 that is in expected state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:60000-0x2377fee2ae80007 Successfully deleted unassigned node for region b713fd655fa02395496c5a6e39ddf568 in expected state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.OpenedRegionHandler",
+    "type": "DEBUG",
+    "content": "The master has opened the region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. that was online on serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=518945, regions=575, usedHeap=15282, maxHeap=31301)"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Failed assignment of CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. to serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=0, regions=575, usedHeap=0, maxHeap=0), trying to assign elsewhere instead; retry=0"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "No previous transition plan was found (or we are ignoring an existing plan) for CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. so generated a random one; hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=, dest=swbss-hadoop-164,60020,1340888346294; 15 (online=15, exclude=serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=0, regions=575, usedHeap=0, maxHeap=0)) available servers"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:60000-0x2377fee2ae80007 Creating (or updating) unassigned node for b713fd655fa02395496c5a6e39ddf568 with OFFLINE state"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Using pre-existing plan for region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568.; plan=hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=, dest=swbss-hadoop-164,60020,1340888346294"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Assigning region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. to swbss-hadoop-164,60020,1340888346294"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-164,60020,1340888346294, region=b713fd655fa02395496c5a6e39ddf568"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Received OPENING for region b713fd655fa02395496c5a6e39ddf568 from server swbss-hadoop-164,60020,1340888346294 but region was in the state null and not in expected PENDING_OPEN or OPENING states"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENING, server=swbss-hadoop-164,60020,1340888346294, region=b713fd655fa02395496c5a6e39ddf568"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Received OPENING for region b713fd655fa02395496c5a6e39ddf568 from server swbss-hadoop-164,60020,1340888346294 but region was in the state null and not in expected PENDING_OPEN or OPENING states"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENED, server=swbss-hadoop-164,60020,1340888346294, region=b713fd655fa02395496c5a6e39ddf568"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Received OPENED for region b713fd655fa02395496c5a6e39ddf568 from server swbss-hadoop-164,60020,1340888346294 but region was in the state null and not in expected PENDING_OPEN or OPENING states"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "balance hri=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568., src=swbss-hadoop-006,60020,1340890678078, dest=swbss-hadoop-008,60020,1340891085175"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Starting unassignment of region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. (offlining)"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Sent CLOSE to serverName=swbss-hadoop-006,60020,1340890678078, load=(requests=0, regions=0, usedHeap=0, maxHeap=0) for region CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Regions in transition timed out: CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. state=PENDING_CLOSE, ts=1340926468331, server=null"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Region has been PENDING_CLOSE for too long, running forced unassign again on region=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Regions in transition timed out: CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568. state=PENDING_CLOSE, ts=1340926468331, server=null"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Region has been PENDING_CLOSE for too long, running forced unassign again on region=CDR_STATS_TRAFFIC,13184390567|20120508|17||2|3|913,1337256975556.b713fd655fa02395496c5a6e39ddf568."
+  }
+]

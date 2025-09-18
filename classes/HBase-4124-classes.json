@@ -1,0 +1,262 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:20000-0x1314ac5addb003e Async create of unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 with OFFLINE state"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager$CreateUnassignedAsyncCallback",
+    "type": "DEBUG",
+    "content": "rs=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=OFFLINE, ts=1311231944712, server=158-1-91-105,20020,1311231874887"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager$ExistsUnassignedAsyncCallback",
+    "type": "DEBUG",
+    "content": "rs=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=OFFLINE, ts=1311231944712"
+  },
+  {
+    "class": "org.apache.zookeeper.ClientCnxn",
+    "type": "INFO",
+    "content": "Unable to read additional data from server sessionid 0x1314ac5addb003f, likely server has closed socket, closing socket connection and attempting reconnect"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "FATAL",
+    "content": "Error deleting OPENED node in ZK for transition ZK node (2c5d23581fc848c89e5be0555086cf30)"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "INFO",
+    "content": "Registering server=158-1-91-105,20020,1311231874887, regionCount=971, userLoad=true"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "INFO",
+    "content": "Registering server=158-1-91-101,20020,1311231878544, regionCount=951, userLoad=true"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "INFO",
+    "content": "Registering server=158-1-91-103,20020,1311232056655, regionCount=0, userLoad=false"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.metrics.MasterMetrics",
+    "type": "INFO",
+    "content": "Initialized"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ActiveMasterManager",
+    "type": "INFO",
+    "content": "Another master is the active master, 158-1-91-103:20000; waiting to become the next active master"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.ipc.HBaseRpcMetrics",
+    "type": "INFO",
+    "content": "Initializing RPC Metrics with hostName=HMaster, port=20000"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Creating (or updating) unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 with OFFLINE state"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Processing region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. in state M_ZK_REGION_OFFLINE"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.ClosedRegionHandler",
+    "type": "DEBUG",
+    "content": "Handling CLOSED event for ffe0f4ab26eaa1796d2f99565ff24012"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Forcing OFFLINE; was=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=OFFLINE, ts=1311232513720"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Creating (or updating) unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 with OFFLINE state"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "No previous transition plan was found (or we are ignoring an existing plan) for test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. so generated a random one; hri=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012., src=, dest=158-1-91-105,20020,1311231874887; 3 (online=3, exclude=null) available servers"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Assigning region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. to 158-1-91-105,20020,1311231874887"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=M_ZK_REGION_OFFLINE, server=158-1-91-103:20000, region=ffe0f4ab26eaa1796d2f99565ff24012"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Regions in transition timed out:  test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311233942949"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Region has been PENDING_OPEN for too long, reassigning region=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Forcing OFFLINE; was=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311234169040"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "No previous transition plan was found (or we are ignoring an existing plan) for test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. so generated a random one; hri=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012., src=, dest=158-1-91-105,20020,1311231874887; 3 (online=3, exclude=null) available servers"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Assigning region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. to 158-1-91-105,20020,1311231874887"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Regions in transition timed out:  test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311234201519"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Region has been PENDING_OPEN for too long, reassigning region=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Forcing OFFLINE; was=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. state=PENDING_OPEN, ts=1311234391597"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "No previous transition plan was found (or we are ignoring an existing plan) for test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. so generated a random one; hri=test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012., src=, dest=158-1-91-103,20020,1311232056655; 3 (online=3, exclude=null) available servers"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Assigning region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. to 158-1-91-103,20020,1311232056655"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.OpenedRegionHandler",
+    "type": "DEBUG",
+    "content": "Handling OPENED event for ffe0f4ab26eaa1796d2f99565ff24012; deleting unassigned node"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Deleting existing unassigned node for ffe0f4ab26eaa1796d2f99565ff24012 that is in expected state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:20000-0x1314ac5addb0042-0x1314ac5addb0042 Successfully deleted unassigned node for region ffe0f4ab26eaa1796d2f99565ff24012 in expected state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.OpenedRegionHandler",
+    "type": "DEBUG",
+    "content": "Opened region test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. on 158-1-91-103,20020,1311232056655"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Received request to open region: test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler",
+    "type": "DEBUG",
+    "content": "Processing open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:20020-0x2314ac6763f0027 Attempting to transition node ffe0f4ab26eaa1796d2f99565ff24012 from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:20020-0x2314ac6763f0027 Successfully transitioned node ffe0f4ab26eaa1796d2f99565ff24012 from M_ZK_REGION_OFFLINE to RS_ZK_REGION_OPENING"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegion",
+    "type": "DEBUG",
+    "content": "Opening region: REGION => {NAME => 'test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.', STARTKEY => '282139', ENDKEY => '282142', ENCODED => ffe0f4ab26eaa1796d2f99565ff24012, TABLE => {{NAME => 'test1', FAMILIES => [{NAME => 'value', BLOOMFILTER => 'NONE', REPLICATION_SCOPE => '0', VERSIONS => '3', COMPRESSION => 'GZ', TTL => '2592000', BLOCKSIZE => '65536', IN_MEMORY => 'false', BLOCKCACHE => 'true'}]}}}"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegion",
+    "type": "DEBUG",
+    "content": "Instantiated test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegion",
+    "type": "INFO",
+    "content": "Onlined test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.; next sequenceid=1"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:20020-0x2314ac6763f0027 Attempting to transition node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENING"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:20020-0x2314ac6763f0027 Successfully transitioned node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENING"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.catalog.MetaEditor",
+    "type": "INFO",
+    "content": "Updated row test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. in region .META.,,1 with server=158-1-91-105:20020, startcode=1311231874887"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:20020-0x2314ac6763f0027 Attempting to transition node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:20020-0x2314ac6763f0027 Successfully transitioned node ffe0f4ab26eaa1796d2f99565ff24012 from RS_ZK_REGION_OPENING to RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler",
+    "type": "DEBUG",
+    "content": "Opened test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012.  It shows that RS105 open the region4012 successfully."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Received request to open region: test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler",
+    "type": "DEBUG",
+    "content": "Processing open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler",
+    "type": "WARN",
+    "content": "Attempted open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. but already online on this server         This suggests that the assignment from HM101 is successful in RS105 (since region4012 is in RS105’s onlineRegion list), although the state in zk for this assignment is offline."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Received request to open region: test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler",
+    "type": "DEBUG",
+    "content": "Processing open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler",
+    "type": "WARN",
+    "content": "Attempted open of test1,282139,1311216321932.ffe0f4ab26eaa1796d2f99565ff24012. but already online on this server"
+  }
+]

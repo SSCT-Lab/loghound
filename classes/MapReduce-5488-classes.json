@@ -1,0 +1,37 @@
+[
+  {
+    "class": "impl.YarnClientImpl",
+    "type": "INFO",
+    "content": "Submitted application application_1377851032086_0003 to ResourceManager at hostname/68.142.247.148:8032"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "Running job: job_1377851032086_0003"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "Job job_1377851032086_0003 running in uber mode : false"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "map 0% reduce 0%"
+  },
+  {
+    "class": "ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: hostname/68.142.247.155:52713. Already tried 0 time(s); retry policy is RetryUpToMaximumCountWithFixedSleep(maxRetries=1, sleepTime=1 SECONDS) (still try to connect the old AM addr)"
+  },
+  {
+    "class": "ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: hostname/68.142.247.155:52713. Already tried 0 time(s); retry policy is RetryUpToMaximumCountWithFixedSleep(maxRetries=1, sleepTime=1 SECONDS)"
+  },
+  {
+    "class": "security.UserGroupInformation",
+    "type": "ERROR",
+    "content": "PriviledgedActionException as:user@REALM (auth:KERBEROS) cause:java.io.IOException: java.net.ConnectException: Call From hostname.ConnectException: Connection refused; For more details see:  http://wiki.apache.org/hadoop/ConnectionRefused"
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENING, server=linux76,60020,1315998828523, region=70236052/-ROOT-"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "-ROOT- assigned=1, rit=false, location=linux76:60020"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Processing region .META.,,1.1028785192 in state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Failed to find linux146,60020,1315998414623 in list of online servers; skipping registration of open of .META.,,1.1028785192"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Waiting on 1028785192/.META."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_OPENED, server=linux76,60020,1315998828523, region=70236052/-ROOT-"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.OpenedRegionHandler",
+    "type": "DEBUG",
+    "content": "Handling OPENED event for 70236052; deleting unassigned node"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:60000-0x13267854032001d Deleting existing unassigned node for 70236052 that is in expected state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:60000-0x13267854032001d Successfully deleted unassigned node for region 70236052 in expected state RS_ZK_REGION_OPENED"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.OpenedRegionHandler",
+    "type": "DEBUG",
+    "content": "Opened region -ROOT-,,0.70236052 on linux76,60020,1315998828523"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.ServerManager",
+    "type": "INFO",
+    "content": "Registering server=linux146,60020,1315998839724, regionCount=0, userLoad=false"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Regions in transition timed out: .META.,,1.1028785192 state=OPEN, ts=0"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "ERROR",
+    "content": "Region has been OPEN for too long, we don't know where region was opened so can't do anything"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "class": "SecurityLogger.org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "Auth successful for oozie/ip-10-46-37-244.ec2.internal@BIGTOP (auth:SIMPLE)"
+  },
+  {
+    "class": "SecurityLogger.org.apache.hadoop.security.authorize.ServiceAuthorizationManager",
+    "type": "INFO",
+    "content": "Authorization successful for rvs (auth:PROXY) via oozie/ip-10-46-37-244.ec2.internal@BIGTOP (auth:KERBEROS) for protocol=interface org.apache.hadoop.yarn.api.ClientRMProtocolPB"
+  },
+  {
+    "class": "org.apache.hadoop.security.token.delegation.AbstractDelegationTokenSecretManager",
+    "type": "INFO",
+    "content": "Creating password for identifier: owner=rvs, renewer=yarn, realUser=oozie/ip-10-46-37-244.ec2.internal@BIGTOP, issueDate=1364441424717, maxDate=1365046224717, sequenceNumber=1, masterKeyId=2"
+  },
+  {
+    "class": "org.apache.hadoop.security.token.delegation.AbstractDelegationTokenSecretManager",
+    "type": "INFO",
+    "content": "Creating password for identifier: owner=rvs, renewer=yarn, realUser=oozie/ip-10-46-37-244.ec2.internal@BIGTOP, issueDate=1364441424752, maxDate=1365046224752, sequenceNumber=2, masterKeyId=2"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.ClientRMService",
+    "type": "INFO",
+    "content": "Allocated new applicationId: 7"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.RPC",
+    "type": "ERROR",
+    "content": "RPC.stopProxy called on non proxy."
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "WARN",
+    "content": "IPC Server handler 15 on 8032, call org.apache.hadoop.yarn.api.ClientRMProtocolPB.submitApplication from 10.46.37.244:36960: error: org.apache.hadoop.HadoopIllegalArgumentException: Cannot close proxy - is not Closeable or does not provide closeable invocation handler class org.apache.hadoop.mapreduce.v2.api.impl.pb.client.HSClientProtocolPBClientImpl"
+  }
+]

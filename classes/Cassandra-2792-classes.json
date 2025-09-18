@@ -1,0 +1,107 @@
+[
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Beginning transfer to /192.168.1.9"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Flushing memtables for FMM_Studio..."
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Stream context metadata [/var/opt/cassandra/data/FMM_Studio/Classes-f-107-Data.db sections=1 progress=0/1585378 - 0%, /var/opt/cassandra/data/FMM_Studio/PartsData-f-100-Data.db sections=1 progress=0/76453 - 0%, /var/opt/cassandra/data/FMM_Studio/PartsData-f-98-Data.db sections=1 progress=0/4309514 - 0%, /var/opt/cassandra/data/FMM_Studio/PartsData-f-99-Data.db sections=1 progress=0/90475 - 0%], 11 sstables."
+  },
+  {
+    "class": "StreamOutSession",
+    "type": "INFO",
+    "content": "Streaming to /192.168.1.9"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Beginning transfer to /192.168.1.9"
+  },
+  {
+    "class": "StreamOut",
+    "type": "INFO",
+    "content": "Flushing memtables for FightMyMonster..."
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-MonsterMarket_1@1054909557(338 bytes, 24 operations)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-UserFights@239934867(1124836 bytes, 965 operations)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-MonsterMarket_1@1054909557(338 bytes, 24 operations)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-Users_CisIndex@1758504250(242 bytes, 8 operations)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-Tribes@1510979736(18318 bytes, 703 operations)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-ColumnViews_TimeUUID@864545260(2073 bytes, 63 operations)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-MonsterMarket_0@537829218(2600 bytes, 129 operations)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /var/opt/cassandra/data/FightMyMonster/MonsterMarket_1-f-3799-Data.db (1774 bytes)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-UserFights@239934867(1124836 bytes, 965 operations)"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-UserSigninLog@1692186117(4043 bytes, 137 operations)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Completed flushing /var/opt/cassandra/data/FightMyMonster/UserFights-f-8192-Data.db (1179202 bytes)"
+  },
+  {
+    "class": "Memtable",
+    "type": "INFO",
+    "content": "Writing Memtable-Users_CisIndex@1758504250(242 bytes, 8 operations)"
+  },
+  {
+    "class": "CompactionManager",
+    "type": "INFO",
+    "content": "Compacting [SSTableReader(path='/var/opt/cassandra/data/FightMyMonster/UserFights-f-8189-Data.db'),SSTableReader(path='/var/opt/cassandra/data/FightMyMonster/UserFights-f-8190-Data.db'),SSTableReader(path='/var/opt/cassandra/data/FightMyMonster/UserFights-f-8191-Data.db'),SSTableReader(path='/var/opt/cassandra/data/FightMyMonster/UserFights-f-8192-Data.db')]"
+  },
+  {
+    "class": "ColumnFamilyStore",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-TribeFights@321579649(138 bytes, 3 operations)"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[MiscStage:1,5,main]"
+  }
+]

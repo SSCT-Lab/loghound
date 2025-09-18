@@ -1,0 +1,12 @@
+[
+  {
+    "class": "client.RMProxy",
+    "type": "INFO",
+    "content": "Connecting to ResourceManager at xx/xx:xx"
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Application state is completed. FinalApplicationStatus=KILLED. Redirecting to job history server"
+  }
+]

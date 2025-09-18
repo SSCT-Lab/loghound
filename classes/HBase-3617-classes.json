@@ -1,0 +1,42 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "FATAL",
+    "content": "Remote unexpected exception"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "Aborting"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "balance hri=SpecialObject_Speed_Test,,1299710751983.f0e5544339870a510c338b3029979d3e.,src=ap13.secur2,60020,1299710609447,dest=ap12.secur2,60020,1299710609148"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Starting unassignment of region SpecialObject_Speed_Test,, 1299710751983.f0e5544339870a510c338b3029979d3e. (offlining)"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "DEBUG",
+    "content": "Stopping service threads"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.HBaseServer",
+    "type": "INFO",
+    "content": "Stopping server on 60000"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "FATAL",
+    "content": "Remote unexpected exception"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.HMaster",
+    "type": "INFO",
+    "content": "Aborting"
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Client tried to access missing scanner 6621035169671703961"
+  },
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "ERROR",
+    "content": "org.apache.hadoop.hbase.exceptions.OutOfOrderScannerNextException: Expected nextCallSeq: 18 But the nextCallSeq got from client: 4470; request=scanner_id: 848804760654927372 number_of_rows: 100 close_scanner: false next_call_seq: 4470"
+  },
+  {
+    "class": "regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Client tried to access missing scanner 4162107982028594792"
+  }
+]

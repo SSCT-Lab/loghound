@@ -1,0 +1,32 @@
+[
+  {
+    "class": "StreamOut.java",
+    "type": "INFO",
+    "content": "Stream context metadata [/data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-5-Data.db sections=3068 progress=0/2785204713 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-25-Data.db sections=2696 progress=0/758409465 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-60-Data.db sections=3099 progress=0/238876436 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-63-Data.db sections=1166 progress=0/2125323 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-38-Data.db sections=2507 progress=0/515992757 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-26-Data.db sections=3153 progress=0/994857654 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-57-Data.db sections=3116 progress=0/129398170 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-58-Data.db sections=217 progress=0/72286 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-59-Data.db sections=3146 progress=0/3357709019 - 0%], 27 sstables."
+  },
+  {
+    "class": "StreamOut.java",
+    "type": "INFO",
+    "content": "Stream context metadata [/data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-5-Data.db sections=2930 progress=0/2799914560 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-25-Data.db sections=2590 progress=0/761266059 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-60-Data.db sections=2956 progress=0/241362497 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-63-Data.db sections=1153 progress=0/2125323 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-38-Data.db sections=2422 progress=0/522126371 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-26-Data.db sections=3004 progress=0/998401202 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-57-Data.db sections=2974 progress=0/129722346 - 0%, /data2/cassandra/evidence/fingerprints/evidence-fingerprints-ib-58-Data.db sections=220 progress=0/72286 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-59-Data.db sections=2998 progress=0/3375554099 - 0%], 27 sstables."
+  },
+  {
+    "class": "StreamOut.java",
+    "type": "INFO",
+    "content": "Stream context metadata [/data/cassandra/evidence/fingerprints/evidence-fingerprints-ia-472-Data.db sections=1727 progress=0/210208515 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-919-Data.db sections=1746 progress=0/119438030 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-920-Data.db sections=1681 progress=0/54498226 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-922-Data.db sections=16 progress=0/13490 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-918-Data.db sections=632 progress=0/70019542 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-921-Data.db sections=1644 progress=0/39870238 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-497-Data.db sections=1569 progress=0/208331077 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-923-Data.db sections=1572 progress=0/30870478 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-925-Data.db sections=167 progress=0/1845123 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-703-Data.db sections=1574 progress=0/287386471 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-913-Data.db sections=811 progress=0/103776521 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-915-Data.db sections=1539 progress=0/141864261 - 0%], 12 sstables."
+  },
+  {
+    "class": "StreamOut.java",
+    "type": "INFO",
+    "content": "Stream context metadata [/var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-919-Data.db sections=3153 progress=0/994857654 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-918-Data.db sections=2507 progress=0/515992757 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-923-Data.db sections=3153 progress=0/131969347 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-703-Data.db sections=3068 progress=0/2784807967 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-913-Data.db sections=2696 progress=0/758409465 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ia-472-Data.db sections=3150 progress=0/1792868996 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-920-Data.db sections=3123 progress=0/240094510 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-929-Data.db sections=18 progress=0/29468 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-922-Data.db sections=217 progress=0/13490 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-921-Data.db sections=3124 progress=0/130320291 - 0%, /data/cassandra/evidence/fingerprints/evidence-fingerprints-ib-497-Data.db sections=3055 progress=0/1749539598 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-925-Data.db sections=1608 progress=0/13357410 - 0%, /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-915-Data.db sections=3096 progress=0/1241397203 - 0%], 13 sstables."
+  },
+  {
+    "class": "StreamReplyVerbHandler.java",
+    "type": "INFO",
+    "content": "Successfully sent /var/lib/cassandra/data2/evidence/fingerprints/evidence-fingerprints-ib-919-Data.db to /10.8.25.132"
+  },
+  {
+    "class": "CassandraDaemon.java",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[Streaming to /10.8.25.114:4,5,main]"
+  }
+]

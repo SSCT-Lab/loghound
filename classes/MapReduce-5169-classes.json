@@ -1,0 +1,67 @@
+[
+  {
+    "class": "mapred.JobClient",
+    "type": "INFO",
+    "content": "Running job: job_201304172049_0008"
+  },
+  {
+    "class": "mapred.JobClient",
+    "type": "INFO",
+    "content": "map 0% reduce 0%"
+  },
+  {
+    "class": "ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: host:50300. Already tried 0 time(s); retry policy is MultipleLinearRandomRetry[6x10000ms, 10x60000ms]50300"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobInProgress",
+    "type": "INFO",
+    "content": "job_201304172049_0008: nMaps=180 nReduces=1 max=-1"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobQueuesManager",
+    "type": "INFO",
+    "content": "Job job_201304172049_0008 submitted to queue default"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobTracker",
+    "type": "INFO",
+    "content": "Job job_201304172049_0008 added successfully for user 'hrt_qa' to queue 'default'  JobStatus addJob(JobID jobId, JobInProgress job):  Add a job to the jobtracker. This is the main logic of job submission."
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobInitializationPoller",
+    "type": "INFO",
+    "content": "Passing to Initializer Job Id :job_201304172049_0008 User: user Queue : default   Print log statements about which jobs are being passed to init-threads."
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobTracker",
+    "type": "INFO",
+    "content": "SHUTDOWN_MSG:"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobInitializationPoller",
+    "type": "INFO",
+    "content": "Initializing job : job_201304172049_0008 in Queue default For user : user"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobTracker",
+    "type": "INFO",
+    "content": "Initializing job_201304172049_0008"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobInProgress",
+    "type": "INFO",
+    "content": "Initializing job_201304172049_0008"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobTracker",
+    "type": "INFO",
+    "content": "STARTUP_MSG:"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.JobTracker",
+    "type": "WARN",
+    "content": "Job job_201304172049_0008 does not have valid info/token file so ignoring for recovery"
+  }
+]

@@ -1,0 +1,137 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.LogCleaner",
+    "type": "WARN",
+    "content": "Error while cleaning the logs"
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 0 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 1 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 9 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.MasterFileSystem",
+    "type": "ERROR",
+    "content": "Failed splitting hdfs://C4C1:9000/hbase/.logs/C4C9.site,60020,1300767633398"
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 0 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 1 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 9 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.LogCleaner",
+    "type": "WARN",
+    "content": "Error while cleaning the logs"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.ServerShutdownHandler",
+    "type": "INFO",
+    "content": "Splitting logs for C4C3.site,60020,1302590910433"
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 0 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 9 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.MasterFileSystem",
+    "type": "ERROR",
+    "content": "Failed splitting hdfs://C4C1:9000/hbase/.logs/C4C3.site,60020,1302590910433"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.catalog.RootLocationEditor",
+    "type": "INFO",
+    "content": "Unsetting ROOT region location in ZooKeeper"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.catalog.CatalogTracker",
+    "type": "INFO",
+    "content": "Failed verification of .META.,,1 at address=C4C3.site:60020; java.net.ConnectException: Connection refused"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.catalog.CatalogTracker",
+    "type": "INFO",
+    "content": "Current cached META location is not valid, resetting"
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 0 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hadoop.ipc.Client",
+    "type": "INFO",
+    "content": "Retrying connect to server: C4C1/157.5.100.1:9000. Already tried 1 time(s)."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Regions in transition timed out: .META.,,1.1028785192 state=OPENING, ts=1302591600701"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Region has been OPENING for too long, reassigning region=.META.,,1.1028785192"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Successfully transitioned region=.META.,,1.1028785192 into OFFLINE and forcing a new assignment"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Regions in transition timed out: ROOT,,0.70236052 state=OPENING, ts=1302591600718"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Region has been OPENING for too long, reassigning region=ROOT,,0.70236052"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "INFO",
+    "content": "Successfully transitioned region=ROOT,,0.70236052 into OFFLINE and forcing a new assignment"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.MetaNodeTracker",
+    "type": "INFO",
+    "content": "Detected completed assignment of META, notifying catalog tracker"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.ServerShutdownHandler",
+    "type": "INFO",
+    "content": "Reassigning 0 region(s) that C4C3.site,60020,1302590910433 was carrying (skipping 0 regions(s) that are already in transition)"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.ServerShutdownHandler",
+    "type": "INFO",
+    "content": "Finished processing of shutdown of C4C3.site,60020,1302590910433"
+  }
+]

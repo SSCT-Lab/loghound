@@ -1,0 +1,22 @@
+[
+  {
+    "class": "rm.RMContainerAllocator",
+    "type": "INFO",
+    "content": "Assigned based on host match 98.138.163.34"
+  },
+  {
+    "class": "rm.RMContainerRequestor",
+    "type": "INFO",
+    "content": "BEFORE decResourceRequest: applicationId=30 priority=20 resourceName=... numContainers=4978 #asks=5"
+  },
+  {
+    "class": "rm.RMContainerRequestor",
+    "type": "INFO",
+    "content": "AFTER decResourceRequest: applicationId=30 priority=20 resourceName=... numContainers=4977 #asks=5"
+  },
+  {
+    "class": "rm.RMContainerAllocator",
+    "type": "ERROR",
+    "content": "ERROR IN CONTACTING RM."
+  }
+]

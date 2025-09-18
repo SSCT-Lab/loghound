@@ -1,0 +1,122 @@
+[
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl",
+    "type": "INFO",
+    "content": "Start request for container_1342210962593_0007 by user x"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl",
+    "type": "INFO",
+    "content": "Creating a new application reference for app application_1342210962593_0007"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application",
+    "type": "INFO",
+    "content": "Application application_1342210962593_0007 transitioned from NEW to INITING"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application",
+    "type": "INFO",
+    "content": "Assign an AM (i.e. an application attempt) org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Adding container_1342210962593_0007_01_000001 to application application_1342210962593_0007"
+  },
+  {
+    "class": "org.apache.hadoop.security.UserGroupInformation",
+    "type": "ERROR",
+    "content": "PriviledgedActionException as:x (auth:SIMPLE) cause:javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Client",
+    "type": "WARN",
+    "content": "Exception encountered while connecting to the server : javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]"
+  },
+  {
+    "class": "org.apache.hadoop.security.UserGroupInformation",
+    "type": "ERROR",
+    "content": "PriviledgedActionException as:x (auth:SIMPLE) cause:java.io.IOException: javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService",
+    "type": "ERROR",
+    "content": "Failed to create user dir [hdfs://xx:8020/mapred/logs/x] while processing app application_1342210962593_0007"
+  },
+  {
+    "class": "org.apache.hadoop.security.UserGroupInformation",
+    "type": "ERROR",
+    "content": "PriviledgedActionException as:x (auth:SIMPLE) cause:java.io.IOException: Failed on local exception: java.io.IOException: javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]; Host Details : local host is: \"xx/xx.xx.xx.xx\"; destination host is: \"x\":8020;"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application",
+    "type": "INFO",
+    "content": "application: INITING → FINISHING_CONTAINERS_WAIT; Application application_1342210962593_0007 transitioned from INITING to FINISHING_CONTAINERS_WAIT"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container",
+    "type": "INFO",
+    "content": "Container container_1342210962593_0007_01_000001 transitioned from NEW to DONE"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application",
+    "type": "INFO",
+    "content": "Removing container_1342210962593_0007_01_000001 from application application_1342210962593_0007"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application",
+    "type": "INFO",
+    "content": "Application application_1342210962593_0007 transitioned from FINISHING_CONTAINERS_WAIT to APPLICATION_RESOURCES_CLEANINGUP"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.event.AsyncDispatcher",
+    "type": "FATAL",
+    "content": "Error in dispatcher thread"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.event.AsyncDispatcher",
+    "type": "INFO",
+    "content": "Exiting, bbye.."
+  },
+  {
+    "class": "org.apache.hadoop.yarn.event.AsyncDispatcher",
+    "type": "WARN",
+    "content": "AsyncDispatcher thread interrupted"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.service.AbstractService",
+    "type": "INFO",
+    "content": "Service:Dispatcher is stopped."
+  },
+  {
+    "class": "org.mortbay.log",
+    "type": "INFO",
+    "content": "Stopped SelectChannelConnector@0.0.0.0:8042"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.service.AbstractService",
+    "type": "INFO",
+    "content": "Service:org.apache.hadoop.yarn.server.nodemanager.webapp.WebServer is stopped."
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "Stopping server on 8041"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "Stopping IPC Server listener on 8041"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService",
+    "type": "INFO",
+    "content": "org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService waiting for pending aggregation during exit"
+  },
+  {
+    "class": "org.apache.hadoop.ipc.Server",
+    "type": "INFO",
+    "content": "Stopping IPC Server Responder"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.service.AbstractService",
+    "type": "INFO",
+    "content": "Service:org.apache.hadoop.yarn.server.nodemanager.containermanager.logaggregation.LogAggregationService is stopped."
+  }
+]

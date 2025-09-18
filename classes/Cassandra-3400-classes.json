@@ -1,0 +1,7 @@
+[
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[AntiEntropySessions:12,5,RMI Runtime]"
+  }
+]

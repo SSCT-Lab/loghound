@@ -1,0 +1,32 @@
+[
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl",
+    "type": "INFO",
+    "content": "attempt_1342238829791_2501_m_007743_0 TaskAttempt Transitioned from SUCCEEDED to FAILED"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl",
+    "type": "INFO",
+    "content": "attempt_1342238829791_2501_m_008850_0 TaskAttempt Transitioned from SUCCEEDED to FAILED"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl",
+    "type": "INFO",
+    "content": "attempt_1342238829791_2501_m_017344_1000 TaskAttempt Transitioned from RUNNING to SUCCESS_CONTAINER_CLEANUP"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl",
+    "type": "ERROR",
+    "content": "Can't handle this event at current state for attempt_1342238829791_2501_m_000027_0"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl",
+    "type": "INFO",
+    "content": "attempt_1342238829791_2501_m_029091_1000 TaskAttempt Transitioned from RUNNING to SUCCESS_CONTAINER_CLEANUP"
+  },
+  {
+    "class": "org.apache.hadoop.mapred.TaskAttemptListenerImpl",
+    "type": "INFO",
+    "content": "Status update from attempt_1342238829791_2501_r_000461_1000"
+  }
+]

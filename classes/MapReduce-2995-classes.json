@@ -1,0 +1,7 @@
+[
+  {
+    "class": "impl.TaskAttemptImpl",
+    "type": "ERROR",
+    "content": "Can't handle this event at current state"
+  }
+]

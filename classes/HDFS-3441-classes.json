@@ -1,0 +1,32 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSImage",
+    "type": "INFO",
+    "content": "Image file of size 201 saved in 0 seconds."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.ha.EditLogTailer",
+    "type": "INFO",
+    "content": "Triggering log roll on remote NameNode /xx.xx.xx.102:8020"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.NNStorageRetentionManager",
+    "type": "INFO",
+    "content": "Going to retain 2 images with txid >= 111"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.NNStorageRetentionManager",
+    "type": "INFO",
+    "content": "Purging old image FSImageFile(file=/home/May8/hadoop-3.0.0-SNAPSHOT/hadoop-root/dfs/name/current/fsimage_0000000000000000109, cpktTxId=0000000000000000109)"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.FSEditLog",
+    "type": "FATAL",
+    "content": "Error: purgeLogsOlderThan 0 failed for required journal (JournalAndStream(mgr=org.apache.hadoop.contrib.bkjournal.BookKeeperJournalManager@142e6767, stream=null))"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.namenode.NameNode",
+    "type": "INFO",
+    "content": "SHUTDOWN_MSG: StanbyNN shuts down."
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "class": "mapreduce.JobSubmitter",
+    "type": "INFO",
+    "content": "number of splits:2094"
+  },
+  {
+    "class": "mapred.YARNRunner",
+    "type": "INFO",
+    "content": "AppMaster capability = memory: 2048,"
+  },
+  {
+    "class": "mapred.YARNRunner",
+    "type": "INFO",
+    "content": "Command to launch container for ApplicationMaster is : $JAVA_HOME/bin/java -Dhadoop.root.logger=INFO,console -Xmx1536m org.apache.hadoop.mapreduce.v2.app.MRAppMaster 1315478927026 1 <FAILCOUNT> 1><LOG_DIR>/stdout 2><LOG_DIR>/stderr"
+  },
+  {
+    "class": "mapred.ResourceMgrDelegate",
+    "type": "INFO",
+    "content": "Submitted application application_1315478927026_1 to ResourceManager"
+  },
+  {
+    "class": "mapreduce.JobSubmitter",
+    "type": "INFO",
+    "content": "Cleaning up the staging area /user/gridperf/.staging/job_1315478927026_0001"
+  }
+]

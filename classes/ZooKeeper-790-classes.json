@@ -1,0 +1,800 @@
+[
+  {
+    "class": "QuorumCnxManager",
+    "type": "DEBUG",
+    "line": "346",
+    "content": "Opening channel to server 1"
+  },
+  {
+    "class": "WorkerReceiver",
+    "type": "DEBUG",
+    "line": "214",
+    "content": "Receive new notification message. My id = 0"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "689",
+    "content": "Notification: 0, 77309411393, 1, 0, LOOKING, LOOKING, 0"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "DEBUG",
+    "line": "495",
+    "content": "id: 0, proposed id: 0, zxid: 77309411393, proposed zxid: 77309411393"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "DEBUG",
+    "line": "717",
+    "content": "Adding vote: From = 0, Proposed leader = 0, Porposed zxid = 77309411393, Proposed epoch = 1"
+  },
+  {
+    "class": "QuorumCnxManager",
+    "type": "INFO",
+    "line": "162",
+    "content": "Have smaller server identifier, so dropping the connection: (1, 0)"
+  },
+  {
+    "class": "QuorumCnxManager",
+    "type": "DEBUG",
+    "line": "346",
+    "content": "Opening channel to server 2"
+  },
+  {
+    "class": "Listener",
+    "type": "DEBUG",
+    "line": "445",
+    "content": "Connection request /192.168.1.182:46701"
+  },
+  {
+    "class": "Listener",
+    "type": "DEBUG",
+    "line": "448",
+    "content": "Connection request: 0"
+  },
+  {
+    "class": "SendWorker",
+    "type": "DEBUG",
+    "line": "504",
+    "content": "Address of remote peer: 1"
+  },
+  {
+    "class": "QuorumCnxManager",
+    "type": "INFO",
+    "line": "162",
+    "content": "Have smaller server identifier, so dropping the connection: (2, 0)"
+  },
+  {
+    "class": "WorkerReceiver",
+    "type": "DEBUG",
+    "line": "214",
+    "content": "Receive new notification message. My id = 0"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "689",
+    "content": "Notification: 1, 77309411372, 1, 0, LOOKING, LOOKING, 1"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "DEBUG",
+    "line": "495",
+    "content": "id: 1, proposed id: 0, zxid: 77309411372, proposed zxid: 77309411393"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "DEBUG",
+    "line": "717",
+    "content": "Adding vote: From = 1, Proposed leader = 1, Porposed zxid = 77309411372, Proposed epoch = 1"
+  },
+  {
+    "class": "Listener",
+    "type": "DEBUG",
+    "line": "445",
+    "content": "Connection request /192.168.1.183:44310"
+  },
+  {
+    "class": "Listener",
+    "type": "DEBUG",
+    "line": "448",
+    "content": "Connection request: 0"
+  },
+  {
+    "class": "SendWorker",
+    "type": "DEBUG",
+    "line": "504",
+    "content": "Address of remote peer: 2"
+  },
+  {
+    "class": "WorkerReceiver",
+    "type": "DEBUG",
+    "line": "214",
+    "content": "Receive new notification message. My id = 0"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "689",
+    "content": "Notification: 2, 73014444097, 1, 0, LOOKING, LOOKING, 2"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "DEBUG",
+    "line": "495",
+    "content": "id: 2, proposed id: 0, zxid: 73014444097, proposed zxid: 77309411393"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "DEBUG",
+    "line": "717",
+    "content": "Adding vote: From = 2, Proposed leader = 2, Porposed zxid = 73014444097, Proposed epoch = 1"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "INFO",
+    "line": "647",
+    "content": "LEADING"
+  },
+  {
+    "class": "FileSnap",
+    "type": "INFO",
+    "line": "82",
+    "content": "Reading snapshot /data/zookeeper/version-2/snapshot.2300001ac2"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "649",
+    "content": "New election. My id =  1, Proposed zxid = 154618826848"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "689",
+    "content": "Notification: 1, 154618826848, 4, 1, LOOKING, LOOKING, 1"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "799",
+    "content": "Notification: 2, 146030952153, 3, 1, LOOKING, LEADING, 2"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "799",
+    "content": "Notification: 2, 146030952153, 3, 1, LOOKING, FOLLOWING, 3"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "INFO",
+    "line": "642",
+    "content": "FOLLOWING"
+  },
+  {
+    "class": "Follower",
+    "type": "FATAL",
+    "line": "71",
+    "content": "Leader epoch 23 is less than our epoch 24"
+  },
+  {
+    "class": "Follower",
+    "type": "WARN",
+    "line": "82",
+    "content": "Exception when following the leader"
+  },
+  {
+    "class": "Follower",
+    "type": "INFO",
+    "line": "166",
+    "content": "shutdown called"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "INFO",
+    "line": "620",
+    "content": "LOOKING"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "1661",
+    "content": "Established session 0x229aa13cfc6276b with negotiated timeout 10000 for client /10.209.45.114:34562"
+  },
+  {
+    "class": "QuorumPeerConfig",
+    "type": "INFO",
+    "line": "90",
+    "content": "Reading configuration from: /etc/zookeeper/conf/zoo.cfg"
+  },
+  {
+    "class": "Follower",
+    "type": "FATAL",
+    "line": "71",
+    "content": "Leader epoch 23 is less than our epoch 24"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "UNKNOWN",
+    "line": "654",
+    "content": "LEADING"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LEADING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), LEADING (n.state), 3 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LEADING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), LEADING (n.state), 3 (n.sid), LEADING (my state)"
+  },
+  {
+    "class": "Leader",
+    "type": "TCP",
+    "line": "54",
+    "content": "TCP NoDelay set to: true"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:zookeeper.version=3.4.0--1, built on 07/15/2010 10:36 GMT"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:host.name=XXXXXXXXXX.com"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.version=1.6.0_04"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.vendor=Sun Microsystems Inc."
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.home=/usr/java/jdk1.6.0_04/jre"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.class.path=.XXXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.library.path= XXXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.io.tmpdir=/tmp"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.compiler=<NA>"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:os.name=Linux"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:os.arch=amd64"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:os.version=2.6.18-53.1.21.el5"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:user.name=XXXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:user.home=XXXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:user.dir=XXXXXXXXX"
+  },
+  {
+    "class": "ZooKeeperServer",
+    "type": "UNKNOWN",
+    "line": "151",
+    "content": "Created server with tickTime 3000 minSessionTimeout 6000 maxSessionTimeout 60000 datadir /XXXXXXXXX/zookeeper/version-2 snapdir /XXXXXXXX/zookeeper/version-2"
+  },
+  {
+    "class": "FileSnap",
+    "type": "UNKNOWN",
+    "line": "82",
+    "content": "Reading snapshot /XXXXXXXX/zookeeper/version-2/snapshot.100113340"
+  },
+  {
+    "class": "FileSnap",
+    "type": "UNKNOWN",
+    "line": "82",
+    "content": "Reading snapshot /XXXXXXXX/zookeeper/version-2/snapshot.100113340"
+  },
+  {
+    "class": "FileTxnSnapLog",
+    "type": "UNKNOWN",
+    "line": "208",
+    "content": "Snapshotting: 10011f748"
+  },
+  {
+    "class": "ZooKeeperServer",
+    "type": "UNKNOWN",
+    "line": "315",
+    "content": "Expiring session 0x229d6a9e0ca0000, timeout of 10000ms exceeded"
+  },
+  {
+    "class": "Leader",
+    "type": "UNKNOWN",
+    "line": "394",
+    "content": "Shutdown called"
+  },
+  {
+    "class": "LearnerCnxAcceptor",
+    "type": "UNKNOWN",
+    "line": "243",
+    "content": "exception while shutting down acceptor: java.net.SocketException: Socket closed"
+  },
+  {
+    "class": "FinalRequestProcessor",
+    "type": "UNKNOWN",
+    "line": "378",
+    "content": "shutdown of request processor complete"
+  },
+  {
+    "class": "SyncRequestProcessor",
+    "type": "UNKNOWN",
+    "line": "151",
+    "content": "SyncRequestProcessor exited!"
+  },
+  {
+    "class": "CommitProcessor",
+    "type": "UNKNOWN",
+    "line": "148",
+    "content": "CommitProcessor exited loop!"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "UNKNOWN",
+    "line": "620",
+    "content": "LOOKING"
+  },
+  {
+    "class": "FileSnap",
+    "type": "UNKNOWN",
+    "line": "82",
+    "content": "Reading snapshot /XXXXXXXXX/zookeeper/version-2/snapshot.10011f748"
+  },
+  {
+    "class": "SessionTrackerImpl",
+    "type": "UNKNOWN",
+    "line": "158",
+    "content": "SessionTrackerImpl exited loop!"
+  },
+  {
+    "class": "PrepRequestProcessor",
+    "type": "UNKNOWN",
+    "line": "385",
+    "content": "Processed session termination for sessionid: 0x229d6a9e0ca0000"
+  },
+  {
+    "class": "1",
+    "type": "UNKNOWN",
+    "line": "87",
+    "content": "Thread Thread[ProcessThread:-1,5,main] died"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "UNKNOWN",
+    "line": "663",
+    "content": "New election. My id =  2, Proposed zxid = 4296144712"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LOOKING",
+    "line": "496",
+    "content": "Notification: 2 (n.leader), 4296144712 (n.zxid), 2 (n.round), LOOKING (n.state), 2 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "QuorumCnxManager",
+    "type": "UNKNOWN",
+    "line": "162",
+    "content": "Have smaller server identifier, so dropping the connection: (3, 2)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LEADING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), LEADING (n.state), 3 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "FOLLOWING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), FOLLOWING (n.state), 1 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "FOLLOWING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), FOLLOWING (n.state), 1 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "FOLLOWING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), FOLLOWING (n.state), 1 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LEADING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), LEADING (n.state), 3 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LEADING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), LEADING (n.state), 3 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "UNKNOWN",
+    "line": "642",
+    "content": "FOLLOWING"
+  },
+  {
+    "class": "Learner",
+    "type": "TCP",
+    "line": "72",
+    "content": "TCP NoDelay set to: true"
+  },
+  {
+    "class": "ZooKeeperServer",
+    "type": "UNKNOWN",
+    "line": "151",
+    "content": "Created server with tickTime 3000 minSessionTimeout 6000 maxSessionTimeout 60000 datadir /XXXXXXXXX/zookeeper/version-2 snapdir /XXXXXXXXX/zookeeper/version-2"
+  },
+  {
+    "class": "Learner",
+    "type": "UNKNOWN",
+    "line": "285",
+    "content": "Getting a snapshot from leader"
+  },
+  {
+    "class": "Learner",
+    "type": "UNKNOWN",
+    "line": "314",
+    "content": "Setting leader epoch 1"
+  },
+  {
+    "class": "Follower",
+    "type": "UNKNOWN",
+    "line": "116",
+    "content": "Got zxid 0x100162711 expected 0x1"
+  },
+  {
+    "class": "FileTxnLog",
+    "type": "UNKNOWN",
+    "line": "196",
+    "content": "Creating new log file: 100162711"
+  },
+  {
+    "class": "FileTxnSnapLog",
+    "type": "UNKNOWN",
+    "line": "208",
+    "content": "Snapshotting: 100164c43"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "UNKNOWN",
+    "line": "654",
+    "content": "LEADING"
+  },
+  {
+    "class": "Leader",
+    "type": "TCP",
+    "line": "54",
+    "content": "TCP NoDelay set to: true"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:zookeeper.version=3.4.0--1, built on 07/15/2010 10:36 GMT"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:host.name=XXXXXXXX.com"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.version=1.6.0_05"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.vendor=Sun Microsystems Inc."
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.home=/usr/java/jdk1.6.0_05/jre"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.class.path=XXXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.library.path=XXXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.io.tmpdir=/tmp"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:java.compiler=<NA>"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:os.name=Linux"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:os.arch= amd64"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:os.version=2.6.18-92.1.13.el5.perfctr.2.6.36"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:user.name=XXXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:user.home=XXXXXXXX"
+  },
+  {
+    "class": "Environment",
+    "type": "UNKNOWN",
+    "line": "97",
+    "content": "Server environment:user.dir=XXXXXXXXX"
+  },
+  {
+    "class": "ZooKeeperServer",
+    "type": "UNKNOWN",
+    "line": "151",
+    "content": "Created server with tickTime 3000 minSessionTimeout 6000 maxSessionTimeout 60000 datadir /xxxxxxx/zookeeper/version-2 snapdir /XXXXXXX/zookeeper/version-2"
+  },
+  {
+    "class": "FileSnap",
+    "type": "UNKNOWN",
+    "line": "82",
+    "content": "Reading snapshot /XXXXXXX/zookeeper/version-2/snapshot.1000469b4"
+  },
+  {
+    "class": "FileSnap",
+    "type": "UNKNOWN",
+    "line": "82",
+    "content": "Reading snapshot /XXXXXXX/zookeeper/version-2/snapshot.1000469b4"
+  },
+  {
+    "class": "FileTxnSnapLog",
+    "type": "UNKNOWN",
+    "line": "208",
+    "content": "Snapshotting: 100055cec"
+  },
+  {
+    "class": "ZooKeeperServer",
+    "type": "UNKNOWN",
+    "line": "315",
+    "content": "Expiring session 0x129d6b61b5b0000, timeout of 10000ms exceeded"
+  },
+  {
+    "class": "PrepRequestProcessor",
+    "type": "UNKNOWN",
+    "line": "385",
+    "content": "Processed session termination for sessionid: 0x129d6b61b5b0000"
+  },
+  {
+    "class": "FileTxnLog",
+    "type": "UNKNOWN",
+    "line": "196",
+    "content": "Creating new log file: log.200000001"
+  },
+  {
+    "class": "Leader",
+    "type": "UNKNOWN",
+    "line": "394",
+    "content": "Shutdown called"
+  },
+  {
+    "class": "PrepRequestProcessor",
+    "type": "UNKNOWN",
+    "line": "119",
+    "content": "PrepRequestProcessor exited loop!"
+  },
+  {
+    "class": "CommitProcessor",
+    "type": "UNKNOWN",
+    "line": "148",
+    "content": "CommitProcessor exited loop!"
+  },
+  {
+    "class": "FinalRequestProcessor",
+    "type": "UNKNOWN",
+    "line": "378",
+    "content": "shutdown of request processor complete"
+  },
+  {
+    "class": "SyncRequestProcessor",
+    "type": "UNKNOWN",
+    "line": "151",
+    "content": "SyncRequestProcessor exited!"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "UNKNOWN",
+    "line": "620",
+    "content": "LOOKING"
+  },
+  {
+    "class": "Leader",
+    "type": "UNKNOWN",
+    "line": "243",
+    "content": "exception while shutting down acceptor: java.net.SocketException: Socket closed"
+  },
+  {
+    "class": "FileSnap",
+    "type": "UNKNOWN",
+    "line": "82",
+    "content": "Reading snapshot /XXXXXXXX/zookeeper/version-2/snapshot.100055cec"
+  },
+  {
+    "class": "SessionTrackerImpl",
+    "type": "UNKNOWN",
+    "line": "158",
+    "content": "SessionTrackerImpl exited loop!"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "UNKNOWN",
+    "line": "663",
+    "content": "New election. My id =  1, Proposed zxid = 8589934593"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LOOKING",
+    "line": "496",
+    "content": "Notification: 1 (n.leader), 8589934593 (n.zxid), 2 (n.round), LOOKING (n.state), 1 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "QuorumCnxManager",
+    "type": "UNKNOWN",
+    "line": "162",
+    "content": "Have smaller server identifier, so dropping the connection: (2, 1)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "FOLLOWING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), FOLLOWING (n.state), 2 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "LEADING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), LEADING (n.state), 3 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "FOLLOWING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), FOLLOWING (n.state), 2 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "FOLLOWING",
+    "line": "496",
+    "content": "Notification: 3 (n.leader), 0 (n.zxid), 1 (n.round), FOLLOWING (n.state), 2 (n.sid), LOOKING (my state)"
+  },
+  {
+    "class": "QuorumPeer",
+    "type": "UNKNOWN",
+    "line": "642",
+    "content": "FOLLOWING"
+  },
+  {
+    "class": "Learner",
+    "type": "TCP",
+    "line": "72",
+    "content": "TCP NoDelay set to: true"
+  },
+  {
+    "class": "ZooKeeperServer",
+    "type": "UNKNOWN",
+    "line": "151",
+    "content": "Created server with tickTime 3000 minSessionTimeout 6000 maxSessionTimeout 60000 datadir /xxxxxxx/zookeeper/version-2 snapdir /xxxxxxx/zookeeper/version-2"
+  },
+  {
+    "class": "Follower",
+    "type": "UNKNOWN",
+    "line": "71",
+    "content": "Leader epoch 1 is less than our epoch 2"
+  },
+  {
+    "class": "Follower",
+    "type": "UNKNOWN",
+    "line": "82",
+    "content": "Exception when following the leader"
+  },
+  {
+    "class": "Follower",
+    "type": "UNKNOWN",
+    "line": "166",
+    "content": "shutdown called"
+  }
+]

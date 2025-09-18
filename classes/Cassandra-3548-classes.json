@@ -1,0 +1,22 @@
+[
+  {
+    "class": "StreamingRepairTask",
+    "type": "INFO",
+    "content": "[streaming task #69187510-1989-11e1-0000-5ff37d368cb6] Forwarding streaming repair of 8602 ranges to /10.6.130.70 (to be streamed with /10.37.114.10)"
+  },
+  {
+    "class": "StreamingRepairTask",
+    "type": "INFO",
+    "content": "[streaming task #69187510-1989-11e1-0000-5ff37d368cb6] task succeeded"
+  },
+  {
+    "class": "AbstractCassandraDaemon",
+    "type": "ERROR",
+    "content": "Fatal exception in thread Thread[AntiEntropyStage:66,5,main]"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "ERROR",
+    "content": "[repair #2bf19860-197f-11e1-0000-5ff37d368cb6] session completed with the following error"
+  }
+]

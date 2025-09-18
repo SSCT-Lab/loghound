@@ -1,0 +1,22 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "DEBUG",
+    "content": "Waiting on 51b27391410efdca841db264df46085f"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "Connected to master at null"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "INFO",
+    "content": "STOPPED: Exiting; cluster shutdown set and not carrying any regions"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.HRegionServer",
+    "type": "FATAL",
+    "content": "ABORTING region server node,60020,1384410974572: Unhandled exception: null"
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Starting repair command #4, repairing 1 ranges for keyspace cardspring_production"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242 new session: will sync /X.X.X.190, /X.X.X.43, /X.X.X.56 on range (1808575600,42535295865117307932921825930779602032] for keyspace_production.[comma separated list of CFs]"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242 requesting merkle trees for BusinessConnectionIndicesEntries (to [/X.X.X.43, /X.X.X.56, /X.X.X.190])"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242 Received merkle tree for ColumnFamilyName from /X.X.X.43"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #cc5a9aa0-9e48-11e2-98ba-11bde7670242 Received merkle tree for ColumnFamilyName from /X.X.X.56"
+  },
+  {
+    "class": "StorageService",
+    "type": "INFO",
+    "content": "Starting repair command #1, repairing 1 ranges for keyspace app_production"
+  },
+  {
+    "class": "StorageService",
+    "type": "DEBUG",
+    "content": "computing ranges for 1808575600, 7089215977519551322153637656637080005, 14178431955039102644307275311465584410, 42535295865117307932921825930779602030, 49624511842636859255075463585608106435, 56713727820156410577229101240436610840, 85070591730234615865843651859750628460, 92159807707754167187997289514579132865, 99249023685273718510150927169407637270, 127605887595351923798765477788721654890, 134695103572871475120919115443550159295, 141784319550391026443072753098378663700"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #a9a87e40-ad35-11e2-945a-050d956ff11b new session: will sync /YYY.XX.98.11, /YY.XXX.107.137, /YY.XXX.133.163 on range (99249023685273718510150927169407637270,127605887595351923798765477788721654890] for cardspring_production.[App]"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #a9a87e40-ad35-11e2-945a-050d956ff11b requesting merkle trees for App (to [/XX.YYY.107.137, /XX.YYY.133.163, /XXX.YY.98.11])"
+  },
+  {
+    "class": "OutboundTcpConnection",
+    "type": "DEBUG",
+    "content": "attempting to connect to /XXX.YY.98.11"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #a9a87e40-ad35-11e2-945a-050d956ff11b Received merkle tree for App from /XX.YYY.133.163"
+  },
+  {
+    "class": "GCInspector",
+    "type": "DEBUG",
+    "content": "GC for ParNew: 54 ms for 1 collections, 669806384 used; max is 4211081216"
+  },
+  {
+    "class": "AntiEntropyService",
+    "type": "INFO",
+    "content": "repair #a9a87e40-ad35-11e2-945a-050d956ff11b Received merkle tree for App from /XX.YYY.107.137"
+  }
+]

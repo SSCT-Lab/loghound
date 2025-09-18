@@ -1,0 +1,7 @@
+[
+  {
+    "class": "hdfs.DFSClient",
+    "type": "WARN",
+    "content": "DataStreamer Exception"
+  }
+]

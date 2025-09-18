@@ -1,0 +1,207 @@
+[
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "Performing status check"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.72 : 36643.639468390524"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "notifying listeners that /x.x.x.72 is down"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "Performing status check ..."
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.72 : 36644.432127252854"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "notifying listeners that /x.x.x.72 is down"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "Performing status check ..."
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.72 : 36645.22442135811"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "notifying listeners that /x.x.x.72 is down"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "Performing status check ..."
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.72 : 36646.016701132285"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "notifying listeners that /x.x.x.72 is down"
+  },
+  {
+    "class": "CassandraDaemon.java",
+    "type": "INFO",
+    "content": "Logging initialized [node x.x.x.72, replaced with same IP]"
+  },
+  {
+    "class": "YamlConfigurationLoader.java",
+    "type": "INFO",
+    "content": "Loading settings from file:/home/y/libexec64/cassandra/conf/cassandra.yaml [node x.x.x.72]"
+  },
+  {
+    "class": "StorageService.java",
+    "type": "INFO",
+    "content": "Starting up server gossip [node x.x.x.72]"
+  },
+  {
+    "class": "StorageService.java",
+    "type": "INFO",
+    "content": "JOINING: Starting to bootstrap... [node x.x.x.72]"
+  },
+  {
+    "class": "CompactionTask.java",
+    "type": "INFO",
+    "content": "Compacted 4 sstables to [/home/y/var/cassandra/data/system/local/system-local-jb-5,]. 755 bytes to 538 (~71% of original) in 25ms = 0.020523MB/s. 4 total partitions merged to 1. Partition merge counts were {4:1, } [node x.x.x.72]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Executing streaming plan for Bootstrap [node x.x.x.72]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Beginning stream session with /x.x.x.80 [node x.x.x.72]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Beginning stream session with /x.x.x.81 [node x.x.x.72]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Beginning stream session with /x.x.x.73 [node x.x.x.72]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Session with /x.x.x.81 is complete [node x.x.x.72]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Received streaming plan for Bootstrap [node x.x.x.80]"
+  },
+  {
+    "class": "ColumnFamilyStore.java",
+    "type": "INFO",
+    "content": "Enqueuing flush of Memtable-facetrevs4@509747825(251160/2013133 serialized/live bytes, 20934 ops) [node x.x.x.80]"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.72 : 36700.87918907657 [node x.x.x.80]"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "notifying listeners that /x.x.x.72 is down [node x.x.x.80]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Session with /x.x.x.72 is complete [node x.x.x.80]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "WARN",
+    "content": "Stream failed [node x.x.x.80]"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "DEBUG",
+    "content": "Clearing interval times for /x.x.x.72 due to generation change [node x.x.x.80]"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "reporting /x.x.x.72 [node x.x.x.80]"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "/x.x.x.72local generation 1391830955, remote generation 1391885793 [node x.x.x.80]"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "Updating heartbeat state generation to 1391885793 from 1391830955 for /x.x.x.72 [node x.x.x.80]"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "Adding endpoint state for /x.x.x.72 [node x.x.x.80]"
+  },
+  {
+    "class": "Gossiper.java",
+    "type": "TRACE",
+    "content": "Performing status check ... [node x.x.x.80]"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.72 : 0.06483452387313912 [node x.x.x.80]"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.81 : 0.7806744414980482 [node x.x.x.80]"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.71 : 1.7235166979455117 [node x.x.x.80]"
+  },
+  {
+    "class": "FailureDetector.java",
+    "type": "TRACE",
+    "content": "PHI for /x.x.x.84 : 0.8088014574340049 [node x.x.x.80]"
+  },
+  {
+    "class": "StreamSession.java",
+    "type": "ERROR",
+    "content": "Streaming error occurred [node x.x.x.80]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "INFO",
+    "content": "Session with /x.x.x.72 is complete [node x.x.x.80]"
+  },
+  {
+    "class": "StreamResultFuture.java",
+    "type": "WARN",
+    "content": "Stream failed [node x.x.x.80]"
+  }
+]

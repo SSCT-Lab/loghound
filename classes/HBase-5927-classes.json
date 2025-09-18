@@ -1,0 +1,42 @@
+[
+  {
+    "class": "handler.ServerShutdownHandler",
+    "type": "INFO",
+    "content": "Splitting logs for Jieshan.china.huawei.com,57163,1336485834464"
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "INFO",
+    "content": "Server jieshan.china.huawei.com,57138,1336485834409 returned java.net.ConnectException: Connection refused: no further information for fc6c3b7c6445127b63f617445aa5dfaf"
+  },
+  {
+    "class": "master.AssignmentManager$TimeoutMonitor",
+    "type": "INFO",
+    "content": "Region has been PENDING_CLOSE for too long, running forced unassign again on region=testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf."
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Attempted to unassign region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. but it is not currently assigned anywhere"
+  },
+  {
+    "class": "master.AssignmentManager$TimeoutMonitor",
+    "type": "INFO",
+    "content": "Regions in transition timed out: testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. state=PENDING_CLOSE, ts=1336485917495, server=null"
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Attempted to unassign region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. but it is not currently assigned anywhere"
+  },
+  {
+    "class": "master.AssignmentManager$TimeoutMonitor",
+    "type": "INFO",
+    "content": "Region has been PENDING_CLOSE for too long, running forced unassign again on region=testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf."
+  },
+  {
+    "class": "master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Attempted to unassign region testHBase5937,000,1336485845463.fc6c3b7c6445127b63f617445aa5dfaf. but it is not currently assigned anywhere"
+  }
+]

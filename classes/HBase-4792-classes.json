@@ -1,0 +1,62 @@
+[
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.SplitRegionHandler",
+    "type": "DEBUG",
+    "content": "Handling SPLIT event for e5be6551c8584a6a1065466e520faf4e; deleting node"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "master:62003-0x132f043bbde08c1 Deleting existing unassigned node for e5be6551c8584a6a1065466e520faf4e that is in expected state RS_ZK_REGION_SPLIT"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "WARN",
+    "content": "master:62003-0x132f043bbde08c1 Attempting to delete unassigned node in RS_ZK_REGION_SPLIT state but after verifying state, we got a version mismatch"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.handler.SplitRegionHandler",
+    "type": "INFO",
+    "content": "Handled SPLIT report); parent=TestTable,0001355346,1321396080924.e5be6551c8584a6a1065466e520faf4e. daughter a=TestTable,0001355346,1321396132414.df9b549eb594a1f8728608a2a431224a. daughter b=TestTable,0001368082,1321396132414.de861596db4337dc341138f26b9c8bc2."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "DEBUG",
+    "content": "Handling transition=RS_ZK_REGION_SPLIT, server=sv4r28s44,62023,1321395865619, region=e5be6551c8584a6a1065466e520faf4e"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Region e5be6551c8584a6a1065466e520faf4e not found on server sv4r28s44,62023,1321395865619; failed processing"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.master.AssignmentManager",
+    "type": "WARN",
+    "content": "Received SPLIT for region e5be6551c8584a6a1065466e520faf4e from server sv4r28s44,62023,1321395865619 but it doesn't exist anymore, probably already processed its split"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:62023-0x132f043bbde08d3 Attempting to transition node e5be6551c8584a6a1065466e520faf4e from RS_ZK_REGION_SPLITTING to RS_ZK_REGION_SPLIT"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:62023-0x132f043bbde08d3 Successfully transitioned node e5be6551c8584a6a1065466e520faf4e from RS_ZK_REGION_SPLITTING to RS_ZK_REGION_SPLIT"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.SplitTransaction",
+    "type": "INFO",
+    "content": "Still waiting on the master to process the split for e5be6551c8584a6a1065466e520faf4e"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:62023-0x132f043bbde08d3 Attempting to transition node e5be6551c8584a6a1065466e520faf4e from RS_ZK_REGION_SPLIT to RS_ZK_REGION_SPLIT"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.ZKAssign",
+    "type": "DEBUG",
+    "content": "regionserver:62023-0x132f043bbde08d3 Successfully transitioned node e5be6551c8584a6a1065466e520faf4e from RS_ZK_REGION_SPLIT to RS_ZK_REGION_SPLIT"
+  }
+]

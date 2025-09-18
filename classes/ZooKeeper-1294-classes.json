@@ -1,0 +1,8 @@
+[
+  {
+    "class": "NIOServerCnxn",
+    "type": "WARN",
+    "line": "642",
+    "content": "Exception causing close of session 0x0 due to java.io.IOException: ZooKeeperServer not running"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "class": "org.apache.zookeeper.ClientCnxn",
+    "type": "INFO",
+    "content": "Client session timed out, have not heard from server in 26668ms for sessionid 0x1377a75f41d0012, closing socket connection and attempting reconnect"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper",
+    "type": "WARN",
+    "content": "Possibly transient ZooKeeper exception: org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /hbase/unassigned/bd1079bf948c672e493432020dc0e144"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.wal.HLog",
+    "type": "DEBUG",
+    "content": "cleanupCurrentWriter waiting for transactions to get synced total 189377 synced till here 189365"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.SplitRequest",
+    "type": "INFO",
+    "content": "Running rollback/cleanup of failed split of ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.; Failed setting SPLITTING znode on ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.SplitRequest",
+    "type": "INFO",
+    "content": "Successful rollback of failed split of ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144."
+  },
+  {
+    "class": "org.apache.hadoop.hbase.zookeeper.RecoverableZooKeeper",
+    "type": "ERROR",
+    "content": "Node /hbase/unassigned/bd1079bf948c672e493432020dc0e144 already exists and this is not a retry"
+  },
+  {
+    "class": "org.apache.hadoop.hbase.regionserver.SplitRequest",
+    "type": "INFO",
+    "content": "Running rollback/cleanup of failed split of ufdr,011365398471659,1337823505339.bd1079bf948c672e493432020dc0e144.; Failed create of ephemeral /hbase/unassigned/bd1079bf948c672e493432020dc0e144"
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "class": "hdfs.DFSClient",
+    "type": "INFO",
+    "content": "Exception in createBlockOutputStream"
+  },
+  {
+    "class": "hdfs.DFSClient",
+    "type": "WARN",
+    "content": "Error Recovery for block BP-1023239-10.18.40.233-1335275282109:blk_296651611851855249_1253 in pipeline *****:50010, ******:50010, *****:50010: bad datanode ******:50010  (DN3)"
+  },
+  {
+    "class": "hdfs.DFSClient",
+    "type": "WARN",
+    "content": "DataStreamer Exception"
+  },
+  {
+    "class": "hdfs.DFSClient",
+    "type": "WARN",
+    "content": "Error while syncing"
+  },
+  {
+    "class": "datanode.DataNode",
+    "type": "ERROR",
+    "content": "host0.foo.com:49744:DataXceiver error processing TRANSFER_BLOCK operation  src: /127.0.0.1:49811 dest: /127.0.0.1:49744"
+  }
+]

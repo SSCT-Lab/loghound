@@ -1,0 +1,32 @@
+[
+  {
+    "class": "NIOServerCnxn",
+    "type": "WARN",
+    "line": "354",
+    "content": "Exception causing close of session 0x0 due to java.io.IOException: ZooKeeperServer not running"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "DEBUG",
+    "line": "358",
+    "content": "IOException stack trace"
+  },
+  {
+    "class": "NIOServerCnxn",
+    "type": "INFO",
+    "line": "1001",
+    "content": "Closed socket connection for client /127.0.0.1:61907 (no session established for client)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "542",
+    "content": "Notification: 3 (n.leader), 0xb800000099 (n.zxid), 0xb9 (n.round), FOLLOWING (n.state), 2 (n.sid), 0xb8 (n.peerEPoch), LOOKING (my state)"
+  },
+  {
+    "class": "FastLeaderElection",
+    "type": "INFO",
+    "line": "542",
+    "content": "Notification: 3 (n.leader), 0xb900000052 (n.zxid), 0xba (n.round), LEADING (n.state), 3 (n.sid), 0xb9 (n.peerEPoch), LOOKING (my state)"
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "class": "ha.BootstrapStandby",
+    "type": "FATAL",
+    "content": "Unable to read transaction ids 6175397-6175405 from the configured shared edits storage. Please copy these logs into the shared edits storage or call saveNamespace on the active node."
+  },
+  {
+    "class": "common.Storage",
+    "type": "INFO",
+    "content": "Storage directory /var/lib/hadoop-hdfs/cache/hdfs/dfs/name has been successfully formatted."
+  },
+  {
+    "class": "ha.BootstrapStandby",
+    "type": "FATAL",
+    "content": "Unable to read transaction ids 50887593-50995570 from the configured shared edits storage qjournal://us3sm2zk010r07.comp.prod.local:8485;us3sm2zk011r08.comp.prod.local:8485;us3sm2zk012r09.comp.prod.local:8485/whprod. Please copy these logs into the shared edits storage or call saveNamespace on the active node."
+  },
+  {
+    "class": "util.ExitUtil",
+    "type": "INFO",
+    "content": "Exiting with status 6"
+  },
+  {
+    "class": "namenode.NameNode",
+    "type": "INFO",
+    "content": "SHUTDOWN_MSG:"
+  }
+]

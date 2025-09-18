@@ -1,0 +1,177 @@
+[
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.NMAuditLogger",
+    "type": "INFO",
+    "content": "USER=<jobuser>    IP=<ip_address_of_RM>        OPERATION=Stop Container Request        TARGET=ContainerManageImpl      RESULT=SUCCESS APPID=application_1326205390797_0002    CONTAINERID=container_1326205390797_0002_01_000001"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container",
+    "type": "INFO",
+    "content": "Processing container_1326205390797_0002_01_000001 of type KILL_CONTAINER"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "Processing container_1326205390797_0002_01_000001 of type LAUNCHED"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "container_1326205390797_0002_01_000001 Container Transitioned from ACQUIRED to RUNNING"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "Processing container_1326205390797_0002_01_000001 of type KILL"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "container_1326205390797_0002_01_000001 Container Transitioned from RUNNING to KILLED"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.scheduler.SchedulerApp",
+    "type": "INFO",
+    "content": "Completed container: container_1326205390797_0002_01_000001 in state: KILLED event:KILL"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.JobImpl",
+    "type": "INFO",
+    "content": "Processing job_1326205390797_0002 of type JOB_TASK_COMPLETED"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl",
+    "type": "INFO",
+    "content": "Processing attempt_1326205390797_0002_r_000154_0 of type TA_UPDATE"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.JobImpl",
+    "type": "INFO",
+    "content": "Processing job_1326205390797_0002 of type JOB_COUNTER_UPDATE"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.JobImpl",
+    "type": "ERROR",
+    "content": "Can't handle this event at current state"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.jobhistory.JobHistoryEventHandler",
+    "type": "INFO",
+    "content": "Moved tmp to done: hdfs://NN/mapred/history/done_intermediate/jobuser/job_1326205390797_0002.summary_tmp to hdfs://NN/mapred/history/done_intermediate/jobuser/job_1326205390797_0002.summary"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.jobhistory.JobHistoryEventHandler",
+    "type": "INFO",
+    "content": "Moved tmp to done: hdfs://NN/mapred/history/done_intermediate/jobuser/job_1326205390797_0002_conf.xml_tmp to hdfs://NN/mapred/history/done_intermediate/jobuser/job_1326205390797_0002_conf.xml"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.jobhistory.JobHistoryEventHandler",
+    "type": "INFO",
+    "content": "Moved tmp to done: hdfs://NN/mapred/history/done_intermediate/jobuser/job_1326205390797_0002-1326205993489-jobuser-sorter-1326206079288-0-0-ERROR-default.jhist_tmp to hdfs://NN/mapred/history/done_intermediate/jobuser/job_1326205390797_0002-1326205993489-jobuser-sorter-1326206079288-0-0-ERROR-default.jhist"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.jobhistory.JobHistoryEventHandler",
+    "type": "INFO",
+    "content": "Stopped JobHistoryEventHandler. super.stop()"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.service.AbstractService",
+    "type": "INFO",
+    "content": "Service:JobHistoryEventHandler is stopped."
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl",
+    "type": "ERROR",
+    "content": "Returning, interrupted : java.lang.InterruptedException"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.service.AbstractService",
+    "type": "INFO",
+    "content": "Service:org.apache.hadoop.mapreduce.v2.app.launcher.ContainerLauncherImpl is stopped."
+  },
+  {
+    "class": "org.apache.hadoop.yarn.service.AbstractService",
+    "type": "INFO",
+    "content": "Service:org.apache.hadoop.mapreduce.v2.app.MRAppMaster$ContainerLauncherRouter is stopped."
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator",
+    "type": "INFO",
+    "content": "Allocated thread interrupted. Returning."
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator",
+    "type": "ERROR",
+    "content": "Returning,interrupted : java.lang.InterruptedException"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator",
+    "type": "INFO",
+    "content": "Setting job diagnostics to Invalid event TA_UPDATE on TaskAttempt attempt_1326205390797_0002_m_007534_0 Invalid event JOB_COUNTER_UPDATE on Job job_1326205390797_0002 Invalid event JOB_COUNTER_UPDATE on Job job_1326205390797_0002 Invalid event JOB_COUNTER_UPDATE on Job job_1326205390797_0002 Invalid event JOB_COUNTER_UPDATE on Job job_1326205390797_0002 Invalid event JOB_COUNTER_UPDATE on Job job_1326205390797_0002"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.state.InvalidStateTransitonException",
+    "type": "ERROR",
+    "content": "Invalid event: TA_UPDATE at ASSIGNED"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.NMAuditLogger",
+    "type": "INFO",
+    "content": "USER=<jobuser> IP=<ip_addres_of_RM>         OPERATION=Stop Container Request         TARGET=ContainerManageImpl          RESULT=SUCCESS           APPID=application_1326289061888_0002          CONTAINERID=container_1326289061888_0002_01_000001 (AM)"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container",
+    "type": "INFO",
+    "content": "Processing container_1326289061888_0002_01_000001 of type KILL_CONTAINER"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container",
+    "type": "INFO",
+    "content": "Container container_1326289061888_0002_01_000001 transitioned from RUNNING to KILLING"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.launcher.ContainerLaunch",
+    "type": "INFO",
+    "content": "Cleaning up container container_1326289061888_0002_01_000001"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container",
+    "type": "INFO",
+    "content": "Processing container_1326289061888_0002_01_000001 of type UPDATE_DIAGNOSTICS_MSG"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container",
+    "type": "INFO",
+    "content": "Processing container_1326289061888_0002_01_000001 of type CONTAINER_KILLED_ON_REQUEST"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "Processing container_1326289061888_0002_01_000001 of type LAUNCHED"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "container_1326289061888_0002_01_000001 Container Transitioned from ACQUIRED to RUNNING"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "Processing container_1326289061888_0002_01_000001 of type KILL"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainerImpl",
+    "type": "INFO",
+    "content": "container_1326289061888_0002_01_000001 Container Transitioned from RUNNING to KILLED"
+  },
+  {
+    "class": "org.apache.hadoop.yarn.server.resourcemanager.scheduler.SchedulerApp",
+    "type": "INFO",
+    "content": "Completed container: container_1326289061888_0002_01_000001 in state: KILLED event:KILL"
+  },
+  {
+    "class": "org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl",
+    "type": "ERROR",
+    "content": "Can't handle this event at current state for attempt_1326289061888_0002_m_006598_0"
+  }
+]

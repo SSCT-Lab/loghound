@@ -1,0 +1,102 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "Receiving block blk_6345892463926159834_1029 src: /XX,XX,XX.140:37890 dest: /XX.XX.XX.139:51010"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "PacketResponder blk_6345892463926159834_1029 1 Exception java.lang.NullPointerException"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "Receiving block blk_6345892463926159834_1029 src: /XX.XX.XX.140:37385 dest: /XX.XX.XX140:51010"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "PacketResponder 2 for block blk_6345892463926159834_1029 terminating"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "DatanodeRegistration(XX.XX.XX.140:51010, storageID=DS-1292310101-208.76.44.140-51010-1256100924816, infoPort=51075, ipcPort=51020):Exception writing block blk_6345892463926159834_1029 to mirror XX.XX.XX.139:51010          (DN2)"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "PacketResponder 1 for block blk_-7356834145770439479_1586 responded my status  for seqno 895"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "Receiving one packet for block blk_-7356834145770439479_1586 of length 65024 seqno 896 offsetInBlock 58025472 lastPacketInBlock false"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "PacketResponder 1 got seqno = 896"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "PacketResponder 1 adding seqno 897 to ack queue."
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "PacketResponder blk_-7356834145770439479_1586 1 Exception"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "PacketResponder 1 got seqno = 4546"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "Receiving one packet for block blk_-7356834145770439479_1586 of length 65024 seqno 898 offsetInBlock 58155520 lastPacketInBlock false"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "PacketResponder 1 for block blk_-7356834145770439479_1586 terminating"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "PacketResponder 1 for block blk_-830254393316092139_1588 responded my status for seqno 4555"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "Number of active connections is: 184"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "PacketResponder blk_-830254393316092139_1588 1 responded other status  for seqno 4555"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "DEBUG",
+    "content": "writeBlock receive buf size 131071 tcp no delay true"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "Receiving block blk_-7356834145770439479_1586 src: /XX,XX,XX.142:49468 dest: /XX,XX,XX.139:51010"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "Recover the RBW replica blk_-7356834145770439479_1586"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "INFO",
+    "content": "Recovering replica ReplicaBeingWritten, blk_-7356834145770439479_1586, RBW"
+  }
+]

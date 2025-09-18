@@ -1,0 +1,67 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: blk_-1426587446408804113 added as corrupt on ZZ.YY.XX..220:1004 by /ZZ.YY.XX.246"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: blk_-1426587446408804113 added as corrupt on ZZ.YY.XX..252:1004 by /ZZ.YY.XX.246"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: blk_-1426587446408804113 added as corrupt on ZZ.YY.XX..107:1004 by /ZZ.YY.XX.246"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: duplicate requested for blk_-1426587446408804113 to add as corrupt on ZZ.YY.XX.252:1004 by /ZZ.YY.XX.246"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: duplicate requested for blk_-1426587446408804113 to add as corrupt on ZZ.YY.XX.107:1004 by /ZZ.YY.XX.246"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.StateChange",
+    "type": "INFO",
+    "content": "BLOCK NameSystem.addToCorruptReplicasMap: duplicate requested for blk_-1426587446408804113 to add as corrupt on ZZ.YY.XX.220:1004 by /ZZ.YY.XX.246"
+  },
+  {
+    "class": "org.apache.hadoop.fs.ChecksumException",
+    "type": "INFO",
+    "content": "Checksum error: /blk_-1426587446408804113:of:/myfile/part-00145.gz at 222720"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.DFSClient",
+    "type": "WARN",
+    "content": "Found Checksum error for blk_-1426587446408804113_970819282 from ZZ.YY.XX.220:1004 at 222720"
+  },
+  {
+    "class": "org.apache.hadoop.fs.ChecksumException",
+    "type": "INFO",
+    "content": "Checksum error: /blk_-1426587446408804113:of:/myfile/part-00145.gz at 103936"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.DFSClient",
+    "type": "WARN",
+    "content": "Found Checksum error for blk_-1426587446408804113_970819282 from ZZ.YY.XX.252:1004 at 103936"
+  },
+  {
+    "class": "org.apache.hadoop.fs.ChecksumException",
+    "type": "INFO",
+    "content": "Checksum error: /blk_-1426587446408804113:of:/myfile/part-00145.gz at 250368"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.DFSClient",
+    "type": "WARN",
+    "content": "Found Checksum error for blk_-1426587446408804113_970819282 from ZZ.YY.XX.107:1004 at 250368"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.DFSClient",
+    "type": "INFO",
+    "content": "Could not obtain block blk_-1426587446408804113_970819282 from any node: java.io.IOException: No live nodes contain current block. Will get new block locations from namenode and retry..."
+  }
+]

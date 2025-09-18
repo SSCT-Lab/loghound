@@ -1,0 +1,102 @@
+[
+  {
+    "class": "mapred.YARNRunner",
+    "type": "INFO",
+    "content": "AppMaster capability = memory: 2048,"
+  },
+  {
+    "class": "mapred.YARNRunner",
+    "type": "INFO",
+    "content": "Command to launch container for ApplicationMaster is : $JAVA_HOME/bin/java -Dhadoop.root.logger=DEBUG,console -Xmx1536m org.apache.hadoop.mapreduce.v2.app.MRAppMaster 1315847180566 6 <FAILCOUNT> 1><LOG_DIR>/stdout 2><LOG_DIR>/stderr"
+  },
+  {
+    "class": "mapred.ResourceMgrDelegate",
+    "type": "INFO",
+    "content": "Submitted application application_1315847180566_6 to ResourceManager"
+  },
+  {
+    "class": "mapred.ClientCache",
+    "type": "INFO",
+    "content": "Connecting to HistoryServer at: 0.0.0.0:10020"
+  },
+  {
+    "class": "ipc.YarnRPC",
+    "type": "INFO",
+    "content": "Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC"
+  },
+  {
+    "class": "mapred.ClientCache",
+    "type": "INFO",
+    "content": "Connected to HistoryServer at: 0.0.0.0:10020"
+  },
+  {
+    "class": "ipc.HadoopYarnRPC",
+    "type": "INFO",
+    "content": "Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.mapreduce.v2.api.MRClientProtocol"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "Running job: job_1315847180566_0006"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "map 0% reduce 0%"
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Tracking Url of JOB is <IP-ADDRESS>:55361"
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Connecting to <IP-ADDRESS>:43465"
+  },
+  {
+    "class": "ipc.YarnRPC",
+    "type": "INFO",
+    "content": "Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC"
+  },
+  {
+    "class": "ipc.HadoopYarnRPC",
+    "type": "INFO",
+    "content": "Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.mapreduce.v2.api.MRClientProtocol"
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Failed to contact AM/History for job job_1315847180566_0006 Will retry.."
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "Job job_1315847180566_0006 failed with state FAILED"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "Counters: 0"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "Job job_1315941172309_0006 failed with state FAILED"
+  },
+  {
+    "class": "mapreduce.Job",
+    "type": "INFO",
+    "content": "Counters: 0"
+  },
+  {
+    "class": "conf.Configuration",
+    "type": "WARN",
+    "content": "mapred.used.genericoptionsparser is deprecated."
+  },
+  {
+    "class": "monitor.ContainersMonitorImpl",
+    "type": "WARN",
+    "content": "Container [pid=22125,containerID=container_1316090748961_0001_01_000001] is running beyond memory-limits. Current usage : 2150408192bytes. Limit : 2147483648bytes. Killing container."
+  }
+]

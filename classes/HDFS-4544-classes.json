@@ -1,0 +1,7 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "WARN",
+    "content": "Unexpected error trying to delete block blk_-2973118207682441648_225738165. BlockInfo not found in volumeMap."
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "class": "org.apache.hadoop.hdfs.DFSClient",
+    "type": "INFO",
+    "content": "Will fetch a new access token and retry, access token was invalid when connecting to /192.168.2.27:1004 : org.apache.hadoop.hdfs.security.token.block.InvalidBlockTokenException: Got access token error for OP_READ_BLOCK, self=/192.168.2.27:56975, remote=/192.168.2.27:1004, for file /hbase/XXXX/b50bf1b95c9242cdd242dc4e6549bc90/raw/d59819ebe5574c79a5d1cf13a733d2ed, for pool BP-621472495-192.168.2.25-1375176775166 block -882505774551713967_11426277"
+  },
+  {
+    "class": "org.apache.hadoop.hdfs.server.datanode.DataNode",
+    "type": "ERROR",
+    "content": "dn2:1004:DataXceiver error processing READ_BLOCK operation src: /192.168.2.27:56975 dest: /192.168.2.27:1004"
+  }
+]

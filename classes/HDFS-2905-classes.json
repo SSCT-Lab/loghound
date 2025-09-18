@@ -1,0 +1,37 @@
+[
+  {
+    "class": "namenode.FSNamesystem",
+    "type": "WARN",
+    "content": "NameNode low on available disk space. Already in safe mode."
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "STATE* Safe mode is ON. Resources are low on NN. Safe mode must be turned off manually."
+  },
+  {
+    "class": "namenode.NameNodeResourceChecker",
+    "type": "WARN",
+    "content": "Space available on volume '/dev/disk0s2' is 0, which is below the configured reserved amount 104857600"
+  },
+  {
+    "class": "namenode.FSNamesystem",
+    "type": "WARN",
+    "content": "NameNode low on available disk space. Already in safe mode."
+  },
+  {
+    "class": "hdfs.StateChange",
+    "type": "INFO",
+    "content": "STATE* Safe mode is ON. Resources are low on NN. Safe mode must be turned off manually."
+  },
+  {
+    "class": "ha.EditLogTailer",
+    "type": "ERROR",
+    "content": "Unknown error encountered while tailing edits. Shutting down standby NN."
+  },
+  {
+    "class": "namenode.NameNode",
+    "type": "INFO",
+    "content": "SHUTDOWN_MSG:"
+  }
+]

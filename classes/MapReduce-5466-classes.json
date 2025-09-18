@@ -1,0 +1,7 @@
+[
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Application state is completed. FinalApplicationStatus=SUCCEEDED. Redirecting to job history server"
+  }
+]

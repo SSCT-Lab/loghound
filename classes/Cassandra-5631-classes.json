@@ -1,0 +1,12 @@
+[
+  {
+    "class": "CassandraDaemon",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[MigrationStage:1,5,main]"
+  },
+  {
+    "class": "CassandraDaemon",
+    "type": "ERROR",
+    "content": "Exception in thread Thread[MigrationStage:1,5,main]"
+  }
+]

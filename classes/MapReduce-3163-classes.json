@@ -1,0 +1,77 @@
+[
+  {
+    "class": "conf.Configuration",
+    "type": "WARN",
+    "content": "mapred.used.genericoptionsparser is deprecated. Instead, use mapreduce.client.genericoptionsparser.used"
+  },
+  {
+    "class": "ipc.YarnRPC",
+    "type": "INFO",
+    "content": "Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC"
+  },
+  {
+    "class": "mapred.ResourceMgrDelegate",
+    "type": "INFO",
+    "content": "Connecting to ResourceManager at c0309.hal.cloudera.com/172.29.81.91:40012"
+  },
+  {
+    "class": "ipc.HadoopYarnRPC",
+    "type": "INFO",
+    "content": "Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.yarn.api.ClientRMProtocol"
+  },
+  {
+    "class": "mapred.ResourceMgrDelegate",
+    "type": "INFO",
+    "content": "Connected to ResourceManager at c0309.hal.cloudera.com/172.29.81.91:40012"
+  },
+  {
+    "class": "mapred.ClientCache",
+    "type": "INFO",
+    "content": "Connecting to HistoryServer at: c0309.hal.cloudera.com:10020"
+  },
+  {
+    "class": "ipc.YarnRPC",
+    "type": "INFO",
+    "content": "Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC"
+  },
+  {
+    "class": "mapred.ClientCache",
+    "type": "INFO",
+    "content": "Connected to HistoryServer at: c0309.hal.cloudera.com:10020"
+  },
+  {
+    "class": "ipc.HadoopYarnRPC",
+    "type": "INFO",
+    "content": "Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.mapreduce.v2.api.MRClientProtocol"
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Tracking Url of JOB is c0312.hal.cloudera.com:38448"
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Connecting to c0312.hal.cloudera.com:44028"
+  },
+  {
+    "class": "ipc.YarnRPC",
+    "type": "INFO",
+    "content": "Creating YarnRPC for org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC"
+  },
+  {
+    "class": "ipc.HadoopYarnRPC",
+    "type": "INFO",
+    "content": "Creating a HadoopYarnProtoRpc proxy for protocol interface org.apache.hadoop.mapreduce.v2.api.MRClientProtocol"
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Failed to contact AM/History for job job_1318301330793_0001  Will retry.."
+  },
+  {
+    "class": "mapred.ClientServiceDelegate",
+    "type": "INFO",
+    "content": "Application state is completed. FinalApplicationStatus=UNDEFINED. Redirecting to job history server"
+  }
+]

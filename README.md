@@ -56,18 +56,19 @@ project_root/
 │   ├── sanity/
 │   │   └── sanity-pack/
 │   └── sanity-coverage/
-│       ├── static_coverage_summary_cak.ql
-│       ├── static_coverage_summary_hao21.ql
-│       ├── static_coverage_summary_hao23.ql
-│       ├── static_coverage_summary_h360.ql
-│       ├── static_coverage_summary_hb50.ql
-│       ├── static_coverage_summary_zks.ql
-│       ├── codenji-pack.lock.yml
-│       └── qlpack.yml
+│       ├── codeql-pack.lock.yml
+│       ├── qlpack.yml
+│       ├── static_coverage_summary_cas.ql
+│       ├── static_coverage_summary_ha020.ql
+│       ├── static_coverage_summary_ha021.ql
+│       ├── static_coverage_summary_ha023.ql
+│       ├── static_coverage_summary_hb90.ql
+│       ├── static_coverage_summary_hb95.ql
+│       └── static_coverage_summary_zk.ql
 ├── tgt_sys/
 │   ├── build_dy.sh
 │   ├── get_target_system.sh
-│   ├── run_coverage.sh
+│   └── run_coverage.sh
 ├── dbugset_resolve.xlsx
 ├── structuration_info.json
 ├── app.py
@@ -88,7 +89,27 @@ First, modify the LLM API settings in the configuration file:
 - Navigate to `conf/conf.yaml`
 - Update the LLM `api`, `model`, and `base_url` parameters
 
-### 2. Static Code Analysis
+### 2. Build CodeQL Database
+Go to the target system directory tgt_sys/ and execute the following commands:
+
+```bash
+cd ./tgt_sys/
+
+# Download and prepare the target system source code
+zsh ./get-target-system.sh  
+
+# Build CodeQL database
+zsh build_db.sh  
+
+# Run coverage script (generate static coverage information)
+sh run_coverage.sh  
+
+cd ..
+
+# Calculate coverage results
+python cover_cal.py
+```
+### 3. Static Code Analysis
 
 Run the following command to perform static analysis of the distributed system source code and build the call graph:
 
@@ -96,7 +117,7 @@ Run the following command to perform static analysis of the distributed system s
 python smp.py -sc source_code_list  # Replace with actual source code path
 ```
 
-### 3. Execute Full LogHound Workflow
+### 4. Execute Full LogHound Workflow
 
 Run the complete fault localization process with:
 

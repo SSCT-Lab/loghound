@@ -13,6 +13,8 @@ def normalize_scores(vsm_scores):
     Returns:
         dict: The normalized VSMScore's mapping.
     """
+    if len(vsm_scores) == 0:
+        return {file: 0.0 for file in vsm_scores}
     min_score = min(vsm_scores.values())
     max_score = max(vsm_scores.values())
 

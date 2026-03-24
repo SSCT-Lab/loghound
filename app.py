@@ -54,7 +54,7 @@ def main():
     args = parser.parse_args()
 
     if "-v" in args or "--version" in args:
-        print("version: 1.0.0")
+        print("LogHound Version: 1.0.0")
         return
 
     bug_reports = args.bug_reports

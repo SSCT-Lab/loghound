@@ -231,7 +231,7 @@
   {
     "file": "Cassandra-3369.docx",
     "title": "Cassandra-3369",
-    "version": "cassandra-0.8.7",
+    "version": "cassandra-1.0.0-rc2",
     "Description": "AssertionError when adding a node and doing repair, repair hangs",
     "logs": [
       "INFO [GossipStage:1] 2011-10-16 18:15:46,837 Gossiper.java (line 737) Node /127.0.0.2 is now part of the cluster",
@@ -619,7 +619,7 @@
   {
     "file": "Cassandra-6622.docx",
     "title": "Cassandra-6622",
-    "version": "cassandra-1.2.15",
+    "version": "cassandra-2.0.4",
     "Description": "Streaming session failures during node replace of same address",
     "logs": [
       "TRACE [GossipTasks:1] 2014-02-08 18:55:23,656 Gossiper.java (line 598) Performing status check",
@@ -875,7 +875,7 @@
   {
     "file": "HBase-4729.docx",
     "title": "HBase-4729",
-    "version": "hbase-0.90.6",
+    "version": "hbase-0.92.0",
     "Description": "Clash between region unassign and splitting kills the master",
     "logs": [
       "2011-11-02 17:06:44,428 FATAL org.apache.hadoop.hbase.master.HMaster: Unexpected ZK exception creating node CLOSING",
@@ -891,7 +891,7 @@
   {
     "file": "HBase-4792.docx",
     "title": "HBase-4792",
-    "version": "hbase-0.90.6",
+    "version": "hbase-0.92.0",
     "Description": "SplitRegionHandler doesn't care if it deletes the znode or not, leaves the parent region stuck offline",
     "logs": [
       "2011-11-15 22:28:57,900 DEBUG org.apache.hadoop.hbase.master.handler.SplitRegionHandler: Handling SPLIT event for e5be6551c8584a6a1065466e520faf4e; deleting node",
@@ -1763,7 +1763,7 @@
       "[main]2012-07-13 20:35:21,019 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl: Start request for container_1342210962593_0007_01_000001 by user x",
       "[IPC Server handler 0 on 8041]2012-07-13 20:35:21,043 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl: Creating a new application reference for app application_1342210962593_0007",
       "[IPC Server handler 0 on 8041]2012-07-13 20:35:21,050 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Application application_1342210962593_0007 transitioned from NEW to INITING",
-      "[AsyncDispatcher event handler]2012-07-13 20:35:21,051 INFO ✦ Assign an AM (i.e. an application attempt) org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Adding container_1342210962593_0007_01_000001 to application application_1342210962593_0007",
+      "[AsyncDispatcher event handler]2012-07-13 20:35:21,051 INFO org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application: Adding container_1342210962593_0007_01_000001 to application application_1342210962593_0007",
       "[AsyncDispatcher event handler]2012-07-13 20:35:21,062 ERROR org.apache.hadoop.security.UserGroupInformation: PriviledgedActionException as:x (auth:SIMPLE) cause:javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]",
       "[AsyncDispatcher event handler]2012-07-13 20:35:21,063 WARN org.apache.hadoop.ipc.Client: Exception encountered while connecting to the server : javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]",
       "[AsyncDispatcher event handler]2012-07-13 20:35:21,063 ERROR org.apache.hadoop.security.UserGroupInformation: PriviledgedActionException as:x (auth:SIMPLE) cause:java.io.IOException: javax.security.sasl.SaslException: GSS initiate failed [Caused by GSSException: No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)]",
